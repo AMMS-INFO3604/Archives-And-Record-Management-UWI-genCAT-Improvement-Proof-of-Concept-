@@ -1,4 +1,6 @@
 from .user import *
+from .auth import *
+from .initialize import *
 from .patron import *
 from .staff_user import *
 from .location import *
