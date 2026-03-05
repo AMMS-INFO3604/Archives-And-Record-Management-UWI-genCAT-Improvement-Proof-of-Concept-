@@ -99,10 +99,10 @@ ipython_config.py
 # Flask
 # =============================================================================
 
-# Flask instance folder (holds SQLite DB, uploaded files, runtime config)
+# Flask instance folder (holds the SQLite DB, uploads, and runtime config)
 instance/
 
-# Custom local config (may contain secrets)
+# Local override config (may contain secrets – never commit)
 App/custom_config.py
 
 # Uploaded files
@@ -111,9 +111,8 @@ App/uploads/
 # Webassets cache
 .webassets-cache
 
-# Flask-Migrate – keep only the initial migration; ignore generated revisions
-# (comment this out if you want to track all migrations in version control)
-# migrations/
+# Flask-Migrate: the migrations/ directory IS tracked in version control.
+# Only the compiled bytecode inside it is ignored (covered by __pycache__ above).
 
 # =============================================================================
 # SQLite
@@ -188,7 +187,7 @@ $RECYCLE.BIN/
 # Editors & IDEs
 # =============================================================================
 
-# VS Code
+# VS Code – ignore user-specific files but keep shared workspace settings
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
