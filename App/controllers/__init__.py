@@ -8,3 +8,10 @@ from .box import *
 from .file import *
 from .file_record import *
 from .loan import *
+from .file import *
+from .staffUser import *
+from .box import *
+from .location import *
+from .loan import *
+from .fileRecord import *
+from .staffUser import *
