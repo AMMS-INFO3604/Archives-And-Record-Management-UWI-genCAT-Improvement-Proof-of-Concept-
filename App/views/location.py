@@ -5,7 +5,12 @@ from App.controllers.location import (
     create_location,
     delete_location,
     get_all_locations,
+    get_all_locations_json,
+    get_boxes_at_location_json,
+    get_files_at_location_json,
     get_location,
+    get_location_json,
+    search_locations,
     update_location,
 )
 
@@ -87,24 +92,26 @@ API Routes
 @location_views.route("/api/locations", methods=["GET"])
 @jwt_required()
 def get_locations_api():
-    locations = get_all_locations()
-    return jsonify(
-        [
-            {"locationID": loc.locationID, "geoLocation": loc.geoLocation}
-            for loc in locations
-        ]
-    ), 200
+    return jsonify(get_all_locations_json()), 200
+
+
+@location_views.route("/api/locations/search", methods=["GET"])
+@jwt_required()
+def search_locations_api():
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify({"error": "Query parameter 'q' is required"}), 400
+    results = search_locations(query)
+    return jsonify([loc.get_json() for loc in results]), 200
 
 
 @location_views.route("/api/locations/<int:locationID>", methods=["GET"])
 @jwt_required()
 def get_location_api(locationID):
-    location = get_location(locationID)
+    location = get_location_json(locationID)
     if not location:
         return jsonify({"error": f"Location {locationID} not found"}), 404
-    return jsonify(
-        {"locationID": location.locationID, "geoLocation": location.geoLocation}
-    ), 200
+    return jsonify(location), 200
 
 
 @location_views.route("/api/locations", methods=["POST"])
@@ -119,8 +126,7 @@ def create_location_api():
     return jsonify(
         {
             "message": "Location created successfully",
-            "locationID": location.locationID,
-            "geoLocation": location.geoLocation,
+            **location.get_json(),
         }
     ), 201
 
@@ -137,8 +143,7 @@ def update_location_api(locationID):
     return jsonify(
         {
             "message": "Location updated successfully",
-            "locationID": location.locationID,
-            "geoLocation": location.geoLocation,
+            **location.get_json(),
         }
     ), 200
 
@@ -150,3 +155,21 @@ def delete_location_api(locationID):
     if not success:
         return jsonify({"error": f"Location {locationID} not found"}), 404
     return jsonify({"message": f"Location {locationID} deleted successfully"}), 200
+
+
+@location_views.route("/api/locations/<int:locationID>/boxes", methods=["GET"])
+@jwt_required()
+def get_location_boxes_api(locationID):
+    boxes = get_boxes_at_location_json(locationID)
+    if boxes is None:
+        return jsonify({"error": f"Location {locationID} not found"}), 404
+    return jsonify(boxes), 200
+
+
+@location_views.route("/api/locations/<int:locationID>/files", methods=["GET"])
+@jwt_required()
+def get_location_files_api(locationID):
+    if not get_location(locationID):
+        return jsonify({"error": f"Location {locationID} not found"}), 404
+    files = get_files_at_location_json(locationID)
+    return jsonify(files), 200
