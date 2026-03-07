@@ -24,7 +24,7 @@ def identify_page():
     return render_template(
         "message.html",
         title="Identify",
-        message=f"You are logged in as {current_user.id} - {current_user.username}",
+        message=f"You are logged in as {current_user.userID} - {current_user.username}",
     )
 
 
@@ -69,7 +69,7 @@ def user_login_api():
 @jwt_required()
 def identify_user():
     return jsonify(
-        {"message": f"username: {current_user.username}, id : {current_user.id}"}
+        {"message": f"username: {current_user.username}, id : {current_user.userID}"}
     )
 
 
