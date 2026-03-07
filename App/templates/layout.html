@@ -1,70 +1,679 @@
 <!doctype html>
-<html>
-  <head>
-  
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-     <!--Import Google Icon Font-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!--Let browser know website is optimized for mobile-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>{% block title %}{% endblock %}</title>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}genCAT{% endblock %} | GEN2 Records</title>
 
-  </head>
-  <body>
-    
-      <nav class="purple">
-          <div class="nav-wrapper">
-              <a href="#!" class="brand-logo center">{% block page %}{% endblock %}</a>
-              <ul id="nav-mobile" class="left">
-                  <li><a href="/">Home</a></li>
-                  <li><a href="/users">Users Jinja</a></li>
-                  {% if is_authenticated %}
-                    <li><a href="/identify">Identify</a></li>
-                  {% endif %}
-                  <li><a href="/static/users">Users JS</a></li>
-              </ul>
-              {% if is_authenticated %}
-              <ul id="nav-mobile" class="right">
-                <li><a href="/logout">Logout</a></li>
-              </ul>
-              {% else %}
-              <form class="right navbar-form" method="POST" action="/login" style="display: flex; flex-wrap: nowrap; align-items: center; margin-right: 10px;">
-                  <div class="input-field" style="margin-right: 10px;">
-                      <input placeholder="username" value="bob" name="username" type="text" class="validate" required>
-                      <label for="username">username</label>
-                  </div>
-                  <div class="input-field" style="margin-right: 10px;">
-                      <input placeholder="password"value="bobpass" name="password" type="password" class="validate" required>
-                      <label for="password">Password</label>
-                  </div>
-                  <button type="submit" class="btn waves-effect waves-light">Login</button>
-              </form>
-              {% endif %}
-              
-          </div>
-      </nav>
-      <style>
-          .navbar-form label {
-              color: white !important;
-          }
-      </style>
+        <!-- Material Icons -->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        <!-- Materialize CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+        <!-- Project styles -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 
-    <div class="container" id="content">{% block content %}{% endblock %}</div>
+        <style>
+            /* ── Reset ─────────────────────────────────────────────────── */
+            *, *::before, *::after { box-sizing: border-box; }
+            html, body { height: 100%; margin: 0; padding: 0; }
+            body {
+                background: #f3e5f5;
+                font-family: 'Roboto', sans-serif;
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+            }
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script>
-       M.AutoInit();
+            /* ════════════════════════════════════════════════════════════
+               TOP BAR
+            ════════════════════════════════════════════════════════════ */
+            .top-bar {
+                background: #4a148c;
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 12px 0 4px;
+                flex-shrink: 0;
+                position: sticky;
+                top: 0;
+                z-index: 300;
+                box-shadow: 0 2px 10px rgba(0,0,0,.30);
+                gap: 8px;
+            }
 
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-              {% for message in messages %}
-              M.toast({html: '{{message}}'})
-              {% endfor %}
-          {% endif %}
-        {% endwith %}
-       
-    </script>
-  </body>
+            /* ── Left section: hamburger + brand + nav links ── */
+            .tb-left {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                min-width: 0;
+                flex: 1;
+            }
+
+            /* Hamburger — always visible; collapses sidebar on desktop,
+               opens drawer on mobile */
+            .tb-hamburger {
+                background: none;
+                border: none;
+                cursor: pointer;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                flex-shrink: 0;
+                transition: background .15s;
+            }
+            .tb-hamburger:hover { background: rgba(255,255,255,.12); }
+            .tb-hamburger i { font-size: 22px; }
+
+            /* Brand */
+            .tb-brand {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #fff;
+                font-size: .92rem;
+                font-weight: 800;
+                letter-spacing: .8px;
+                text-transform: uppercase;
+                text-decoration: none;
+                white-space: nowrap;
+                padding: 4px 8px;
+                border-radius: 6px;
+                transition: background .15s;
+                flex-shrink: 0;
+            }
+            .tb-brand:hover { background: rgba(255,255,255,.1); color: #fff; }
+            .tb-brand i { font-size: 20px; }
+
+            /* Divider between brand and nav */
+            .tb-divider {
+                width: 1px;
+                height: 24px;
+                background: rgba(255,255,255,.2);
+                margin: 0 6px;
+                flex-shrink: 0;
+            }
+
+            /* Horizontal nav links — desktop only */
+            .tb-nav {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                overflow: hidden;
+            }
+            .tb-nav a {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                color: rgba(255,255,255,.72);
+                font-size: .8rem;
+                font-weight: 500;
+                text-decoration: none;
+                padding: 6px 10px;
+                border-radius: 6px;
+                white-space: nowrap;
+                transition: background .15s, color .15s;
+            }
+            .tb-nav a i { font-size: 16px; }
+            .tb-nav a:hover {
+                background: rgba(255,255,255,.12);
+                color: #fff;
+            }
+            /* Active colours match sidebar */
+            .tb-nav a.tb-active-location { background: rgba(255,255,255,.18); color: #fff; }
+            .tb-nav a.tb-active-boxes    { background: rgba(76,175,80,.25);   color: #c8e6c9; }
+            .tb-nav a.tb-active-files    { background: rgba(244,67,54,.22);   color: #ffcdd2; }
+            .tb-nav a.tb-active-loans    { background: rgba(33,150,243,.22);  color: #bbdefb; }
+
+            /* ── Right section ── */
+            .tb-right {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            /* Date chip */
+            .tb-date {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                color: rgba(255,255,255,.65);
+                font-size: .75rem;
+                white-space: nowrap;
+                padding: 4px 8px;
+                border: 1px solid rgba(255,255,255,.18);
+                border-radius: 20px;
+            }
+            .tb-date i { font-size: 14px; }
+
+            /* Search bar */
+            .tb-search {
+                position: relative;
+                flex-shrink: 0;
+            }
+            .tb-search input {
+                height: 32px;
+                width: 180px;
+                background: rgba(255,255,255,.12) !important;
+                border: 1px solid rgba(255,255,255,.22) !important;
+                border-bottom: 1px solid rgba(255,255,255,.22) !important;
+                border-radius: 20px !important;
+                color: #fff !important;
+                font-size: .8rem;
+                padding: 0 12px 0 32px !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                transition: background .2s, border-color .2s, width .2s;
+                outline: none;
+            }
+            .tb-search input::placeholder { color: rgba(255,255,255,.5); }
+            .tb-search input:focus {
+                background: rgba(255,255,255,.2) !important;
+                border-color: rgba(255,255,255,.5) !important;
+                width: 220px;
+            }
+            .tb-search .search-icon {
+                position: absolute;
+                left: 9px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: rgba(255,255,255,.55);
+                font-size: 16px;
+                pointer-events: none;
+            }
+
+            /* Avatar circle */
+            .tb-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: rgba(255,255,255,.2);
+                border: 1.5px solid rgba(255,255,255,.35);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: .78rem;
+                font-weight: 800;
+                color: #fff;
+                text-transform: uppercase;
+                cursor: default;
+                flex-shrink: 0;
+                letter-spacing: 0;
+            }
+
+            /* Username label */
+            .tb-username {
+                color: rgba(255,255,255,.85);
+                font-size: .8rem;
+                white-space: nowrap;
+                max-width: 110px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* Logout button */
+            .tb-logout {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                color: rgba(255,255,255,.65);
+                font-size: .78rem;
+                text-decoration: none;
+                padding: 5px 10px;
+                border-radius: 6px;
+                border: 1px solid rgba(255,255,255,.18);
+                white-space: nowrap;
+                transition: background .15s, color .15s, border-color .15s;
+            }
+            .tb-logout i { font-size: 15px; }
+            .tb-logout:hover {
+                background: rgba(255,255,255,.1);
+                color: #fff;
+                border-color: rgba(255,255,255,.35);
+            }
+
+            /* Login form (unauthenticated) */
+            .tb-login-form {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: nowrap;
+            }
+            .tb-login-form input {
+                height: 32px;
+                width: 120px;
+                background: rgba(255,255,255,.12) !important;
+                border: none !important;
+                border-bottom: 1.5px solid rgba(255,255,255,.45) !important;
+                color: #fff !important;
+                font-size: .82rem;
+                padding: 0 8px !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+            }
+            .tb-login-form input::placeholder { color: rgba(255,255,255,.5); }
+            .tb-login-form input:focus {
+                border-bottom-color: #fff !important;
+                box-shadow: none !important;
+            }
+            .tb-login-btn {
+                background: #fff;
+                color: #4a148c;
+                border: none;
+                border-radius: 6px;
+                height: 32px;
+                padding: 0 14px;
+                font-size: .8rem;
+                font-weight: 700;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: background .15s;
+            }
+            .tb-login-btn:hover { background: #ede7f6; }
+
+            /* ════════════════════════════════════════════════════════════
+               APP SHELL
+            ════════════════════════════════════════════════════════════ */
+            .app-shell {
+                display: flex;
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            /* ── Sidebar ─────────────────────────────────────────────── */
+            .sidebar {
+                width: 168px;
+                min-width: 168px;
+                background: #fff;
+                border-right: 1.5px solid #e1bee7;
+                display: flex;
+                flex-direction: column;
+                flex-shrink: 0;
+                overflow-y: auto;
+                overflow-x: hidden;
+                transition: width .22s ease, min-width .22s ease, border-color .22s;
+            }
+            /* Collapsed state (desktop) */
+            .sidebar.collapsed {
+                width: 0;
+                min-width: 0;
+                border-right-color: transparent;
+            }
+
+            .sidebar-menu-hdr {
+                font-size: .68rem;
+                font-weight: 800;
+                letter-spacing: 1.4px;
+                text-transform: uppercase;
+                color: #bdbdbd;
+                padding: 16px 16px 4px;
+                white-space: nowrap;
+            }
+            .sidebar nav ul {
+                list-style: none;
+                margin: 0;
+                padding: 0 8px;
+            }
+            .sidebar nav ul li { margin: 2px 0; }
+            .sidebar nav ul li a {
+                display: flex;
+                align-items: center;
+                gap: 9px;
+                padding: 9px 10px;
+                border-radius: 8px;
+                font-size: .85rem;
+                font-weight: 500;
+                color: #424242;
+                text-decoration: none;
+                white-space: nowrap;
+                transition: background .15s, color .15s;
+            }
+            .sidebar nav ul li a i {
+                font-size: 18px;
+                color: #9e9e9e;
+                transition: color .15s;
+                flex-shrink: 0;
+            }
+            .sidebar nav ul li a:hover            { background: #f3e5f5; color: #4a148c; }
+            .sidebar nav ul li a:hover i          { color: #7b1fa2; }
+
+            /* Active states — colour-coded per section */
+            .sidebar nav ul li.active-location > a   { background: #ede7f6; color: #4a148c; font-weight: 600; }
+            .sidebar nav ul li.active-location > a i { color: #7b1fa2; }
+            .sidebar nav ul li.active-boxes > a      { background: #e8f5e9; color: #2e7d32; font-weight: 600; }
+            .sidebar nav ul li.active-boxes > a i    { color: #388e3c; }
+            .sidebar nav ul li.active-files > a      { background: #fce4ec; color: #c62828; font-weight: 600; }
+            .sidebar nav ul li.active-files > a i    { color: #e53935; }
+            .sidebar nav ul li.active-loans > a      { background: #e3f2fd; color: #1565c0; font-weight: 600; }
+            .sidebar nav ul li.active-loans > a i    { color: #1976d2; }
+
+            .sidebar-divider {
+                height: 1px;
+                background: #f3e5f5;
+                margin: 6px 14px;
+            }
+            .sidebar nav ul li.logout-item > a       { color: #9e9e9e; }
+            .sidebar nav ul li.logout-item > a:hover { background: #fce4ec; color: #c62828; }
+            .sidebar nav ul li.logout-item > a:hover i { color: #e53935; }
+
+            /* ── Main content ─────────────────────────────────────────── */
+            .main-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 28px 28px 56px;
+                min-width: 0;
+            }
+
+            /* ── Flash toasts ─────────────────────────────────────────── */
+            .toast.toast-success { background-color: #2e7d32 !important; }
+            .toast.toast-error   { background-color: #c62828 !important; }
+            .toast.toast-warning { background-color: #ef6c00 !important; }
+            .toast.toast-info    { background-color: #1565c0 !important; }
+
+            /* ── Footer ───────────────────────────────────────────────── */
+            .app-footer {
+                background: #311b92;
+                color: rgba(255,255,255,.55);
+                font-size: .76rem;
+                padding: 10px 24px;
+                text-align: center;
+                flex-shrink: 0;
+            }
+
+            /* ════════════════════════════════════════════════════════════
+               MOBILE  (≤ 768px)
+            ════════════════════════════════════════════════════════════ */
+            @media (max-width: 768px) {
+                /* Hide items that don't fit */
+                .tb-nav    { display: none; }
+                .tb-divider{ display: none; }
+                .tb-date   { display: none; }
+                .tb-search { display: none; }
+                .tb-username { display: none; }
+
+                /* Sidebar becomes a fixed off-canvas drawer */
+                .sidebar {
+                    position: fixed;
+                    top: 56px;
+                    left: -172px;
+                    height: calc(100vh - 56px);
+                    z-index: 400;
+                    transition: left .25s ease;
+                    box-shadow: 4px 0 20px rgba(0,0,0,.18);
+                    /* override desktop collapsed state on mobile */
+                    width: 168px !important;
+                    min-width: 168px !important;
+                    border-right-color: #e1bee7 !important;
+                }
+                .sidebar.open { left: 0; }
+
+                /* Backdrop */
+                .sidebar-overlay {
+                    display: none;
+                    position: fixed;
+                    inset: 56px 0 0;
+                    background: rgba(0,0,0,.38);
+                    z-index: 399;
+                }
+                .sidebar-overlay.open { display: block; }
+
+                .main-content { padding: 16px 14px 48px; }
+
+                .tb-login-form input { width: 88px; }
+            }
+        </style>
+    </head>
+    <body>
+
+        <!-- ════════════ TOP BAR ════════════ -->
+        <header class="top-bar" role="banner">
+
+            <!-- LEFT: hamburger · brand · (divider) · nav links -->
+            <div class="tb-left">
+
+                <button class="tb-hamburger" id="sidebar-toggle" aria-label="Toggle navigation">
+                    <i class="material-icons">menu</i>
+                </button>
+
+                <a href="/" class="tb-brand">
+                    <i class="material-icons">archive</i>
+                    genCAT
+                </a>
+
+                {% if is_authenticated %}
+                <span class="tb-divider" aria-hidden="true"></span>
+
+                <nav class="tb-nav" aria-label="Main navigation">
+                    <a href="/location"
+                       class="{{ 'tb-active-location' if request.path.startswith('/location') else '' }}">
+                        <i class="material-icons">location_on</i>Location
+                    </a>
+                    <a href="/boxes"
+                       class="{{ 'tb-active-boxes' if request.path.startswith('/boxes') else '' }}">
+                        <i class="material-icons">inventory_2</i>Boxes
+                    </a>
+                    <a href="/files"
+                       class="{{ 'tb-active-files' if request.path.startswith('/files') else '' }}">
+                        <i class="material-icons">folder_open</i>File Records
+                    </a>
+                    <a href="/loans"
+                       class="{{ 'tb-active-loans' if request.path.startswith('/loans') else '' }}">
+                        <i class="material-icons">swap_horiz</i>Loaned Records
+                    </a>
+                </nav>
+                {% endif %}
+
+            </div>
+
+            <!-- RIGHT: date · search · avatar · username · logout  /  login form -->
+            <div class="tb-right">
+
+                {% if is_authenticated %}
+
+                <!-- Date chip -->
+                <span class="tb-date" id="tb-date" aria-live="polite">
+                    <i class="material-icons">calendar_today</i>
+                    <span id="tb-date-text"></span>
+                </span>
+
+                <!-- Global search -->
+                <div class="tb-search">
+                    <i class="material-icons search-icon">search</i>
+                    <input type="text"
+                           id="tb-global-search"
+                           placeholder="search/keyword"
+                           aria-label="Global search" />
+                </div>
+
+                <!-- Avatar circle -->
+                <span class="tb-avatar"
+                      title="{{ current_user.username }}"
+                      aria-label="Logged in as {{ current_user.username }}">
+                    {{ current_user.username[0] | upper }}
+                </span>
+
+                <!-- Username (hidden on mobile) -->
+                <span class="tb-username">{{ current_user.username }}</span>
+
+                <!-- Logout -->
+                <a href="/logout" class="tb-logout" aria-label="Logout">
+                    <i class="material-icons">logout</i>
+                    Logout
+                </a>
+
+                {% else %}
+
+                <!-- Login form -->
+                <form class="tb-login-form" method="POST" action="/login">
+                    <input type="text"     name="username" placeholder="Username" required />
+                    <input type="password" name="password" placeholder="Password" required />
+                    <button type="submit" class="tb-login-btn">Login</button>
+                </form>
+
+                {% endif %}
+            </div>
+
+        </header>
+
+        <!-- ════════════ APP SHELL ════════════ -->
+        <div class="app-shell">
+
+            <!-- Backdrop (mobile sidebar) -->
+            <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+            {% if is_authenticated %}
+            <!-- ── Sidebar nav ──────────────────────────────────────── -->
+            <aside class="sidebar" id="sidebar" aria-label="Sidebar navigation">
+                <div class="sidebar-menu-hdr">Menu</div>
+                <nav>
+                    <ul>
+                        <li class="{{ 'active-location' if request.path.startswith('/location') else '' }}">
+                            <a href="/location">
+                                <i class="material-icons">location_on</i>Location
+                            </a>
+                        </li>
+                        <li class="{{ 'active-boxes' if request.path.startswith('/boxes') else '' }}">
+                            <a href="/boxes">
+                                <i class="material-icons">inventory_2</i>Boxes
+                            </a>
+                        </li>
+                        <li class="{{ 'active-files' if request.path.startswith('/files') else '' }}">
+                            <a href="/files">
+                                <i class="material-icons">folder_open</i>File Records
+                            </a>
+                        </li>
+                        <li class="{{ 'active-loans' if request.path.startswith('/loans') else '' }}">
+                            <a href="/loans">
+                                <i class="material-icons">swap_horiz</i>Loaned Records
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="sidebar-divider"></div>
+
+                    <ul>
+                        <li>
+                            <a href="/help">
+                                <i class="material-icons">help_outline</i>Help
+                            </a>
+                        </li>
+                        <li class="logout-item">
+                            <a href="/logout">
+                                <i class="material-icons">logout</i>Logout
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+            {% endif %}
+
+            <!-- ── Main content ──────────────────────────────────────── -->
+            <main class="main-content" id="main-content">
+                {% block content %}{% endblock %}
+            </main>
+
+        </div><!-- /.app-shell -->
+
+        <!-- ════════════ FOOTER ════════════ -->
+        <footer class="app-footer">
+            &copy; 2026 genCAT &mdash; GEN2 Records Management System, UWI
+        </footer>
+
+        <!-- Materialize JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            /* ── Materialize modals ── */
+            M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
+
+            /* ── Flash toasts (category-aware) ── */
+            var msgs = [
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% for cat, msg in messages %}
+                    { text: {{ msg | tojson }}, cat: {{ cat | tojson }} },
+                  {% endfor %}
+                {% endwith %}
+            ];
+            msgs.forEach(function (m) {
+                var cls = 'rounded';
+                if      (m.cat === 'success') cls += ' toast-success';
+                else if (m.cat === 'error')   cls += ' toast-error';
+                else if (m.cat === 'warning') cls += ' toast-warning';
+                else if (m.cat === 'info')    cls += ' toast-info';
+                M.toast({ html: m.text, classes: cls, displayLength: 4000 });
+            });
+
+            /* ── Live date in top bar ── */
+            var dateEl = document.getElementById('tb-date-text');
+            if (dateEl) {
+                var d = new Date();
+                dateEl.textContent = d.toLocaleDateString('en-US', {
+                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                });
+            }
+
+            /* ── Sidebar toggle ── */
+            var toggle  = document.getElementById('sidebar-toggle');
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            var MOBILE  = 768;
+
+            function isMobile() { return window.innerWidth <= MOBILE; }
+
+            function openDrawer() {
+                if (sidebar) sidebar.classList.add('open');
+                if (overlay) overlay.classList.add('open');
+            }
+            function closeDrawer() {
+                if (sidebar) sidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('open');
+            }
+            function collapseDesktop() {
+                if (sidebar) sidebar.classList.add('collapsed');
+                localStorage.setItem('sidebarCollapsed', '1');
+            }
+            function expandDesktop() {
+                if (sidebar) sidebar.classList.remove('collapsed');
+                localStorage.setItem('sidebarCollapsed', '0');
+            }
+
+            /* Restore previous sidebar state on desktop */
+            if (!isMobile() && sidebar) {
+                if (localStorage.getItem('sidebarCollapsed') === '1') {
+                    sidebar.classList.add('collapsed');
+                }
+            }
+
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    if (isMobile()) {
+                        sidebar && sidebar.classList.contains('open')
+                            ? closeDrawer() : openDrawer();
+                    } else {
+                        sidebar && sidebar.classList.contains('collapsed')
+                            ? expandDesktop() : collapseDesktop();
+                    }
+                });
+            }
+            if (overlay) overlay.addEventListener('click', closeDrawer);
+
+            /* Close drawer on resize to desktop */
+            window.addEventListener('resize', function () {
+                if (!isMobile()) closeDrawer();
+            });
+
+        });
+        </script>
+
+        {% block scripts %}{% endblock %}
+
+    </body>
 </html>
