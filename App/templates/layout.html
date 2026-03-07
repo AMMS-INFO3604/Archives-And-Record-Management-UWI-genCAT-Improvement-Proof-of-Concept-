@@ -1,70 +1,325 @@
 <!doctype html>
 <html>
-  <head>
-  
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-     <!--Import Google Icon Font-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!--Let browser know website is optimized for mobile-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>{% block title %}{% endblock %}</title>
+    <head>
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <!-- Material Icons -->
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
+        <!-- Materialize CSS -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}AMMS{% endblock %} | genCAT</title>
+        <style>
+            body {
+                background-color: #f5f5f5;
+                min-height: 100vh;
+            }
+            nav.purple {
+                background-color: #6a1b9a !important;
+            }
+            nav .brand-logo {
+                font-weight: 600;
+                letter-spacing: 0.5px;
+            }
+            .navbar-form label {
+                color: white !important;
+            }
+            .navbar-form .input-field input {
+                color: white !important;
+                border-bottom-color: rgba(255, 255, 255, 0.6) !important;
+            }
+            .navbar-form .input-field input::placeholder {
+                color: rgba(255, 255, 255, 0.6);
+            }
+            #content {
+                padding-top: 24px;
+                padding-bottom: 48px;
+            }
 
-  </head>
-  <body>
-    
-      <nav class="purple">
-          <div class="nav-wrapper">
-              <a href="#!" class="brand-logo center">{% block page %}{% endblock %}</a>
-              <ul id="nav-mobile" class="left">
-                  <li><a href="/">Home</a></li>
-                  <li><a href="/users">Users Jinja</a></li>
-                  {% if is_authenticated %}
-                    <li><a href="/identify">Identify</a></li>
-                  {% endif %}
-                  <li><a href="/static/users">Users JS</a></li>
-              </ul>
-              {% if is_authenticated %}
-              <ul id="nav-mobile" class="right">
-                <li><a href="/logout">Logout</a></li>
-              </ul>
-              {% else %}
-              <form class="right navbar-form" method="POST" action="/login" style="display: flex; flex-wrap: nowrap; align-items: center; margin-right: 10px;">
-                  <div class="input-field" style="margin-right: 10px;">
-                      <input placeholder="username" value="bob" name="username" type="text" class="validate" required>
-                      <label for="username">username</label>
-                  </div>
-                  <div class="input-field" style="margin-right: 10px;">
-                      <input placeholder="password"value="bobpass" name="password" type="password" class="validate" required>
-                      <label for="password">Password</label>
-                  </div>
-                  <button type="submit" class="btn waves-effect waves-light">Login</button>
-              </form>
-              {% endif %}
-              
-          </div>
-      </nav>
-      <style>
-          .navbar-form label {
-              color: white !important;
-          }
-      </style>
+            /* Flash toasts */
+            .toast.toast-success {
+                background-color: #2e7d32 !important;
+            }
+            .toast.toast-error {
+                background-color: #c62828 !important;
+            }
+            .toast.toast-warning {
+                background-color: #ef6c00 !important;
+            }
+            .toast.toast-info {
+                background-color: #1565c0 !important;
+            }
 
-    <div class="container" id="content">{% block content %}{% endblock %}</div>
+            /* Active nav link */
+            nav ul li.active > a {
+                background-color: rgba(255, 255, 255, 0.15);
+                border-radius: 4px;
+            }
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script>
-       M.AutoInit();
+            /* Sidenav on mobile */
+            .sidenav li > a {
+                color: #4a148c !important;
+            }
+            .sidenav .divider {
+                background-color: #e1bee7;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- ── Sidenav (mobile) ─────────────────────────────────────────── -->
+        <ul id="mobile-nav" class="sidenav">
+            <li>
+                <div
+                    class="user-view"
+                    style="background: #6a1b9a; padding: 16px"
+                >
+                    <span
+                        class="white-text"
+                        style="font-weight: 600; font-size: 1.1rem"
+                        >genCAT</span
+                    ><br />
+                    <span
+                        class="white-text"
+                        style="font-size: 0.8rem; opacity: 0.8"
+                        >Archive Management System</span
+                    >
+                </div>
+            </li>
+            <li>
+                <a href="/"><i class="material-icons">home</i>Home</a>
+            </li>
+            <li>
+                <a href="/location"
+                    ><i class="material-icons">location_on</i>Locations</a
+                >
+            </li>
+            <li>
+                <a href="/users"><i class="material-icons">people</i>Users</a>
+            </li>
+            {% if is_authenticated %}
+            <li>
+                <a href="/identify"
+                    ><i class="material-icons">fingerprint</i>Identify</a
+                >
+            </li>
+            <li class="divider"></li>
+            <li>
+                <a href="/logout"><i class="material-icons">logout</i>Logout</a>
+            </li>
+            {% endif %}
+        </ul>
 
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-              {% for message in messages %}
-              M.toast({html: '{{message}}'})
-              {% endfor %}
-          {% endif %}
-        {% endwith %}
-       
-    </script>
-  </body>
+        <!-- ── Top navbar ───────────────────────────────────────────────── -->
+        <nav class="purple">
+            <div class="nav-wrapper" style="padding: 0 12px">
+                <!-- Mobile hamburger -->
+                <a href="#" data-target="mobile-nav" class="sidenav-trigger">
+                    <i class="material-icons">menu</i>
+                </a>
+
+                <!-- Brand -->
+                <a href="/" class="brand-logo center hide-on-med-and-down"
+                    >genCAT</a
+                >
+
+                <!-- Left links (desktop) -->
+                <ul class="left hide-on-med-and-down">
+                    <li>
+                        <a href="/"
+                            ><i class="material-icons left">home</i>Home</a
+                        >
+                    </li>
+                    <li>
+                        <a href="/location"
+                            ><i class="material-icons left">location_on</i
+                            >Locations</a
+                        >
+                    </li>
+                    <li>
+                        <a href="/users"
+                            ><i class="material-icons left">people</i>Users</a
+                        >
+                    </li>
+                    {% if is_authenticated %}
+                    <li>
+                        <a href="/identify"
+                            ><i class="material-icons left">fingerprint</i
+                            >Identify</a
+                        >
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Right: login form or logout button -->
+                {% if is_authenticated %}
+                <ul class="right hide-on-med-and-down">
+                    <li>
+                        <span
+                            style="
+                                color: rgba(255, 255, 255, 0.75);
+                                line-height: 64px;
+                                padding: 0 10px;
+                                font-size: 0.9rem;
+                            "
+                        >
+                            <i
+                                class="material-icons tiny"
+                                style="vertical-align: middle"
+                                >account_circle</i
+                            >
+                            {{ current_user.username }}
+                        </span>
+                    </li>
+                    <li>
+                        <a href="/logout"
+                            ><i class="material-icons left">logout</i>Logout</a
+                        >
+                    </li>
+                </ul>
+                {% else %}
+                <form
+                    class="right hide-on-med-and-down navbar-form"
+                    method="POST"
+                    action="/login"
+                    style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-right: 8px;
+                    "
+                >
+                    <div
+                        class="input-field"
+                        style="margin: 0; min-width: 120px"
+                    >
+                        <input
+                            placeholder="Username"
+                            name="username"
+                            type="text"
+                            required
+                            style="
+                                margin: 0;
+                                height: 40px;
+                                color: white;
+                                border-bottom-color: rgba(
+                                    255,
+                                    255,
+                                    255,
+                                    0.5
+                                ) !important;
+                            "
+                        />
+                    </div>
+                    <div
+                        class="input-field"
+                        style="margin: 0; min-width: 120px"
+                    >
+                        <input
+                            placeholder="Password"
+                            name="password"
+                            type="password"
+                            required
+                            style="
+                                margin: 0;
+                                height: 40px;
+                                color: white;
+                                border-bottom-color: rgba(
+                                    255,
+                                    255,
+                                    255,
+                                    0.5
+                                ) !important;
+                            "
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        class="btn waves-effect waves-light white purple-text"
+                        style="font-weight: 600"
+                    >
+                        Login
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- ── Page content ─────────────────────────────────────────────── -->
+        <div class="container" id="content">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- ── Footer ───────────────────────────────────────────────────── -->
+        <footer class="page-footer purple darken-3" style="margin-top: 48px">
+            <div class="container">
+                <div class="row" style="margin-bottom: 0">
+                    <div class="col s12" style="padding: 16px 0">
+                        <span
+                            class="white-text"
+                            style="font-size: 0.85rem; opacity: 0.8"
+                        >
+                            &copy; {{ now.year if now is defined else '2026' }}
+                            genCAT &mdash; Archives &amp; Records Management
+                            System, UWI
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Materialize JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              // Sidenav
+              M.Sidenav.init(document.querySelectorAll('.sidenav'));
+
+              // All modals
+              M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
+
+              // Dropdowns
+              M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'));
+
+              // Flash messages with type-aware colours
+              var flashMessages = [
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% for category, message in messages %}
+                    { text: {{ message | tojson }}, category: {{ category | tojson }} },
+                  {% endfor %}
+                {% endwith %}
+              ];
+
+              flashMessages.forEach(function (msg) {
+                var classes = 'rounded';
+                if      (msg.category === 'success') classes += ' toast-success';
+                else if (msg.category === 'error')   classes += ' toast-error';
+                else if (msg.category === 'warning') classes += ' toast-warning';
+                else if (msg.category === 'info')    classes += ' toast-info';
+
+                M.toast({ html: msg.text, classes: classes, displayLength: 4000 });
+              });
+
+              // Highlight active nav link
+              var path = window.location.pathname;
+              document.querySelectorAll('nav ul li a, .sidenav li a').forEach(function (a) {
+                var href = a.getAttribute('href');
+                if (href && href !== '/' && path.startsWith(href)) {
+                  a.parentElement.classList.add('active');
+                } else if (href === '/' && path === '/') {
+                  a.parentElement.classList.add('active');
+                }
+              });
+            });
+        </script>
+
+        {% block scripts %}{% endblock %}
+    </body>
 </html>

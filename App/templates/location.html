@@ -1,0 +1,255 @@
+{% extends "layout.html" %}
+{% block title %}Storage Locations{% endblock %}
+{% block page %}Storage Locations{% endblock %}
+
+{% block content %}
+
+<!-- ───────────────────────── Page header ───────────────────────── -->
+<div class="row" style="margin-top: 24px; margin-bottom: 0;">
+  <div class="col s12 m8">
+    <h4 style="margin:0;">
+      <i class="material-icons left purple-text" style="font-size:2rem; line-height:2.5rem;">location_on</i>
+      Storage Locations
+    </h4>
+    <p class="grey-text" style="margin-top:4px;">
+      Manage physical archive storage locations and their box assignments.
+    </p>
+  </div>
+  <div class="col s12 m4" style="text-align:right; padding-top:14px;">
+    <a href="#add-location-modal"
+       class="btn waves-effect waves-light purple modal-trigger">
+      <i class="material-icons left">add</i>New Location
+    </a>
+  </div>
+</div>
+
+<div class="divider" style="margin-bottom: 16px;"></div>
+
+<!-- ───────────────────────── Search / filter ───────────────────── -->
+<div class="row" style="margin-bottom: 4px;">
+  <div class="input-field col s12 m6">
+    <i class="material-icons prefix">search</i>
+    <input id="location-search" type="text" onkeyup="filterLocations(this.value)">
+    <label for="location-search">Filter locations&hellip;</label>
+  </div>
+  <div class="col s12 m6" style="padding-top:20px;">
+    <span class="grey-text">
+      <strong id="visible-count">{{ locations | length }}</strong>
+      location{{ 's' if locations | length != 1 else '' }} shown
+    </span>
+  </div>
+</div>
+
+<!-- ───────────────────────── Location cards ────────────────────── -->
+{% if locations %}
+<div class="row" id="locations-container">
+  {% for location in locations %}
+  <div class="col s12 m6 l4 location-card">
+    <div class="card hoverable">
+
+      <!-- Coloured top accent bar -->
+      <div style="height:5px; background: #7b1fa2; border-radius: 2px 2px 0 0;"></div>
+
+      <div class="card-content">
+        <span class="card-title" style="font-size: 1.1rem; font-weight: 600;">
+          <i class="material-icons left purple-text tiny" style="margin-top:4px;">warehouse</i>
+          <span class="location-name">{{ location.geoLocation }}</span>
+        </span>
+
+        <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+          <!-- Box count badge -->
+          <span class="new badge purple darken-2"
+                data-badge-caption="{{ 'box' if location.boxes|length == 1 else 'boxes' }}"
+                style="position: static; float: none; display: inline-block;">
+            {{ location.boxes|length }}
+          </span>
+        </div>
+
+        <p class="grey-text" style="font-size: 0.8rem; margin-top: 8px;">
+          ID&nbsp;#{{ location.locationID }}
+        </p>
+      </div>
+
+      <div class="card-action" style="padding: 8px 16px;">
+        <!-- Edit trigger -->
+        <a href="#edit-modal-{{ location.locationID }}"
+           class="purple-text modal-trigger"
+           style="margin-right: 12px;">
+          <i class="material-icons tiny" style="vertical-align: middle;">edit</i>
+          Edit
+        </a>
+        <!-- Delete trigger -->
+        <a href="#delete-modal-{{ location.locationID }}"
+           class="red-text modal-trigger">
+          <i class="material-icons tiny" style="vertical-align: middle;">delete</i>
+          Delete
+        </a>
+      </div>
+
+    </div><!-- /.card -->
+  </div><!-- /.col -->
+
+  <!-- ─── Edit modal (one per location) ─── -->
+  <div id="edit-modal-{{ location.locationID }}" class="modal">
+    <form method="POST" action="/location/{{ location.locationID }}">
+      <div class="modal-content">
+        <h5></h5>
+          <i class="material-icons left purple-text">edit_location_alt</i>
+          Edit Location
+        </h5>
+        <div class="input-field">
+          <input id="geo-edit-{{ location.locationID }}"
+                 name="geoLocation"
+                 type="text"
+                 value="{{ location.geoLocation }}"
+                 class="validate"
+                 required
+                 minlength="2"
+                 maxlength="255">
+          <label for="geo-edit-{{ location.locationID }}" class="active">
+            Location Name
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close btn-flat grey-text">Cancel</a>
+        <button type="submit"
+                class="btn waves-effect waves-light purple"
+                style="margin-left: 8px;">
+          <i class="material-icons left">save</i>Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ─── Delete confirmation modal (one per location) ─── -->
+  <div id="delete-modal-{{ location.locationID }}" class="modal">
+    <div class="modal-content">
+      <h5 class="red-text">
+        <i class="material-icons left">warning</i>
+        Delete Location?
+      </h5>
+      <p>
+        You are about to permanently delete
+        <strong>{{ location.geoLocation }}</strong>.
+      </p>
+      {% if location.boxes|length > 0 %}
+      <div class="card-panel orange lighten-4" style="padding: 10px 14px;">
+        <i class="material-icons left orange-text">info</i>
+        <strong>Warning:</strong> This location has
+        <strong>{{ location.boxes|length }}</strong>
+        box{{ 'es' if location.boxes|length != 1 else '' }} assigned to it.
+        Deleting the location may affect those records.
+      </div>
+      {% endif %}
+      <p class="grey-text">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat grey-text">Cancel</a>
+      <form method="POST"
+            action="/location/{{ location.locationID }}/delete"
+            style="display: inline;">
+        <button type="submit"
+                class="btn waves-effect waves-light red"
+                style="margin-left: 8px;">
+          <i class="material-icons left">delete_forever</i>Delete
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% endfor %}
+</div><!-- /#locations-container -->
+
+{% else %}
+<!-- Empty state -->
+<div class="row">
+  <div class="col s12">
+    <div class="card-panel grey lighten-4 center-align" style="padding: 40px 20px;">
+      <i class="material-icons large grey-text text-lighten-1">location_off</i>
+      <p class="grey-text" style="font-size: 1.1rem; margin-top: 10px;">
+        No storage locations found.
+      </p>
+      <p class="grey-text">
+        Click <strong>New Location</strong> above to add your first location.
+      </p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ──────────────────── Add Location Modal ──────────────────────── -->
+<div id="add-location-modal" class="modal">
+  <form id="add-location-form" method="POST" action="/location">
+    <div class="modal-content">
+      <h5>
+        <i class="material-icons left purple-text">add_location_alt</i>
+        Add New Location
+      </h5>
+      <p class="grey-text">
+        Enter a descriptive name for the physical storage location
+        (e.g. "UWI Main Library – Bay A, Row 3").
+      </p>
+      <div class="input-field">
+        <input id="geo-add"
+               name="geoLocation"
+               type="text"
+               class="validate"
+               required
+               minlength="2"
+               maxlength="255"
+               autofocus>
+        <label for="geo-add">Location Name</label>
+        <span class="helper-text">Maximum 255 characters.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat grey-text">Cancel</a>
+      <button type="submit"
+              class="btn waves-effect waves-light purple"
+              style="margin-left: 8px;">
+        <i class="material-icons left">add</i>Add Location
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- ──────────────────── Inline scripts ─────────────────────────── -->
+<script>
+  /* Live client-side filter – hides cards whose name doesn't match */
+  function filterLocations(query) {
+    var cards    = document.querySelectorAll('.location-card');
+    var lcQuery  = query.trim().toLowerCase();
+    var visible  = 0;
+
+    cards.forEach(function (card) {
+      var name = card.querySelector('.location-name').textContent.toLowerCase();
+      var show = !lcQuery || name.includes(lcQuery);
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    var countEl = document.getElementById('visible-count');
+    if (countEl) countEl.textContent = visible;
+  }
+
+  /* Re-initialise Materialize modals after Materialize's AutoInit runs */
+  document.addEventListener('DOMContentLoaded', function () {
+    var elems = document.querySelectorAll('.modal');
+    M.Modal.init(elems, { dismissible: true });
+
+    /* Clear the Add-Location input each time the modal opens */
+    var addModal = document.getElementById('add-location-modal');
+    if (addModal) {
+      var instance = M.Modal.getInstance(addModal);
+      if (instance) {
+        addModal.addEventListener('modal:open', function () {
+          var inp = document.getElementById('geo-add');
+          if (inp) { inp.value = ''; M.updateTextFields(); }
+        });
+      }
+    }
+  });
+</script>
+
+{% endblock %}
