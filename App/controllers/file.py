@@ -1,5 +1,8 @@
 #will edit for staffUser usage for certain controllers as well as for patron(Hence only staff can add,delete,update while patron could only search and view files)
-from App.models import File,Box,User,Location
+from App.models.box import Box
+from App.models.user import User
+from App.models.location import Location
+from App.models.file import File
 from App.database import db 
 
 def addFile( boxID, fileType,locationID=None, loanID=None, 
