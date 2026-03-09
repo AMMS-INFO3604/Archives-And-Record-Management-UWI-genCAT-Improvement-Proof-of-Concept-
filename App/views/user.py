@@ -11,7 +11,11 @@ from flask import (
 from flask_jwt_extended import current_user as jwt_current_user
 from flask_jwt_extended import jwt_required
 
-from App.controllers import create_user, get_all_users, get_all_users_json, jwt_required
+from App.controllers import (
+    create_user,
+    get_all_users,
+    get_all_users_json,
+)
 
 from .index import index_views
 

@@ -6,7 +6,7 @@ from App.database import db
 class User(db.Model):
     __tablename__ = "user"
 
-    userID = db.Column(db.Integer, primary_key=True)
+    userID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(256), nullable=False)
 
@@ -31,4 +31,4 @@ class User(db.Model):
         return check_password_hash(self.password, password)
 
     def __repr__(self):
-        return f"<User {self.userID} - {self.username}>"
+        return f"<User {self.username}>"

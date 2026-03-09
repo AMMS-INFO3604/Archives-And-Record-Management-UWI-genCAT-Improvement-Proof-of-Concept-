@@ -1,0 +1,425 @@
+{% extends "layout.html" %}
+{% block title %}Select Location{% endblock %}
+{% block page %}Select Location{% endblock %}
+
+{% block content %}
+<style>
+  body { background-color: #f3e5f5 !important; }
+
+  .portal-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 64px;
+  }
+
+  .portal-card {
+    background: #fff;
+    border: 1.5px solid #ce93d8;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 860px;
+    box-shadow: 0 6px 32px rgba(74,20,140,.10);
+    overflow: hidden;
+  }
+
+  /* ── Header band ── */
+  .portal-header {
+    background: #fff;
+    border-bottom: 1.5px solid #e8d5f5;
+    padding: 36px 40px 28px;
+    text-align: center;
+  }
+  .portal-icon-wrap {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: #ede7f6;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 18px;
+  }
+  .portal-icon-wrap i { font-size: 36px; color: #6a1b9a; }
+
+  .portal-sys-title {
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    margin: 0 0 10px;
+    line-height: 1.25;
+  }
+  .portal-welcome { font-size: 1rem; color: #555; margin: 0; }
+  .portal-welcome strong { color: #5b0ea6; }
+
+  /* ── Body ── */
+  .portal-body { padding: 32px 40px 40px; }
+
+  .select-label {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #2e2e2e;
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .select-label i { color: #7b1fa2; font-size: 20px; }
+
+  /* ── Search ── */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .search-wrap input[type="text"] {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #ce93d8 !important;
+    border-radius: 8px !important;
+    border-bottom: 1.5px solid #ce93d8 !important;
+    padding: 0 14px 0 44px !important;
+    font-size: 0.93rem;
+    outline: none;
+    color: #333;
+    background: #fdf8ff;
+    box-shadow: none !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+  .search-wrap input[type="text"]:focus {
+    border-color: #7b1fa2 !important;
+    box-shadow: 0 0 0 3px rgba(123,31,162,.08) !important;
+  }
+  .search-wrap .s-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a07bc0;
+    font-size: 20px;
+    pointer-events: none;
+  }
+
+  /* ── Location grid ── */
+  .loc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .loc-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Main clickable card */
+  .loc-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 22px 16px;
+    min-height: 90px;
+    background: #fff;
+    border: 2px solid #ce93d8;
+    border-radius: 12px;
+    cursor: pointer;
+    text-decoration: none !important;
+    color: #2e2e2e !important;
+    transition: all .18s ease;
+    gap: 4px;
+  }
+  .loc-card:hover {
+    background: #f3e5f5;
+    border-color: #7b1fa2;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(106,27,154,.15);
+  }
+  .loc-card .loc-name {
+    font-weight: 700;
+    font-size: 0.93rem;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .loc-card .loc-meta {
+    font-size: 0.78rem;
+    color: #888;
+  }
+
+  /* Admin action row under each card */
+  .loc-admin {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+  .loc-admin a {
+    font-size: 0.75rem;
+    color: #999;
+    text-decoration: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    transition: color .15s;
+  }
+  .loc-admin a:hover { color: #555; }
+  .loc-admin a.edit-lnk:hover { color: #1565c0; }
+  .loc-admin a.del-lnk:hover  { color: #c62828; }
+  .loc-admin a i { font-size: 13px; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #aaa;
+  }
+  .empty-state i { font-size: 48px; color: #d1c4e9; }
+  .empty-state p { margin-top: 10px; font-size: 0.95rem; }
+
+  /* ── Footer row: visible count + add button ── */
+  .portal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1.5px solid #f0e6fa;
+    padding: 16px 40px;
+    background: #fdf8ff;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .portal-footer .count-lbl { font-size: 0.85rem; color: #888; }
+
+  /* ── Modals ── */
+  .modal .modal-content h5 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 600px) {
+    .portal-header { padding: 24px 20px 20px; }
+    .portal-body   { padding: 20px 20px 24px; }
+    .portal-footer { padding: 14px 20px; }
+    .portal-sys-title { font-size: 1.15rem; }
+    .loc-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<div class="portal-wrapper">
+  <div class="portal-card">
+
+    <!-- ════════════ Header ════════════ -->
+    <div class="portal-header">
+      <div class="portal-icon-wrap">
+        <i class="material-icons">archive</i>
+      </div>
+      <div class="portal-sys-title">GEN2 Records Management System</div>
+      {% if is_authenticated and current_user %}
+      <p class="portal-welcome">
+        Welcome, <strong>{{ current_user.username }}</strong>!
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- ════════════ Body ════════════ -->
+    <div class="portal-body">
+
+      <!-- Label -->
+      <div class="select-label">
+        <i class="material-icons">location_on</i>
+        Select Your Location:
+      </div>
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <i class="material-icons s-icon">search</i>
+        <input id="loc-search"
+               type="text"
+               placeholder="search/keyword"
+               oninput="filterLocations(this.value)">
+      </div>
+
+      <!-- Grid of location cards -->
+      {% if locations %}
+      <div class="loc-grid" id="loc-grid">
+
+        {% for location in locations %}
+        <div class="loc-item" data-name="{{ location.geoLocation | lower }}">
+
+          <!-- Main pill: clicking navigates to boxes for this location -->
+          <a class="loc-card waves-effect"
+             href="/location/{{ location.locationID }}">
+            <span class="loc-name">{{ location.geoLocation }}</span>
+            <span class="loc-meta">
+              {{ location.boxes | length }}
+              {{ 'box' if location.boxes | length == 1 else 'boxes' }}
+            </span>
+          </a>
+
+          <!-- Admin actions (edit / delete) -->
+          <div class="loc-admin">
+            <a class="edit-lnk modal-trigger"
+               href="#edit-modal-{{ location.locationID }}">
+              <i class="material-icons">edit</i>edit
+            </a>
+            <a class="del-lnk modal-trigger"
+               href="#del-modal-{{ location.locationID }}">
+              <i class="material-icons">delete</i>delete
+            </a>
+          </div>
+
+        </div><!-- /.loc-item -->
+        {% endfor %}
+
+      </div><!-- /.loc-grid -->
+
+      {% else %}
+      <div class="empty-state">
+        <i class="material-icons">location_off</i>
+        <p>No locations found. Add your first location below.</p>
+      </div>
+      {% endif %}
+
+    </div><!-- /.portal-body -->
+
+    <!-- ════════════ Footer ════════════ -->
+    <div class="portal-footer">
+      <span class="count-lbl">
+        <span id="visible-count">{{ locations | length }}</span>
+        location{{ 's' if locations | length != 1 else '' }}
+      </span>
+      <a href="#add-modal"
+         class="btn waves-effect waves-light purple modal-trigger"
+         style="font-size:.85rem; height:34px; line-height:34px; padding:0 14px;">
+        <i class="material-icons left" style="font-size:16px; line-height:34px;">add</i>
+        New Location
+      </a>
+    </div>
+
+  </div><!-- /.portal-card -->
+</div><!-- /.portal-wrapper -->
+
+
+<!-- ══════════ ADD MODAL ══════════ -->
+<div id="add-modal" class="modal">
+  <form method="POST" action="/location">
+    <div class="modal-content">
+      <h5>
+        <i class="material-icons purple-text">add_location_alt</i>
+        Add New Location
+      </h5>
+      <p class="grey-text" style="margin-top:-8px; margin-bottom:16px; font-size:.9rem;">
+        Enter a descriptive name for the physical archive location.
+      </p>
+      <div class="input-field">
+        <input id="add-geo" name="geoLocation" type="text"
+               class="validate" required minlength="2" maxlength="255">
+        <label for="add-geo">Location name</label>
+        <span class="helper-text">e.g. "UWI Main Library – Bay A, Row 3"</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat grey-text">Cancel</a>
+      <button type="submit" class="btn waves-effect waves-light purple" style="margin-left:8px;">
+        <i class="material-icons left">add</i>Add
+      </button>
+    </div>
+  </form>
+</div>
+
+
+<!-- ══════════ PER-LOCATION MODALS ══════════ -->
+{% for location in locations %}
+
+<!-- Edit modal -->
+<div id="edit-modal-{{ location.locationID }}" class="modal">
+  <form method="POST" action="/location/{{ location.locationID }}">
+    <div class="modal-content">
+      <h5>
+        <i class="material-icons purple-text">edit_location_alt</i>
+        Edit Location
+      </h5>
+      <div class="input-field">
+        <input id="geo-edit-{{ location.locationID }}"
+               name="geoLocation"
+               type="text"
+               value="{{ location.geoLocation }}"
+               class="validate" required minlength="2" maxlength="255">
+        <label for="geo-edit-{{ location.locationID }}" class="active">Location name</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat grey-text">Cancel</a>
+      <button type="submit" class="btn waves-effect waves-light purple" style="margin-left:8px;">
+        <i class="material-icons left">save</i>Save
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="del-modal-{{ location.locationID }}" class="modal">
+  <div class="modal-content">
+    <h5 class="red-text">
+      <i class="material-icons">warning</i>
+      Delete Location?
+    </h5>
+    <p>You are about to permanently delete <strong>{{ location.geoLocation }}</strong>.</p>
+    {% if location.boxes | length > 0 %}
+    <div class="card-panel orange lighten-4" style="padding:10px 14px; font-size:.9rem;">
+      <i class="material-icons left orange-text text-darken-2">info</i>
+      This location has <strong>{{ location.boxes | length }}</strong>
+      box{{ 'es' if location.boxes | length != 1 else '' }} assigned.
+      Deleting it may affect those records.
+    </div>
+    {% endif %}
+    <p class="grey-text" style="font-size:.85rem;">This action cannot be undone.</p>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close btn-flat grey-text">Cancel</a>
+    <form method="POST" action="/location/{{ location.locationID }}/delete" style="display:inline;">
+      <button type="submit" class="btn waves-effect waves-light red" style="margin-left:8px;">
+        <i class="material-icons left">delete_forever</i>Delete
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endfor %}
+
+
+{% block scripts %}
+<script>
+  function filterLocations(query) {
+    var q   = query.trim().toLowerCase();
+    var all = document.querySelectorAll('.loc-item');
+    var n   = 0;
+    all.forEach(function (item) {
+      var name = item.dataset.name || '';
+      var show = !q || name.includes(q);
+      item.style.display = show ? '' : 'none';
+      if (show) n++;
+    });
+    var el = document.getElementById('visible-count');
+    if (el) el.textContent = n;
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
+
+    /* Clear add-modal input each time it opens */
+    var addModalEl = document.getElementById('add-modal');
+    if (addModalEl) {
+      addModalEl.addEventListener('modal:open', function () {
+        var inp = document.getElementById('add-geo');
+        if (inp) { inp.value = ''; M.updateTextFields(); }
+      });
+    }
+  });
+</script>
+{% endblock %}
+
+{% endblock %}
