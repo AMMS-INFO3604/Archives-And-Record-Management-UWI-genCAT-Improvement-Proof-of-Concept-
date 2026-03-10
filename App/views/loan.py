@@ -171,6 +171,71 @@ def loan_detail_page(loanID):
 
 
 # ---------------------------------------------------------------------------
+# HTML – Check-in (form POST)
+# ---------------------------------------------------------------------------
+
+
+@loan_views.route("/loans/<int:loanID>/checkin", methods=["POST"])
+@jwt_required()
+def checkin_loan_page(loanID):
+    """Mark an active loan as returned via an HTML form submission.
+
+    No form fields are required – the action is triggered by submitting the
+    form for the given loanID.  An optional ``returnDate`` field (ISO-8601
+    string, e.g. ``2025-06-15``) can be included to override the default of
+    'now'.  On success every file attached to the loan is set back to
+    'Available' and its loanID is cleared.
+
+    Expected form fields:
+        returnDate  (optional) – ISO-8601 date/datetime string
+    """
+    loan = get_loan(loanID)
+    if not loan:
+        flash(f"Loan #{loanID} not found.", "error")
+        return redirect(url_for("loan_views.get_loans_page"))
+
+    if loan.returnDate is not None:
+        flash(
+            f"Loan #{loanID} has already been returned on "
+            f"{loan.returnDate.strftime('%d %b %Y')}.",
+            "warning",
+        )
+        return redirect(url_for("loan_views.loan_detail_page", loanID=loanID))
+
+    # Parse optional override return date
+    return_date = None
+    return_date_raw = request.form.get("returnDate", "").strip()
+    if return_date_raw:
+        from datetime import datetime as dt
+
+        for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d"):
+            try:
+                return_date = dt.strptime(return_date_raw, fmt)
+                break
+            except ValueError:
+                continue
+        if return_date is None:
+            flash(
+                "Invalid return date format. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM.",
+                "error",
+            )
+            return redirect(url_for("loan_views.loan_detail_page", loanID=loanID))
+
+    updated = return_loan(loanID, returnDate=return_date)
+    if not updated:
+        flash(f"Failed to check in loan #{loanID}. Please try again.", "error")
+        return redirect(url_for("loan_views.loan_detail_page", loanID=loanID))
+
+    file_count = 0 if updated.files is None else len(updated.files)
+    flash(
+        f"Loan #{loanID} checked in successfully – "
+        f"{file_count} file{'s' if file_count != 1 else ''} returned to 'Available'.",
+        "success",
+    )
+    return redirect(url_for("loan_views.loan_detail_page", loanID=loanID))
+
+
+# ---------------------------------------------------------------------------
 # API – Read (all)
 # ---------------------------------------------------------------------------
 
