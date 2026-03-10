@@ -3,228 +3,541 @@
 
 {% block content %}
 <style>
-    body { background-color: #fce4ec !important; }
-    .detail-wrapper { display: flex; justify-content: center; padding: 32px 16px 64px; }
+    body { background-color: #f3e5f5 !important; }
+
+    /* ── wrapper ── */
+    .detail-wrapper { max-width: 860px; margin: 32px auto; padding: 0 16px 64px; }
+
+    /* ── card shared ── */
     .detail-card {
-        background: #fff; border: 1.5px solid #ef9a9a; border-radius: 14px;
-        width: 100%; max-width: 780px;
-        box-shadow: 0 6px 32px rgba(198,40,40,.08); overflow: hidden;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(106,27,154,.10);
+        margin-bottom: 20px;
+        overflow: hidden;
     }
-    .detail-header {
-        background: #fff; border-bottom: 1.5px solid #fce4ec; padding: 28px 36px 24px;
-        display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+
+    /* ── card header ── */
+    .card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 24px 28px;
+        border-bottom: 1.5px solid #f3e5f5;
+        flex-wrap: wrap;
     }
-    .detail-header-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
-    .detail-icon-wrap {
-        width: 56px; height: 56px; border-radius: 50%; background: #fce4ec;
+    .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .header-icon {
+        width: 52px; height: 52px; border-radius: 50%; background: #f3e5f5;
         display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .detail-icon-wrap i { font-size: 28px; color: #c62828; }
-    .detail-title-block { min-width: 0; }
-    .detail-file-id { font-size: 1.35rem; font-weight: 800; color: #1a1a1a; margin: 0 0 6px; }
-    .detail-file-id span { color: #c62828; }
-    .detail-desc-preview {
-        font-size: 0.88rem; color: #666; margin: 0;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;
+    .header-icon i { font-size: 26px; color: #6a1b9a; }
+    .header-text { min-width: 0; }
+    .header-title {
+        font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin: 0 0 4px;
     }
-    .back-link {
+    .header-title span { color: #6a1b9a; }
+    .header-sub {
+        font-size: 0.87rem; color: #666; margin: 0;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 460px;
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    /* ── buttons ── */
+    .btn-back {
         display: inline-flex; align-items: center; gap: 4px;
-        color: #c62828; font-size: 0.83rem; font-weight: 600;
-        text-decoration: none; white-space: nowrap; flex-shrink: 0;
-        padding: 6px 12px; border: 1.5px solid #ef9a9a; border-radius: 8px;
-        transition: background .15s, border-color .15s;
+        padding: 7px 14px; border: 1.5px solid #ce93d8; border-radius: 8px;
+        color: #6a1b9a; font-size: 0.83rem; font-weight: 600;
+        text-decoration: none; transition: background .15s;
     }
-    .back-link i { font-size: 16px; }
-    .back-link:hover { background: #fce4ec; border-color: #c62828; color: #c62828; }
-    .detail-body { padding: 28px 36px 36px; }
-    .detail-section { margin-bottom: 28px; }
+    .btn-back i { font-size: 16px; }
+    .btn-back:hover { background: #f3e5f5; color: #6a1b9a; }
+
+    .btn-issue {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 8px 16px; background: #6a1b9a; color: #fff;
+        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
+        cursor: pointer; transition: background .15s; text-decoration: none;
+    }
+    .btn-issue i { font-size: 18px; }
+    .btn-issue:hover { background: #4a148c; }
+
+    .btn-checkin {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 8px 16px; background: #2e7d32; color: #fff;
+        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-checkin i { font-size: 18px; }
+    .btn-checkin:hover { background: #1b5e20; }
+
+    /* ── card body ── */
+    .card-body { padding: 24px 28px; }
+
+    /* ── section ── */
+    .detail-section { margin-bottom: 26px; }
     .detail-section:last-child { margin-bottom: 0; }
     .section-title {
-        font-size: 0.72rem; font-weight: 800; letter-spacing: 1.2px;
-        text-transform: uppercase; color: #c62828; margin: 0 0 14px; padding-bottom: 6px;
-        border-bottom: 1.5px solid #fce4ec; display: flex; align-items: center; gap: 6px;
+        display: flex; align-items: center; gap: 6px;
+        font-size: 0.70rem; font-weight: 800; letter-spacing: 1.1px;
+        text-transform: uppercase; color: #6a1b9a;
+        padding-bottom: 6px; margin: 0 0 14px;
+        border-bottom: 1.5px solid #f3e5f5;
     }
     .section-title i { font-size: 15px; }
+
+    /* ── field grid ── */
     .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
     .field-item { display: flex; flex-direction: column; gap: 3px; }
-    .field-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #aaa; }
+    .field-label {
+        font-size: 0.70rem; font-weight: 700; letter-spacing: 0.5px;
+        text-transform: uppercase; color: #aaa;
+    }
     .field-value { font-size: 0.9rem; color: #2e2e2e; word-break: break-word; }
     .field-value.mono { font-family: monospace; font-size: 0.85rem; color: #555; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
-    .badge-available { background: #e8f5e9; color: #2e7d32; }
-    .badge-on-loan   { background: #e3f2fd; color: #1565c0; }
-    .badge-other     { background: #f5f5f5; color: #757575; }
-    .type-chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
-    .chip-student { background: #fce4ec; color: #c62828; }
+    .full-width { grid-column: 1 / -1; }
+
+    /* ── type chip ── */
+    .type-chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
+    .chip-student { background: #f3e5f5; color: #6a1b9a; }
     .chip-staff   { background: #e8eaf6; color: #283593; }
     .chip-other   { background: #f5f5f5; color: #616161; }
+
+    /* ── status badge ── */
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 12px; border-radius: 20px; font-size: 0.77rem; font-weight: 700;
+    }
+    .status-badge .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .badge-available { background: #e8f5e9; color: #2e7d32; }
+    .badge-available .dot { background: #2e7d32; }
+    .badge-on-loan   { background: #ffebee; color: #c62828; }
+    .badge-on-loan .dot   { background: #c62828; }
+    .badge-other     { background: #f5f5f5; color: #757575; }
+    .badge-other .dot     { background: #9e9e9e; }
+
+    /* ── info / notice boxes ── */
     .info-box {
         display: flex; align-items: flex-start; gap: 10px;
-        background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px;
-        padding: 12px 16px; font-size: 0.87rem; color: #1565c0;
+        background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px;
+        padding: 12px 16px; font-size: 0.87rem; color: #2e7d32;
     }
-    .info-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .warn-box {
+        display: flex; align-items: flex-start; gap: 10px;
+        background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px;
+        padding: 12px 16px; font-size: 0.87rem; color: #c62828;
+    }
     .notice-box {
         display: flex; align-items: flex-start; gap: 10px;
         background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
         padding: 12px 16px; font-size: 0.87rem; color: #795548;
     }
-    .notice-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .info-box i, .warn-box i, .notice-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── loan history table ── */
+    .loan-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .loan-table thead tr { background: #f3e5f5; border-bottom: 2px solid #ce93d8; }
+    .loan-table thead th {
+        padding: 9px 14px; font-size: 0.70rem; font-weight: 700;
+        letter-spacing: 0.8px; text-transform: uppercase;
+        color: #6a1b9a; text-align: left; white-space: nowrap;
+    }
+    .loan-table tbody tr { border-bottom: 1px solid #f3e5f5; transition: background .12s; }
+    .loan-table tbody tr:last-child { border-bottom: none; }
+    .loan-table tbody tr:hover { background: #fdf6ff; }
+    .loan-table td { padding: 10px 14px; color: #333; vertical-align: middle; }
+    .loan-table td.col-id { font-weight: 700; color: #6a1b9a; white-space: nowrap; }
+    .loan-table td.col-date { white-space: nowrap; font-size: 0.82rem; color: #666; }
+
+    .loan-status-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 9px; border-radius: 20px; font-size: 0.73rem; font-weight: 700;
+    }
+    .lbadge-active   { background: #ffebee; color: #c62828; }
+    .lbadge-returned { background: #e8f5e9; color: #2e7d32; }
+
+    .btn-view-loan {
+        display: inline-flex; align-items: center; gap: 3px;
+        padding: 4px 10px; background: #6a1b9a; color: #fff;
+        border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+        text-decoration: none; transition: background .15s;
+    }
+    .btn-view-loan i { font-size: 14px; }
+    .btn-view-loan:hover { background: #4a148c; color: #fff; }
+
+    /* ── modal ── */
+    .modal { border-radius: 12px !important; }
+    .modal .modal-content { padding: 28px 28px 8px; }
+    .modal .modal-footer { padding: 12px 28px 20px; border-top: 1px solid #f3e5f5; background: #fdf6ff; }
+    .modal-title {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 1.1rem; font-weight: 700; color: #1a1a1a; margin: 0 0 20px;
+    }
+    .modal-title i { color: #6a1b9a; font-size: 24px; }
+
+    /* modal form fields */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+        display: block; font-size: 0.72rem; font-weight: 700;
+        letter-spacing: 0.5px; text-transform: uppercase; color: #6a1b9a; margin-bottom: 6px;
+    }
+    .form-select {
+        width: 100%; height: 42px; padding: 0 12px;
+        border: 1.5px solid #ce93d8; border-radius: 8px;
+        font-size: 0.9rem; color: #333; background: #fdf6ff;
+        cursor: pointer; outline: none;
+    }
+    .form-select:focus { border-color: #6a1b9a; box-shadow: 0 0 0 3px rgba(106,27,154,.10); }
+    .form-input {
+        width: 100%; height: 42px; padding: 0 12px;
+        border: 1.5px solid #ce93d8; border-radius: 8px;
+        font-size: 0.9rem; color: #333; background: #fdf6ff;
+        box-sizing: border-box; outline: none;
+        border-bottom: 1.5px solid #ce93d8 !important;
+        box-shadow: none !important; margin: 0 !important;
+    }
+    .form-input:focus { border-color: #6a1b9a !important; box-shadow: 0 0 0 3px rgba(106,27,154,.10) !important; }
+    .form-hint { font-size: 0.78rem; color: #aaa; margin-top: 4px; }
+
+    .btn-modal-cancel {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 8px 16px; background: transparent; color: #6a1b9a;
+        border: 1.5px solid #ce93d8; border-radius: 8px;
+        font-size: 0.87rem; font-weight: 600; cursor: pointer;
+        transition: background .15s; margin-right: 8px;
+    }
+    .btn-modal-cancel:hover { background: #f3e5f5; }
+    .btn-modal-submit {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 8px 18px; background: #6a1b9a; color: #fff;
+        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600; cursor: pointer;
+        transition: background .15s;
+    }
+    .btn-modal-submit i { font-size: 18px; }
+    .btn-modal-submit:hover { background: #4a148c; }
+
+    /* ── responsive ── */
     @media (max-width: 600px) {
-        .detail-header { flex-direction: column; padding: 20px 20px 18px; }
-        .detail-body   { padding: 20px 20px 28px; }
-        .field-grid    { grid-template-columns: 1fr; }
-        .detail-desc-preview { max-width: 100%; }
+        .detail-wrapper { margin: 16px auto; }
+        .card-body { padding: 18px 16px; }
+        .card-header { padding: 18px 16px; }
+        .field-grid { grid-template-columns: 1fr; }
+        .header-sub { max-width: 100%; }
     }
 </style>
 
 <div class="detail-wrapper">
-  <div class="detail-card">
 
-    <div class="detail-header">
-      <div class="detail-header-left">
-        <div class="detail-icon-wrap"><i class="material-icons">folder_open</i></div>
-        <div class="detail-title-block">
-          <p class="detail-file-id">File <span>#{{ file.fileID }}</span></p>
-          <p class="detail-desc-preview">{{ file.description or "No description provided" }}</p>
+    <!-- ══ Header card ══════════════════════════════════════════════════════ -->
+    <div class="detail-card">
+        <div class="card-header">
+            <div class="header-left">
+                <div class="header-icon"><i class="material-icons">folder_open</i></div>
+                <div class="header-text">
+                    <p class="header-title">File <span>#{{ file.fileID }}</span></p>
+                    <p class="header-sub">{{ file.description or 'No description provided' }}</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <!-- Back button -->
+                <a href="/files" class="btn-back">
+                    <i class="material-icons">arrow_back</i>All Files
+                </a>
+
+                <!-- Check In (only when on loan) -->
+                {% if file.status == 'On Loan' and file.loanID %}
+                <form method="POST" action="/loans/{{ file.loanID }}/checkin" style="margin:0;">
+                    <button type="submit" class="btn-checkin">
+                        <i class="material-icons">assignment_return</i>Check In
+                    </button>
+                </form>
+                {% endif %}
+
+                <!-- Issue File (only when available) -->
+                {% if file.status == 'Available' %}
+                <button class="btn-issue modal-trigger" data-target="issue-modal">
+                    <i class="material-icons">assignment_ind</i>Issue File
+                </button>
+                {% endif %}
+            </div>
         </div>
-      </div>
-      <a href="/files" class="back-link"><i class="material-icons">arrow_back</i>All Files</a>
     </div>
 
-    <div class="detail-body">
+    <!-- ══ File details ═════════════════════════════════════════════════════ -->
+    <div class="detail-card">
+        <div class="card-body">
+            <div class="detail-section">
+                <div class="section-title"><i class="material-icons">info</i>File Details</div>
+                <div class="field-grid">
+                    <div class="field-item">
+                        <span class="field-label">File Type</span>
+                        <span class="field-value">
+                            {% if file.fileType == 'Student' %}
+                                <span class="type-chip chip-student">Student</span>
+                            {% elif file.fileType == 'Staff' %}
+                                <span class="type-chip chip-staff">Staff</span>
+                            {% else %}
+                                <span class="type-chip chip-other">{{ file.fileType }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Status</span>
+                        <span class="field-value">
+                            {% if file.status == 'Available' %}
+                                <span class="status-badge badge-available">
+                                    <span class="dot"></span>Available
+                                </span>
+                            {% elif file.status == 'On Loan' %}
+                                <span class="status-badge badge-on-loan">
+                                    <span class="dot"></span>On Loan
+                                </span>
+                            {% else %}
+                                <span class="status-badge badge-other">
+                                    <span class="dot"></span>{{ file.status }}
+                                </span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Previous Designation</span>
+                        <span class="field-value mono">{{ file.previousDesignation or '&mdash;' }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Date Created</span>
+                        <span class="field-value">
+                            {% if file.dateCreated %}{{ file.dateCreated.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
+                        </span>
+                    </div>
+                    <div class="field-item full-width">
+                        <span class="field-label">Description</span>
+                        <span class="field-value">{{ file.description or '&mdash;' }}</span>
+                    </div>
+                </div>
+            </div>
 
-      <div class="detail-section">
-        <div class="section-title"><i class="material-icons">info</i>File Details</div>
-        <div class="field-grid">
-          <div class="field-item">
-            <span class="field-label">File Type</span>
-            <span class="field-value">
-              {% if file.fileType == "Student" %}<span class="type-chip chip-student">Student</span>
-              {% elif file.fileType == "Staff" %}<span class="type-chip chip-staff">Staff</span>
-              {% else %}<span class="type-chip chip-other">{{ file.fileType }}</span>{% endif %}
-            </span>
-          </div>
-          <div class="field-item">
-            <span class="field-label">Status</span>
-            <span class="field-value">
-              {% if file.status == "Available" %}<span class="status-badge badge-available">Available</span>
-              {% elif file.status == "On Loan" %}<span class="status-badge badge-on-loan">On Loan</span>
-              {% else %}<span class="status-badge badge-other">{{ file.status }}</span>{% endif %}
-            </span>
-          </div>
-          <div class="field-item">
-            <span class="field-label">Previous Designation</span>
-            <span class="field-value mono">{{ file.previousDesignation or "&mdash;" }}</span>
-          </div>
-          <div class="field-item">
-            <span class="field-label">Date Created</span>
-            <span class="field-value">
-              {% if file.dateCreated %}{{ file.dateCreated.strftime("%d %b %Y") }}{% else %}&mdash;{% endif %}
-            </span>
-          </div>
-          <div class="field-item" style="grid-column: 1 / -1;">
-            <span class="field-label">Description</span>
-            <span class="field-value">{{ file.description or "&mdash;" }}</span>
-          </div>
-        </div>
-      </div>
+            <!-- Student record -->
+            {% if file.fileType == 'Student' %}
+            <div class="detail-section">
+                <div class="section-title"><i class="material-icons">school</i>Student Record</div>
+                {% if file.student_record %}
+                <div class="field-grid">
+                    <div class="field-item">
+                        <span class="field-label">Student ID / Code</span>
+                        <span class="field-value mono">{{ file.student_record.code or '&mdash;' }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Certificate / Diploma</span>
+                        <span class="field-value">{{ file.student_record.certificateDiploma or '&mdash;' }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="notice-box">
+                    <i class="material-icons">info</i>No student record linked to this file.
+                </div>
+                {% endif %}
+            </div>
 
-      {% if file.fileType == "Student" %}
-        {% if file.student_record %}
-        <div class="detail-section">
-          <div class="section-title"><i class="material-icons">school</i>Student Record</div>
-          <div class="field-grid">
-            <div class="field-item">
-              <span class="field-label">Student ID / Code</span>
-              <span class="field-value mono">{{ file.student_record.code or "&mdash;" }}</span>
-            </div>
-            <div class="field-item">
-              <span class="field-label">Certificate / Diploma</span>
-              <span class="field-value">{{ file.student_record.certificateDiploma or "&mdash;" }}</span>
-            </div>
-          </div>
-        </div>
-        {% else %}
-        <div class="detail-section">
-          <div class="section-title"><i class="material-icons">school</i>Student Record</div>
-          <div class="notice-box"><i class="material-icons">info</i>No student record linked to this file.</div>
-        </div>
-        {% endif %}
-      {% elif file.fileType == "Staff" %}
-        {% if file.staff_record %}
-        <div class="detail-section">
-          <div class="section-title"><i class="material-icons">badge</i>Staff Record</div>
-          <div class="field-grid">
-            <div class="field-item">
-              <span class="field-label">File Number</span>
-              <span class="field-value mono">{{ file.staff_record.fileNumber or "&mdash;" }}</span>
-            </div>
-            <div class="field-item">
-              <span class="field-label">File Title</span>
-              <span class="field-value">{{ file.staff_record.fileTitle or "&mdash;" }}</span>
-            </div>
-            <div class="field-item">
-              <span class="field-label">Post</span>
-              <span class="field-value">{{ file.staff_record.post or "&mdash;" }}</span>
-            </div>
-            <div class="field-item">
-              <span class="field-label">Organisation Unit</span>
-              <span class="field-value">{{ file.staff_record.organisationUnit or "&mdash;" }}</span>
-            </div>
-            {% if file.staff_record.notes %}
-            <div class="field-item" style="grid-column: 1 / -1;">
-              <span class="field-label">Notes</span>
-              <span class="field-value">{{ file.staff_record.notes }}</span>
+            <!-- Staff record -->
+            {% elif file.fileType == 'Staff' %}
+            <div class="detail-section">
+                <div class="section-title"><i class="material-icons">badge</i>Staff Record</div>
+                {% if file.staff_record %}
+                <div class="field-grid">
+                    <div class="field-item">
+                        <span class="field-label">File Number</span>
+                        <span class="field-value mono">{{ file.staff_record.fileNumber or '&mdash;' }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">File Title</span>
+                        <span class="field-value">{{ file.staff_record.fileTitle or '&mdash;' }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Post</span>
+                        <span class="field-value">{{ file.staff_record.post or '&mdash;' }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Organisation Unit</span>
+                        <span class="field-value">{{ file.staff_record.organisationUnit or '&mdash;' }}</span>
+                    </div>
+                    {% if file.staff_record.notes %}
+                    <div class="field-item full-width">
+                        <span class="field-label">Notes</span>
+                        <span class="field-value">{{ file.staff_record.notes }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="notice-box">
+                    <i class="material-icons">info</i>No staff record linked to this file.
+                </div>
+                {% endif %}
             </div>
             {% endif %}
-          </div>
-        </div>
-        {% else %}
-        <div class="detail-section">
-          <div class="section-title"><i class="material-icons">badge</i>Staff Record</div>
-          <div class="notice-box"><i class="material-icons">info</i>No staff record linked to this file.</div>
-        </div>
-        {% endif %}
-      {% endif %}
 
-      <div class="detail-section">
-        <div class="section-title"><i class="material-icons">inventory_2</i>Storage</div>
-        {% if file.box %}
-        <div class="field-grid">
-          <div class="field-item">
-            <span class="field-label">Box ID</span>
-            <span class="field-value mono">#{{ file.box.boxID }}</span>
-          </div>
-          <div class="field-item">
-            <span class="field-label">Barcode</span>
-            <span class="field-value mono">{{ file.box.barcode or "&mdash;" }}</span>
-          </div>
-          <div class="field-item">
-            <span class="field-label">Bay / Row / Column</span>
-            <span class="field-value">{{ file.box.bayNo }} / {{ file.box.rowNo }} / {{ file.box.columnNo }}</span>
-          </div>
-          <div class="field-item">
-            <span class="field-label">Location</span>
-            <span class="field-value">{% if file.box.location %}{{ file.box.location.geoLocation }}{% else %}&mdash;{% endif %}</span>
-          </div>
+            <!-- Storage -->
+            <div class="detail-section">
+                <div class="section-title"><i class="material-icons">inventory_2</i>Storage</div>
+                {% if file.box %}
+                <div class="field-grid">
+                    <div class="field-item">
+                        <span class="field-label">Box ID</span>
+                        <span class="field-value mono">#{{ file.box.boxID }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Barcode</span>
+                        <span class="field-value mono">{{ file.box.barcode or '&mdash;' }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Bay / Row / Column</span>
+                        <span class="field-value">{{ file.box.bayNo }} / {{ file.box.rowNo }} / {{ file.box.columnNo }}</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">Location</span>
+                        <span class="field-value">
+                            {% if file.box.location %}{{ file.box.location.geoLocation }}{% else %}&mdash;{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="notice-box">
+                    <i class="material-icons">info</i>No box assigned to this file.
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% else %}
-        <div class="notice-box"><i class="material-icons">info</i>No box assigned to this file.</div>
-        {% endif %}
-      </div>
-
-      {% if file.loanID %}
-      <div class="detail-section">
-        <div class="section-title"><i class="material-icons">swap_horiz</i>Current Loan</div>
-        <div class="info-box">
-          <i class="material-icons">swap_horiz</i>
-          This file is currently on loan (Loan #{{ file.loanID }}).
-        </div>
-      </div>
-      {% endif %}
-
     </div>
-  </div>
+
+    <!-- ══ Loan history ═════════════════════════════════════════════════════ -->
+    <div class="detail-card">
+        <div class="card-body">
+            <div class="detail-section" style="margin-bottom:0;">
+                <div class="section-title"><i class="material-icons">history</i>Loan History</div>
+
+                {% if file.loan %}
+                <!-- Active loan banner -->
+                <div class="warn-box" style="margin-bottom:16px;">
+                    <i class="material-icons">swap_horiz</i>
+                    <div>
+                        This file is currently on <strong>Loan #{{ file.loan.loanID }}</strong> (Patron #{{ file.loan.patronID }})
+                        {% if file.loan.patron and file.loan.patron.user %}
+                            issued to <strong>{{ file.loan.patron.user.username }}</strong>
+                        {% endif %}
+                        {% if file.loan.loanDate %}
+                            on {{ file.loan.loanDate.strftime('%d %b %Y') }}
+                        {% endif %}.
+                    </div>
+                </div>
+
+                <!-- Loan detail table -->
+                <div style="overflow-x:auto;">
+                    <table class="loan-table">
+                        <thead>
+                            <tr>
+                                <th>Loan ID</th>
+                                <th>Status</th>
+                                <th>Patron</th>
+                                <th>Loan Date</th>
+                                <th>Return Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="col-id">#{{ file.loan.loanID }}</td>
+                                <td>
+                                    {% if file.loan.returnDate is none %}
+                                        <span class="loan-status-badge lbadge-active">Active</span>
+                                    {% else %}
+                                        <span class="loan-status-badge lbadge-returned">Returned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if file.loan.patron and file.loan.patron.user %}
+                                        {{ file.loan.patron.user.username }}
+                                        <span style="color:#bbb;font-size:.8rem;">(#{{ file.loan.patronID }})</span>
+                                    {% else %}
+                                        #{{ file.loan.patronID }}
+                                    {% endif %}
+                                </td>
+                                <td class="col-date">
+                                    {% if file.loan.loanDate %}{{ file.loan.loanDate.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
+                                </td>
+                                <td class="col-date">
+                                    {% if file.loan.returnDate %}{{ file.loan.returnDate.strftime('%d %b %Y') }}
+                                    {% else %}<span style="color:#c62828;font-weight:600;">Pending</span>{% endif %}
+                                </td>
+                                <td>
+                                    <a href="/loans/{{ file.loan.loanID }}/detail" class="btn-view-loan">
+                                        <i class="material-icons">open_in_new</i>View
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <!-- No active loan -->
+                <div class="info-box">
+                    <i class="material-icons">check_circle</i>
+                    This file is not currently on loan.
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+</div><!-- /.detail-wrapper -->
+
+<!-- ══ Issue File Modal ═════════════════════════════════════════════════════ -->
+{% if file.status == 'Available' %}
+<div id="issue-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">
+            <i class="material-icons">assignment_ind</i>
+            Issue File #{{ file.fileID }}
+        </div>
+
+        <form method="POST" action="/loans" id="issue-form">
+            <!-- Hidden: the file being issued -->
+            <input type="hidden" name="fileIDs" value="{{ file.fileID }}">
+
+            <!-- Patron selector -->
+            <div class="form-group">
+                <label class="form-label" for="patronID">Patron *</label>
+                <select name="patronID" id="patronID" class="form-select" required>
+                    <option value="">— Select a patron —</option>
+                    {% for patron in patrons %}
+                    <option value="{{ patron.patronID }}">
+                        {% if patron.user %}
+                            {{ patron.user.username }} (Patron #{{ patron.patronID }})
+                        {% else %}
+                            Patron #{{ patron.patronID }}
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Optional: staff user processing the loan -->
+            <div class="form-group">
+                <label class="form-label" for="processedByStaffUserID">Processed By (Staff ID)</label>
+                <input type="number" name="processedByStaffUserID" id="processedByStaffUserID"
+                       class="form-input" placeholder="e.g. 1" min="1">
+                <p class="form-hint">Leave blank to record without a processing staff member.</p>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal-footer">
+        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
+        <button type="submit" form="issue-form" class="btn-modal-submit">
+            <i class="material-icons">assignment_ind</i>Issue File
+        </button>
+    </div>
 </div>
+{% endif %}
 {% endblock %}
