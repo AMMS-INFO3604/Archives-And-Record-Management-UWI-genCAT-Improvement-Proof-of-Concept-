@@ -27,8 +27,24 @@ from .index import index_views
 
 box_views = Blueprint("box_views", __name__, template_folder="templates")
 
+@box_views.route("/boxes", methods=["GET"])
+@jwt_required()
+def get_boxes_page():
+    keyword = request.args.get("keyword", "").strip()
+    boxes = searchBoxesByBarcode(keyword) if keyword else getAllBoxes()
+    return render_template("boxes.html", boxes=boxes, keyword=keyword)
 
-@box_views.route("/boxes", methods=["POST"])
+
+@box_views.route("/boxes/<int:boxID>/detail", methods=["GET"])
+@jwt_required()
+def get_box_detail_page(boxID):
+    box = getBoxByID(boxID)
+    if not box:
+        flash("Box not found.", "error")
+        return redirect(url_for("box_views.get_boxes_page"))
+    return render_template("box_detail.html", box=box)
+
+@box_views.route("/api/boxes", methods=["POST"])
 @jwt_required()
 def add_box():
     data = request.json
@@ -49,7 +65,7 @@ def add_box():
     return jsonify({"message": "Box added successfully", "box": box}), 201
 
 
-@box_views.route("/boxes/<int:boxID>", methods=["PUT"])
+@box_views.route("/api/boxes/<int:boxID>", methods=["PUT"])
 @jwt_required()
 def update_box(boxID):
     data = request.json
@@ -71,7 +87,7 @@ def update_box(boxID):
     return jsonify({"message": "Box updated successfully", "box": box}), 200
 
 
-@box_views.route("/boxes/<int:boxID>/move", methods=["PUT"])
+@box_views.route("/api/boxes/<int:boxID>/move", methods=["PUT"])
 @jwt_required()
 def move_box_location(boxID):
     data = request.json
@@ -92,7 +108,7 @@ def move_box_location(boxID):
     ), 200
 
 
-@box_views.route("/boxes/<int:boxID>", methods=["DELETE"])
+@box_views.route("/api/boxes/<int:boxID>", methods=["DELETE"])
 @jwt_required()
 def delete_box(boxID):
     box = deleteBox(boxID)
@@ -102,7 +118,7 @@ def delete_box(boxID):
     return jsonify({"message": f"Box {boxID} deleted successfully"}), 200
 
 
-@box_views.route("/boxes/<int:boxID>", methods=["GET"])
+@box_views.route("/api/boxes/<int:boxID>", methods=["GET"])
 @jwt_required()
 def get_box_by_id(boxID):
     box = getBoxByID(boxID)
@@ -122,7 +138,7 @@ def get_all_boxes():
     return jsonify({"boxes": boxes}), 200
 
 
-@box_views.route("/boxes/search/<int:locationID>", methods=["GET"])
+@box_views.route("/api/boxes/search/<int:locationID>", methods=["GET"])
 @jwt_required()
 def search_boxes_by_location(locationID):
     locationID = request.args.get("locationID")

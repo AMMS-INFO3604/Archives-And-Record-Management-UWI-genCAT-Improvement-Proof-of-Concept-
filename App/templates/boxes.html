@@ -1,0 +1,343 @@
+{% extends "layout.html" %}
+{% block title %}Boxes{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .page-title { display: flex; align-items: center; gap: 10px; }
+  .page-title i { font-size: 26px; color: #7b1fa2; }
+  .page-title h4 { margin: 0; font-size: 1.35rem; font-weight: 700; color: #1a1a1a; }
+
+  /* ── Search bar ── */
+  .search-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .search-wrap { position: relative; }
+  .search-wrap input[type="text"] {
+    height: 40px;
+    width: 250px;
+    border: 1.5px solid #ce93d8 !important;
+    border-bottom: 1.5px solid #ce93d8 !important;
+    border-radius: 8px !important;
+    padding: 0 12px 0 38px !important;
+    font-size: 0.875rem;
+    background: #fdf8ff;
+    box-shadow: none !important;
+    margin: 0 !important;
+    outline: none;
+    color: #333;
+  }
+  .search-wrap input[type="text"]:focus {
+    border-color: #7b1fa2 !important;
+    box-shadow: 0 0 0 3px rgba(123,31,162,.08) !important;
+  }
+  .search-wrap .search-icon {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #b39ddb;
+    font-size: 17px;
+    pointer-events: none;
+  }
+
+  /* ── Card shell ── */
+  .data-card {
+    background: #fff;
+    border: 1.5px solid #e1bee7;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(74,20,140,.07);
+  }
+  .data-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 20px;
+    background: #fdf8ff;
+    border-bottom: 1.5px solid #f0e6fa;
+  }
+  .count-label { font-size: 0.82rem; color: #999; }
+
+  /* ── Table ── */
+  .boxes-table { width: 100%; border-collapse: collapse; }
+  .boxes-table thead tr { background: #f3e5f5; }
+  .boxes-table thead th {
+    padding: 11px 16px;
+    font-size: 0.73rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #6a1b9a;
+    border-bottom: 1.5px solid #e1bee7;
+    white-space: nowrap;
+  }
+  .boxes-table tbody tr {
+    border-bottom: 1px solid #f5eeff;
+    transition: background 0.1s;
+  }
+  .boxes-table tbody tr:last-child { border-bottom: none; }
+  .boxes-table tbody tr:hover { background: #fdf4ff; }
+  .boxes-table tbody td {
+    padding: 11px 16px;
+    font-size: 0.875rem;
+    color: #333;
+    vertical-align: middle;
+  }
+
+  /* ── Chips ── */
+  .barcode-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ede7f6;
+    color: #4a148c;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.77rem;
+    font-weight: 600;
+    font-family: monospace;
+    letter-spacing: 0.3px;
+  }
+  .barcode-chip i { font-size: 13px; }
+
+  .location-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f3e5f5;
+    color: #6a1b9a;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.77rem;
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .location-chip i { font-size: 13px; flex-shrink: 0; }
+
+  /* ── Empty state ── */
+  .empty-state { text-align: center; padding: 56px 20px; }
+  .empty-state i { font-size: 50px; color: #d1c4e9; display: block; margin-bottom: 12px; }
+  .empty-state p { color: #aaa; font-size: 0.92rem; margin: 0; }
+
+  /* ── Flash messages ── */
+  .flash-msg {
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flash-msg.error { background: #fce4ec; color: #b71c1c; border: 1px solid #f8bbd0; }
+  .flash-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+</style>
+
+<!-- Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash-msg {{ category }}">
+    <i class="material-icons" style="font-size:18px;">
+      {{ 'error' if category == 'error' else 'check_circle' }}
+    </i>
+    {{ message }}
+  </div>
+  {% endfor %}
+{% endwith %}
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="page-title">
+    <i class="material-icons">inventory_2</i>
+    <h4>Boxes</h4>
+  </div>
+
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <!-- Barcode search -->
+    <form class="search-form" method="GET" action="/boxes">
+      <div class="search-wrap">
+        <i class="material-icons search-icon">qr_code_scanner</i>
+        <input type="text"
+               name="keyword"
+               value="{{ keyword }}"
+               placeholder="Search by barcode…">
+      </div>
+      <button type="submit"
+              class="btn waves-effect waves-light purple"
+              style="height:40px; line-height:40px; padding:0 14px; font-size:.85rem;">
+        Search
+      </button>
+      {% if keyword %}
+      <a href="/boxes"
+         class="btn-flat waves-effect"
+         style="height:40px; line-height:40px; color:#888; font-size:.85rem; padding:0 10px;">
+        <i class="material-icons left" style="font-size:15px; line-height:40px;">close</i>Clear
+      </a>
+      {% endif %}
+    </form>
+
+    <!-- New Box -->
+    <a href="#add-box-modal"
+       class="btn waves-effect waves-light purple modal-trigger"
+       style="height:40px; line-height:40px; padding:0 14px; font-size:.85rem;">
+      <i class="material-icons left" style="font-size:15px; line-height:40px;">add</i>New Box
+    </a>
+  </div>
+</div>
+
+<!-- Results card -->
+<div class="data-card">
+  <div class="data-card-header">
+    <span class="count-label">
+      {% if keyword %}
+        {{ boxes|length }} result{{ 's' if boxes|length != 1 else '' }}
+        for "<strong>{{ keyword }}</strong>"
+      {% else %}
+        {{ boxes|length }} box{{ 'es' if boxes|length != 1 else '' }} total
+      {% endif %}
+    </span>
+  </div>
+
+  {% if boxes %}
+  <div style="overflow-x:auto;">
+    <table class="boxes-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Bay</th>
+          <th>Row</th>
+          <th>Col</th>
+          <th>Barcode</th>
+          <th>Location</th>
+          <th>Files</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for box in boxes %}
+        <tr>
+          <td style="color:#bbb; font-size:.77rem;">#{{ box.boxID }}</td>
+          <td><strong>{{ box.bayNo }}</strong></td>
+          <td>{{ box.rowNo }}</td>
+          <td>{{ box.columnNo }}</td>
+          <td>
+            {% if box.barcode %}
+            <span class="barcode-chip">
+              <i class="material-icons">qr_code</i>{{ box.barcode }}
+            </span>
+            {% else %}
+            <span style="color:#ccc;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if box.location %}
+            <span class="location-chip" title="{{ box.location.geoLocation }}">
+              <i class="material-icons">location_on</i>{{ box.location.geoLocation }}
+            </span>
+            {% else %}
+            <span style="color:#ccc;">—</span>
+            {% endif %}
+          </td>
+          <td style="font-size:.8rem; color:#888;">
+            {{ box.files|length }} file{{ 's' if box.files|length != 1 else '' }}
+          </td>
+          <td style="text-align:right; padding-right:14px;">
+            <a href="/boxes/{{ box.boxID }}/detail"
+               class="btn-small waves-effect waves-light purple"
+               style="height:28px; line-height:28px; padding:0 10px; font-size:.75rem;">
+              <i class="material-icons left" style="font-size:13px; line-height:28px;">visibility</i>View
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <i class="material-icons">inventory_2</i>
+    <p>
+      {% if keyword %}
+        No boxes matched "<strong>{{ keyword }}</strong>".
+      {% else %}
+        No boxes yet — add one using the button above.
+      {% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+
+<!-- ── Add Box Modal ── -->
+<div id="add-box-modal" class="modal">
+  <form method="POST" action="/api/boxes">
+    <div class="modal-content">
+      <h5 style="display:flex; align-items:center; gap:8px; font-size:1.05rem; font-weight:700; margin-bottom:6px;">
+        <i class="material-icons purple-text">add_box</i>Add New Box
+      </h5>
+      <p class="grey-text text-darken-1" style="font-size:.875rem; margin-top:0; margin-bottom:18px;">
+        Enter the physical shelf position and optional barcode for the new box.
+      </p>
+
+      <div class="row" style="margin-bottom:0;">
+        <div class="input-field col s4">
+          <input id="m-bay" name="bayNo" type="number" min="1" class="validate" required>
+          <label for="m-bay">Bay No.</label>
+        </div>
+        <div class="input-field col s4">
+          <input id="m-row" name="rowNo" type="number" min="1" class="validate" required>
+          <label for="m-row">Row No.</label>
+        </div>
+        <div class="input-field col s4">
+          <input id="m-col" name="columnNo" type="number" min="1" class="validate" required>
+          <label for="m-col">Col No.</label>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:0;">
+        <div class="input-field col s12">
+          <input id="m-barcode" name="barcode" type="text" maxlength="100">
+          <label for="m-barcode">Barcode (optional)</label>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:0;">
+        <div class="input-field col s12">
+          <input id="m-loc" name="locationID" type="number" min="1" class="validate" required>
+          <label for="m-loc">Location ID</label>
+          <span class="helper-text">
+            See <a href="/location" target="_blank">Locations</a> for the correct ID.
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <a href="#!" class="modal-close btn-flat grey-text">Cancel</a>
+      <button type="submit" class="btn waves-effect waves-light purple" style="margin-left:8px;">
+        <i class="material-icons left">add</i>Add Box
+      </button>
+    </div>
+  </form>
+</div>
+
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
+  });
+</script>
+{% endblock %}
+
+{% endblock %}
