@@ -1,43 +1,30 @@
-
 services:
-- type: web
-  name: flask-postgres-api
-  env: python
-  repo: https://github.com/uwidcit/flaskmvc.git
-  plan: free
-  branch: main
-  healthCheckPath: /healthcheck
-  buildCommand: "pip install -r requirements.txt"
-  startCommand: "gunicorn wsgi:app"
-  envVars:
-  - fromGroup: flask-postgres-api-settings
-  - key: POSTGRES_URL
-    fromDatabase:
-      name: flask-postgres-api-db
-      property: host
-  - key: POSTGRES_USER
-    fromDatabase:
-      name: flask-postgres-api-db
-      property: user
-  - key: POSTGRES_PASSWORD
-    fromDatabase:
-      name: flask-postgres-api-db
-      property: password
-  - key: POSTGRES_DB
-    fromDatabase:
-      name: flask-postgres-api-db
-      property: database 
+  - type: web
+    name: gencat-records-management
+    env: python
+    plan: free
+    branch: main
+    healthCheckPath: /healthcheck
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn --config gunicorn_config.py wsgi:app"
+    envVars:
+      - fromGroup: gencat-settings
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gencat-db
+          property: connectionString
 
 envVarGroups:
-- name: flask-postgres-api-settings
-  envVars:
-  - key: ENV
-    value: production
-  - key: FLASK_APP
-    value: wsgi.py
-    
+  - name: gencat-settings
+    envVars:
+      - key: ENV
+        value: production
+      - key: FLASK_APP
+        value: wsgi.py
+      - key: SECRET_KEY
+        generateValue: true
 
 databases:
-- name: flask-postgres-api-db
-  plan: free
-  databaseName: mydb
+  - name: gencat-db
+    plan: free
+    databaseName: gencat

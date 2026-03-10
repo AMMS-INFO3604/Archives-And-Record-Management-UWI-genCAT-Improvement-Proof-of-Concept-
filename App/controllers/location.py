@@ -9,6 +9,14 @@ from App.models import Box, Location
 
 
 def create_location(geoLocation):
+    """Create a new Location record.
+
+    Args:
+        geoLocation: A descriptive string identifying the physical location.
+
+    Returns:
+        The new Location instance, or None on failure.
+    """
     location = Location(geoLocation=geoLocation)
     try:
         db.session.add(location)
@@ -26,10 +34,12 @@ def create_location(geoLocation):
 
 
 def get_location(locationID):
+    """Return a Location by its primary key."""
     return db.session.get(Location, locationID)
 
 
 def get_location_by_name(geoLocation):
+    """Return the first Location whose geoLocation matches exactly."""
     return db.session.execute(
         db.select(Location).filter_by(geoLocation=geoLocation)
     ).scalar_one_or_none()
@@ -156,6 +166,15 @@ def get_files_at_location_json(locationID):
 
 
 def update_location(locationID, geoLocation):
+    """Update the geoLocation name of an existing Location.
+
+    Args:
+        locationID: The ID of the location to update.
+        geoLocation: The new descriptive name for the location.
+
+    Returns:
+        The updated Location instance, or None on failure.
+    """
     location = get_location(locationID)
     if not location:
         print(f"Location with ID {locationID} not found.")
@@ -176,6 +195,14 @@ def update_location(locationID, geoLocation):
 
 
 def delete_location(locationID):
+    """Delete a Location by its primary key.
+
+    Args:
+        locationID: The ID of the location to delete.
+
+    Returns:
+        True on success, False otherwise.
+    """
     location = get_location(locationID)
     if not location:
         print(f"Location with ID {locationID} not found.")

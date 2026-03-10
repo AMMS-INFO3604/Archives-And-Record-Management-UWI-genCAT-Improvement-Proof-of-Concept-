@@ -14,14 +14,12 @@ from App.controllers.location import (
     update_location,
 )
 
-from .index import index_views
-
 location_views = Blueprint("location_views", __name__, template_folder="../templates")
 
 
-"""
-Page / Action Routes
-"""
+# ---------------------------------------------------------------------------
+# Page / Action Routes
+# ---------------------------------------------------------------------------
 
 
 @location_views.route("/location", methods=["GET"])
@@ -84,9 +82,9 @@ def delete_location_action(locationID):
     return redirect(url_for("location_views.get_locations_page"))
 
 
-"""
-API Routes
-"""
+# ---------------------------------------------------------------------------
+# API Routes
+# ---------------------------------------------------------------------------
 
 
 @location_views.route("/api/locations", methods=["GET"])

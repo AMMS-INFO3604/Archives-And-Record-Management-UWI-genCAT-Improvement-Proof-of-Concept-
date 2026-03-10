@@ -29,15 +29,6 @@ def _add(obj):
 # Public API
 # ---------------------------------------------------------------------------
 
-from .box import addBox
-from .file import addFile
-from .fileRecord import create_staff_record, create_student_record
-from .loan import create_loan, return_loan
-from .location import create_location
-from .patron import create_patron
-from .staffUser import create_staff_user
-from .user import create_user
-
 
 def initialize():
     """Drop all tables, recreate them, then populate with seed data."""
