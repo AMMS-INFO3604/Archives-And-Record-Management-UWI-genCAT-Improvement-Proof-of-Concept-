@@ -1,0 +1,230 @@
+{% extends "layout.html" %}
+{% block title %}File #{{ file.fileID }}{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #fce4ec !important; }
+    .detail-wrapper { display: flex; justify-content: center; padding: 32px 16px 64px; }
+    .detail-card {
+        background: #fff; border: 1.5px solid #ef9a9a; border-radius: 14px;
+        width: 100%; max-width: 780px;
+        box-shadow: 0 6px 32px rgba(198,40,40,.08); overflow: hidden;
+    }
+    .detail-header {
+        background: #fff; border-bottom: 1.5px solid #fce4ec; padding: 28px 36px 24px;
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    }
+    .detail-header-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+    .detail-icon-wrap {
+        width: 56px; height: 56px; border-radius: 50%; background: #fce4ec;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .detail-icon-wrap i { font-size: 28px; color: #c62828; }
+    .detail-title-block { min-width: 0; }
+    .detail-file-id { font-size: 1.35rem; font-weight: 800; color: #1a1a1a; margin: 0 0 6px; }
+    .detail-file-id span { color: #c62828; }
+    .detail-desc-preview {
+        font-size: 0.88rem; color: #666; margin: 0;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px;
+    }
+    .back-link {
+        display: inline-flex; align-items: center; gap: 4px;
+        color: #c62828; font-size: 0.83rem; font-weight: 600;
+        text-decoration: none; white-space: nowrap; flex-shrink: 0;
+        padding: 6px 12px; border: 1.5px solid #ef9a9a; border-radius: 8px;
+        transition: background .15s, border-color .15s;
+    }
+    .back-link i { font-size: 16px; }
+    .back-link:hover { background: #fce4ec; border-color: #c62828; color: #c62828; }
+    .detail-body { padding: 28px 36px 36px; }
+    .detail-section { margin-bottom: 28px; }
+    .detail-section:last-child { margin-bottom: 0; }
+    .section-title {
+        font-size: 0.72rem; font-weight: 800; letter-spacing: 1.2px;
+        text-transform: uppercase; color: #c62828; margin: 0 0 14px; padding-bottom: 6px;
+        border-bottom: 1.5px solid #fce4ec; display: flex; align-items: center; gap: 6px;
+    }
+    .section-title i { font-size: 15px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
+    .field-item { display: flex; flex-direction: column; gap: 3px; }
+    .field-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #aaa; }
+    .field-value { font-size: 0.9rem; color: #2e2e2e; word-break: break-word; }
+    .field-value.mono { font-family: monospace; font-size: 0.85rem; color: #555; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; }
+    .badge-available { background: #e8f5e9; color: #2e7d32; }
+    .badge-on-loan   { background: #e3f2fd; color: #1565c0; }
+    .badge-other     { background: #f5f5f5; color: #757575; }
+    .type-chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+    .chip-student { background: #fce4ec; color: #c62828; }
+    .chip-staff   { background: #e8eaf6; color: #283593; }
+    .chip-other   { background: #f5f5f5; color: #616161; }
+    .info-box {
+        display: flex; align-items: flex-start; gap: 10px;
+        background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px;
+        padding: 12px 16px; font-size: 0.87rem; color: #1565c0;
+    }
+    .info-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .notice-box {
+        display: flex; align-items: flex-start; gap: 10px;
+        background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+        padding: 12px 16px; font-size: 0.87rem; color: #795548;
+    }
+    .notice-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    @media (max-width: 600px) {
+        .detail-header { flex-direction: column; padding: 20px 20px 18px; }
+        .detail-body   { padding: 20px 20px 28px; }
+        .field-grid    { grid-template-columns: 1fr; }
+        .detail-desc-preview { max-width: 100%; }
+    }
+</style>
+
+<div class="detail-wrapper">
+  <div class="detail-card">
+
+    <div class="detail-header">
+      <div class="detail-header-left">
+        <div class="detail-icon-wrap"><i class="material-icons">folder_open</i></div>
+        <div class="detail-title-block">
+          <p class="detail-file-id">File <span>#{{ file.fileID }}</span></p>
+          <p class="detail-desc-preview">{{ file.description or "No description provided" }}</p>
+        </div>
+      </div>
+      <a href="/files" class="back-link"><i class="material-icons">arrow_back</i>All Files</a>
+    </div>
+
+    <div class="detail-body">
+
+      <div class="detail-section">
+        <div class="section-title"><i class="material-icons">info</i>File Details</div>
+        <div class="field-grid">
+          <div class="field-item">
+            <span class="field-label">File Type</span>
+            <span class="field-value">
+              {% if file.fileType == "Student" %}<span class="type-chip chip-student">Student</span>
+              {% elif file.fileType == "Staff" %}<span class="type-chip chip-staff">Staff</span>
+              {% else %}<span class="type-chip chip-other">{{ file.fileType }}</span>{% endif %}
+            </span>
+          </div>
+          <div class="field-item">
+            <span class="field-label">Status</span>
+            <span class="field-value">
+              {% if file.status == "Available" %}<span class="status-badge badge-available">Available</span>
+              {% elif file.status == "On Loan" %}<span class="status-badge badge-on-loan">On Loan</span>
+              {% else %}<span class="status-badge badge-other">{{ file.status }}</span>{% endif %}
+            </span>
+          </div>
+          <div class="field-item">
+            <span class="field-label">Previous Designation</span>
+            <span class="field-value mono">{{ file.previousDesignation or "&mdash;" }}</span>
+          </div>
+          <div class="field-item">
+            <span class="field-label">Date Created</span>
+            <span class="field-value">
+              {% if file.dateCreated %}{{ file.dateCreated.strftime("%d %b %Y") }}{% else %}&mdash;{% endif %}
+            </span>
+          </div>
+          <div class="field-item" style="grid-column: 1 / -1;">
+            <span class="field-label">Description</span>
+            <span class="field-value">{{ file.description or "&mdash;" }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if file.fileType == "Student" %}
+        {% if file.student_record %}
+        <div class="detail-section">
+          <div class="section-title"><i class="material-icons">school</i>Student Record</div>
+          <div class="field-grid">
+            <div class="field-item">
+              <span class="field-label">Student ID / Code</span>
+              <span class="field-value mono">{{ file.student_record.code or "&mdash;" }}</span>
+            </div>
+            <div class="field-item">
+              <span class="field-label">Certificate / Diploma</span>
+              <span class="field-value">{{ file.student_record.certificateDiploma or "&mdash;" }}</span>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="detail-section">
+          <div class="section-title"><i class="material-icons">school</i>Student Record</div>
+          <div class="notice-box"><i class="material-icons">info</i>No student record linked to this file.</div>
+        </div>
+        {% endif %}
+      {% elif file.fileType == "Staff" %}
+        {% if file.staff_record %}
+        <div class="detail-section">
+          <div class="section-title"><i class="material-icons">badge</i>Staff Record</div>
+          <div class="field-grid">
+            <div class="field-item">
+              <span class="field-label">File Number</span>
+              <span class="field-value mono">{{ file.staff_record.fileNumber or "&mdash;" }}</span>
+            </div>
+            <div class="field-item">
+              <span class="field-label">File Title</span>
+              <span class="field-value">{{ file.staff_record.fileTitle or "&mdash;" }}</span>
+            </div>
+            <div class="field-item">
+              <span class="field-label">Post</span>
+              <span class="field-value">{{ file.staff_record.post or "&mdash;" }}</span>
+            </div>
+            <div class="field-item">
+              <span class="field-label">Organisation Unit</span>
+              <span class="field-value">{{ file.staff_record.organisationUnit or "&mdash;" }}</span>
+            </div>
+            {% if file.staff_record.notes %}
+            <div class="field-item" style="grid-column: 1 / -1;">
+              <span class="field-label">Notes</span>
+              <span class="field-value">{{ file.staff_record.notes }}</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <div class="detail-section">
+          <div class="section-title"><i class="material-icons">badge</i>Staff Record</div>
+          <div class="notice-box"><i class="material-icons">info</i>No staff record linked to this file.</div>
+        </div>
+        {% endif %}
+      {% endif %}
+
+      <div class="detail-section">
+        <div class="section-title"><i class="material-icons">inventory_2</i>Storage</div>
+        {% if file.box %}
+        <div class="field-grid">
+          <div class="field-item">
+            <span class="field-label">Box ID</span>
+            <span class="field-value mono">#{{ file.box.boxID }}</span>
+          </div>
+          <div class="field-item">
+            <span class="field-label">Barcode</span>
+            <span class="field-value mono">{{ file.box.barcode or "&mdash;" }}</span>
+          </div>
+          <div class="field-item">
+            <span class="field-label">Bay / Row / Column</span>
+            <span class="field-value">{{ file.box.bayNo }} / {{ file.box.rowNo }} / {{ file.box.columnNo }}</span>
+          </div>
+          <div class="field-item">
+            <span class="field-label">Location</span>
+            <span class="field-value">{% if file.box.location %}{{ file.box.location.geoLocation }}{% else %}&mdash;{% endif %}</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="notice-box"><i class="material-icons">info</i>No box assigned to this file.</div>
+        {% endif %}
+      </div>
+
+      {% if file.loanID %}
+      <div class="detail-section">
+        <div class="section-title"><i class="material-icons">swap_horiz</i>Current Loan</div>
+        <div class="info-box">
+          <i class="material-icons">swap_horiz</i>
+          This file is currently on loan (Loan #{{ file.loanID }}).
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

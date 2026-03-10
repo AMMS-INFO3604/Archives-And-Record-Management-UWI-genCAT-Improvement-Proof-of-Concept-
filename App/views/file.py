@@ -108,6 +108,16 @@ def view_file(fileID):
     ), 200
 
 
+@file_views.route("/files/<int:fileID>/detail", methods=["GET"])
+@jwt_required()
+def file_detail_page(fileID):
+    file = viewFile(fileID)
+    if not file:
+        flash(f"File {fileID} not found.", "error")
+        return redirect(url_for("file_views.get_files_page"))
+    return render_template("file_detail.html", file=file)
+
+
 @file_views.route("/files", methods=["GET"])
 @jwt_required()
 def get_files_page():
