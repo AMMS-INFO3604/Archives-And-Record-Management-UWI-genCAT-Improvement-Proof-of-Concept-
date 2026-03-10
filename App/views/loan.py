@@ -68,6 +68,93 @@ def get_loans_page():
 
 
 # ---------------------------------------------------------------------------
+# HTML – Create (form POST)
+# ---------------------------------------------------------------------------
+
+
+@loan_views.route("/loans", methods=["POST"])
+@jwt_required()
+def create_loan_page():
+    """Handle the loan creation form submitted from the loans list page.
+
+    Expected form fields:
+        patronID              (required)  – integer patron ID
+        processedByStaffUserID (optional) – integer staff user ID
+        fileIDs               (optional)  – comma-separated file IDs to check
+                                            out immediately (e.g. "1,3,7")
+    """
+    patron_id_raw = request.form.get("patronID", "").strip()
+    staff_id_raw = request.form.get("processedByStaffUserID", "").strip()
+    file_ids_raw = request.form.get("fileIDs", "").strip()
+
+    # --- Validate patronID ---------------------------------------------------
+    if not patron_id_raw:
+        flash("Patron ID is required to create a loan.", "error")
+        return redirect(url_for("loan_views.get_loans_page"))
+
+    try:
+        patron_id = int(patron_id_raw)
+    except ValueError:
+        flash("Patron ID must be a whole number.", "error")
+        return redirect(url_for("loan_views.get_loans_page"))
+
+    # --- Parse optional staff ID --------------------------------------------
+    processed_by = None
+    if staff_id_raw:
+        try:
+            processed_by = int(staff_id_raw)
+        except ValueError:
+            flash("Staff User ID must be a whole number.", "error")
+            return redirect(url_for("loan_views.get_loans_page"))
+
+    # --- Parse optional file IDs and route to the right controller ----------
+    if file_ids_raw:
+        raw_parts = [p.strip() for p in file_ids_raw.split(",") if p.strip()]
+        try:
+            file_ids = [int(p) for p in raw_parts]
+        except ValueError:
+            flash(
+                "File IDs must be comma-separated whole numbers (e.g. 1,3,7).", "error"
+            )
+            return redirect(url_for("loan_views.get_loans_page"))
+
+        loan = checkout_files(
+            patronID=patron_id,
+            file_ids=file_ids,
+            processedByStaffUserID=processed_by,
+        )
+        if not loan:
+            flash(
+                "Checkout failed. Check that the patron exists, all file IDs are "
+                "valid, and every file has status 'Available'.",
+                "error",
+            )
+            return redirect(url_for("loan_views.get_loans_page"))
+
+        flash(
+            f"Loan #{loan.loanID} created – "
+            f"{len(loan.files)} file{'s' if len(loan.files) != 1 else ''} checked out.",
+            "success",
+        )
+    else:
+        loan = create_loan(
+            patronID=patron_id,
+            processedByStaffUserID=processed_by,
+        )
+        if not loan:
+            flash(
+                "Failed to create loan. Check that the patron ID (and staff ID, "
+                "if provided) are valid.",
+                "error",
+            )
+            return redirect(url_for("loan_views.get_loans_page"))
+
+        flash(f"Loan #{loan.loanID} created successfully.", "success")
+
+    return redirect(url_for("loan_views.loan_detail_page", loanID=loan.loanID))
+
+
+# ---------------------------------------------------------------------------
 # HTML – Detail
 # ---------------------------------------------------------------------------
 
