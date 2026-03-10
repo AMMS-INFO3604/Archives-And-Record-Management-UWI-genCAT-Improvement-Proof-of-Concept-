@@ -931,6 +931,90 @@ def test_api_get_loans_by_patron_not_found(client, auth_token):
 # ------------------------------------------------------------------
 
 
+# ------------------------------------------------------------------
+# Loaned (active checkout dashboard) HTML page
+# ------------------------------------------------------------------
+
+
+def test_get_loaned_page_requires_auth(test_app):
+    """GET /loaned without a JWT should return 401 (uses a fresh cookieless client)."""
+    with test_app.test_client() as fresh_client:
+        resp = fresh_client.get("/loaned")
+        assert resp.status_code == 401
+
+
+def test_get_loaned_page_authenticated(client, auth_token):
+    """GET /loaned with a valid JWT should render 200 HTML."""
+    resp = client.get("/loaned", headers=_auth_headers(auth_token))
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert "Active Checkouts" in body
+
+
+def test_get_loaned_page_contains_table_headings(client, auth_token):
+    """The loaned page should include the expected column headings."""
+    resp = client.get("/loaned", headers=_auth_headers(auth_token))
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert "Loan" in body
+    assert "Patron" in body
+    assert "Loan Date" in body
+    assert "Actions" in body
+
+
+def test_get_loaned_page_shows_active_loans(client, auth_token):
+    """When active loans exist the table body should reference their IDs."""
+    patron = _get_patron()
+    box = _get_box()
+    file = addFile(boxID=box.boxID, fileType="Student", description="loaned page file")
+    loan = checkout_files(patronID=patron.patronID, file_ids=[file.fileID])
+
+    resp = client.get("/loaned", headers=_auth_headers(auth_token))
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    # The loan ID must appear somewhere in the rendered table
+    assert f"#{loan.loanID}" in body
+
+
+def test_get_loaned_page_empty_state_when_no_active_loans(client, auth_token):
+    """When all loans are returned the empty-state message should be shown."""
+    # Return every active loan so the table is empty
+    active = get_active_loans()
+    for loan in active:
+        return_loan(loan.loanID)
+
+    resp = client.get("/loaned", headers=_auth_headers(auth_token))
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert "No Active Checkouts" in body
+
+
+def test_get_loaned_page_checkin_button_present(client, auth_token):
+    """Each active loan row should contain a Check In button."""
+    patron = _get_patron()
+    box = _get_box()
+    file = addFile(boxID=box.boxID, fileType="Student", description="checkin btn test")
+    checkout_files(patronID=patron.patronID, file_ids=[file.fileID])
+
+    resp = client.get("/loaned", headers=_auth_headers(auth_token))
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert "Check In" in body
+
+
+def test_get_loaned_page_links_to_loan_history(client, auth_token):
+    """The page should contain a link back to the full loan history (/loans)."""
+    resp = client.get("/loaned", headers=_auth_headers(auth_token))
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert 'href="/loans"' in body
+
+
+# ------------------------------------------------------------------
+# Boxes page (keep existing tests below)
+# ------------------------------------------------------------------
+
+
 def test_get_boxes_page_requires_auth(test_app):
     """GET /boxes without a JWT should return 401 (uses a fresh cookieless client)."""
     with test_app.test_client() as fresh_client:

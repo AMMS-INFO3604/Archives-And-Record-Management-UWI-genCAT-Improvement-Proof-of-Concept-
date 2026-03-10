@@ -685,12 +685,25 @@ st_returned = 'selected' if status_filter == 'returned' else '' %}
                 }} {% if status_filter or patron_id %}matching filters{% endif
                 %}
             </span>
-            <button
-                class="btn-new-loan modal-trigger"
-                data-target="new-loan-modal"
-            >
-                <i class="material-icons">add</i>New Loan
-            </button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                <a
+                    href="/loaned"
+                    class="btn-new-loan"
+                    style="
+                        background: #e65100;
+                        box-shadow: 0 2px 8px rgba(230, 81, 0, 0.18);
+                    "
+                >
+                    <i class="material-icons">pending_actions</i>Active
+                    Checkouts
+                </a>
+                <button
+                    class="btn-new-loan modal-trigger"
+                    data-target="new-loan-modal"
+                >
+                    <i class="material-icons">add</i>New Loan
+                </button>
+            </div>
         </div>
     </div>
 </div>

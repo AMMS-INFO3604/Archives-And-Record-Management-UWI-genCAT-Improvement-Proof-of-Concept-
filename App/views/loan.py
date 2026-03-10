@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import (
     Blueprint,
     flash,
@@ -237,6 +239,25 @@ def checkin_loan_page(loanID):
         "success",
     )
     return redirect(url_for("loan_views.loan_detail_page", loanID=loanID))
+
+
+# ---------------------------------------------------------------------------
+# HTML – Active checkout dashboard
+# ---------------------------------------------------------------------------
+
+
+@loan_views.route("/loaned", methods=["GET"])
+@jwt_required()
+def get_loaned_page():
+    """Render the active-checkout dashboard.
+
+    Shows every loan that has not yet been returned, one row per loan, with
+    the files currently attached, patron info, loan date, and a per-row
+    Check In button.  ``now`` is passed so the template can compute how many
+    days each loan has been outstanding without a custom Jinja filter.
+    """
+    loans = get_active_loans()
+    return render_template("loaned.html", loans=loans, now=datetime.utcnow())
 
 
 # ---------------------------------------------------------------------------
