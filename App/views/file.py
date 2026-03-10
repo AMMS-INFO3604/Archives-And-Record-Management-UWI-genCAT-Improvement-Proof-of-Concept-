@@ -110,6 +110,24 @@ def view_file(fileID):
 
 @file_views.route("/files", methods=["GET"])
 @jwt_required()
+def get_files_page():
+    keyword = request.args.get("keyword", "").strip() or None
+    fileType = request.args.get("fileType", "").strip() or None
+    status = request.args.get("status", "").strip() or None
+
+    files = searchFile(keyword=keyword, fileType=fileType, status=status)
+
+    return render_template(
+        "files.html",
+        files=files,
+        keyword=keyword or "",
+        fileType=fileType or "",
+        status=status or "",
+    )
+
+
+@file_views.route("/api/files", methods=["GET"])
+@jwt_required()
 def get_all_files():
     files = getAllFiles()
     if not files:
@@ -129,7 +147,7 @@ def get_all_files():
     ), 200
 
 
-@file_views.route("/files/search", methods=["GET"])
+@file_views.route("/api/files/search", methods=["GET"])
 @jwt_required()
 def search_file():
     fileID = request.args.get("fileID")
@@ -137,6 +155,7 @@ def search_file():
     locationID = request.args.get("locationID")
     loanID = request.args.get("loanID")
     status = request.args.get("status")
+    keyword = request.args.get("keyword")
 
     files = searchFile(
         fileID=fileID,
@@ -144,6 +163,7 @@ def search_file():
         locationID=locationID,
         loanID=loanID,
         status=status,
+        keyword=keyword,
     )
     if not files:
         return jsonify({"message": "No files found"}), 404
