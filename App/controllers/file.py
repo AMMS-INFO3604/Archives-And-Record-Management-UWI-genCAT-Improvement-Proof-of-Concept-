@@ -78,7 +78,9 @@ def updateFile(
         return None  # Handle the error as needed
 
 
-def searchFile(fileID=None, fileType=None, locationID=None, loanID=None, status=None):
+def searchFile(
+    fileID=None, fileType=None, locationID=None, loanID=None, status=None, keyword=None
+):
     query = File.query
 
     if fileID is not None:
@@ -91,6 +93,14 @@ def searchFile(fileID=None, fileType=None, locationID=None, loanID=None, status=
         query = query.filter_by(loanID=loanID)
     if status is not None:
         query = query.filter_by(status=status)
+    if keyword is not None:
+        pattern = f"%{keyword}%"
+        query = query.filter(
+            db.or_(
+                File.description.ilike(pattern),
+                File.previousDesignation.ilike(pattern),
+            )
+        )
 
     return query.all()
 
