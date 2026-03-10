@@ -2,17 +2,18 @@
 {% block title %}File Records{% endblock %}
 
 {% block content %}
+{% set ft_student = 'selected' if fileType == 'Student' else '' %}
+{% set ft_staff   = 'selected' if fileType == 'Staff'   else '' %}
+{% set st_avail   = 'selected' if status   == 'Available' else '' %}
+{% set st_loan    = 'selected' if status   == 'On Loan'   else '' %}
 <style>
     body { background-color: #fce4ec !important; }
-
     .portal-wrapper { display: flex; justify-content: center; padding: 32px 16px 64px; }
     .portal-card {
         background: #fff; border: 1.5px solid #ef9a9a; border-radius: 14px;
-        width: 100%; max-width: 1060px;
+        width: 100%; max-width: 1100px;
         box-shadow: 0 6px 32px rgba(198,40,40,.08); overflow: hidden;
     }
-
-    /* Header */
     .portal-header { background: #fff; border-bottom: 1.5px solid #fce4ec; padding: 36px 40px 28px; text-align: center; }
     .portal-icon-wrap {
         width: 72px; height: 72px; border-radius: 50%; background: #fce4ec;
@@ -23,11 +24,7 @@
         font-size: 1.55rem; font-weight: 800; letter-spacing: 1.5px;
         text-transform: uppercase; color: #1a1a1a; margin: 0 0 10px; line-height: 1.25;
     }
-
-    /* Body */
     .portal-body { padding: 28px 40px 36px; }
-
-    /* Filter row */
     .filter-form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
     .search-wrap { position: relative; flex: 1 1 200px; min-width: 160px; }
     .search-wrap input[type="text"] {
@@ -69,8 +66,6 @@
     }
     .btn-clear i { font-size: 17px; }
     .btn-clear:hover { background: #fce4ec; border-color: #c62828; color: #c62828; }
-
-    /* Active filter pills */
     .active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
     .filter-pill {
         display: inline-flex; align-items: center; gap: 4px;
@@ -78,8 +73,6 @@
         padding: 3px 10px; font-size: 0.78rem; color: #c62828; font-weight: 600;
     }
     .filter-pill i { font-size: 13px; }
-
-    /* Results table */
     .files-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
     .files-table thead tr { background: #fce4ec; border-bottom: 2px solid #ef9a9a; }
     .files-table thead th {
@@ -87,7 +80,7 @@
         letter-spacing: 0.8px; text-transform: uppercase;
         color: #c62828; text-align: left; white-space: nowrap;
     }
-    .files-table tbody tr { border-bottom: 1px solid #fce4ec; transition: background .12s; }
+    .files-table tbody tr { border-bottom: 1px solid #fce4ec; transition: background .12s; cursor: pointer; }
     .files-table tbody tr:last-child { border-bottom: none; }
     .files-table tbody tr:hover { background: #fff9f9; }
     .files-table td { padding: 11px 14px; color: #333; vertical-align: middle; }
@@ -95,8 +88,6 @@
     .files-table td.cell-desc  { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .files-table td.cell-desig { font-family: monospace; font-size: 0.82rem; color: #666; white-space: nowrap; }
     .files-table td.cell-date  { white-space: nowrap; color: #777; font-size: 0.82rem; }
-
-    /* Status badges */
     .status-badge {
         display: inline-block; padding: 3px 10px; border-radius: 20px;
         font-size: 0.75rem; font-weight: 700; letter-spacing: 0.4px; white-space: nowrap;
@@ -104,26 +95,28 @@
     .badge-available { background: #e8f5e9; color: #2e7d32; }
     .badge-on-loan   { background: #e3f2fd; color: #1565c0; }
     .badge-other     { background: #f5f5f5; color: #757575; }
-
-    /* Type chips */
     .type-chip { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 0.76rem; font-weight: 600; }
     .chip-student { background: #fce4ec; color: #c62828; }
     .chip-staff   { background: #e8eaf6; color: #283593; }
     .chip-other   { background: #f5f5f5; color: #616161; }
-
-    /* Empty state */
+    .detail-link {
+        display: inline-flex; align-items: center; gap: 2px;
+        color: #c62828; font-size: 0.79rem; font-weight: 600;
+        text-decoration: none; padding: 3px 8px;
+        border: 1.5px solid #ef9a9a; border-radius: 6px;
+        transition: background .12s; white-space: nowrap;
+    }
+    .detail-link i { font-size: 14px; }
+    .detail-link:hover { background: #fce4ec; border-color: #c62828; color: #c62828; }
     .empty-state { text-align: center; padding: 48px 20px; color: #bbb; }
     .empty-state i { font-size: 52px; color: #ffcdd2; }
     .empty-state p { margin-top: 12px; font-size: 0.95rem; }
-
-    /* Footer */
     .portal-footer {
         display: flex; align-items: center; justify-content: space-between;
         border-top: 1.5px solid #fce4ec; padding: 14px 40px;
         background: #fff9f9; flex-wrap: wrap; gap: 10px;
     }
     .count-lbl { font-size: 0.85rem; color: #888; }
-
     @media (max-width: 640px) {
         .portal-header { padding: 24px 20px 20px; }
         .portal-body   { padding: 20px 20px 28px; }
@@ -137,16 +130,13 @@
 <div class="portal-wrapper">
   <div class="portal-card">
 
-    <!-- Header -->
     <div class="portal-header">
       <div class="portal-icon-wrap"><i class="material-icons">folder_open</i></div>
       <div class="portal-sys-title">File Records</div>
     </div>
 
-    <!-- Body -->
     <div class="portal-body">
 
-      <!-- Filter form -->
       <form method="GET" action="/files" class="filter-form">
         <div class="search-wrap">
           <i class="material-icons s-icon">search</i>
@@ -156,14 +146,14 @@
 
         <select name="fileType" class="filter-select">
           <option value="">All Types</option>
-          <option value="Student" {% if fileType == "Student" %}selected{% endif %}>Student</option>
-          <option value="Staff"   {% if fileType == "Staff"   %}selected{% endif %}>Staff</option>
+          <option value="Student" {{ ft_student }}>Student</option>
+          <option value="Staff"   {{ ft_staff   }}>Staff</option>
         </select>
 
         <select name="status" class="filter-select">
           <option value="">All Statuses</option>
-          <option value="Available" {% if status == "Available" %}selected{% endif %}>Available</option>
-          <option value="On Loan"   {% if status == "On Loan"   %}selected{% endif %}>On Loan</option>
+          <option value="Available" {{ st_avail }}>Available</option>
+          <option value="On Loan"   {{ st_loan  }}>On Loan</option>
         </select>
 
         <button type="submit" class="btn-filter waves-effect">
@@ -175,7 +165,6 @@
         {% endif %}
       </form>
 
-      <!-- Active filter pills -->
       {% if keyword or fileType or status %}
       <div class="active-filters">
         {% if keyword %}<span class="filter-pill"><i class="material-icons">search</i>{{ keyword }}</span>{% endif %}
@@ -184,40 +173,43 @@
       </div>
       {% endif %}
 
-      <!-- Results -->
       {% if files %}
       <div style="overflow-x: auto;">
         <table class="files-table">
           <thead>
             <tr>
-              <th>ID</th><th>Type</th><th>Description</th>
-              <th>Prev. Designation</th><th>Status</th><th>Date Created</th>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Prev. Designation</th>
+              <th>Status</th>
+              <th>Date Created</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {% for file in files %}
-            <tr>
+            <tr onclick="window.location='/files/{{ file.fileID }}/detail'">
               <td class="cell-id">#{{ file.fileID }}</td>
-
               <td>
                 {% if file.fileType == "Student" %}<span class="type-chip chip-student">Student</span>
                 {% elif file.fileType == "Staff"  %}<span class="type-chip chip-staff">Staff</span>
-                {% else %}<span class="type-chip chip-other">{{ file.fileType }}</span>
-                {% endif %}
+                {% else %}<span class="type-chip chip-other">{{ file.fileType }}</span>{% endif %}
               </td>
-
               <td class="cell-desc" title="{{ file.description or '' }}">{{ file.description or '&mdash;' }}</td>
               <td class="cell-desig">{{ file.previousDesignation or '&mdash;' }}</td>
-
               <td>
                 {% if file.status == "Available" %}<span class="status-badge badge-available">Available</span>
                 {% elif file.status == "On Loan"  %}<span class="status-badge badge-on-loan">On Loan</span>
-                {% else %}<span class="status-badge badge-other">{{ file.status }}</span>
-                {% endif %}
+                {% else %}<span class="status-badge badge-other">{{ file.status }}</span>{% endif %}
               </td>
-
               <td class="cell-date">
                 {% if file.dateCreated %}{{ file.dateCreated.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
+              </td>
+              <td>
+                <a href="/files/{{ file.fileID }}/detail" class="detail-link" onclick="event.stopPropagation()">
+                  <i class="material-icons">open_in_new</i>Details
+                </a>
               </td>
             </tr>
             {% endfor %}
@@ -231,16 +223,15 @@
       </div>
       {% endif %}
 
-    </div><!-- /.portal-body -->
+    </div>
 
-    <!-- Footer -->
     <div class="portal-footer">
       <span class="count-lbl">
-        {{ files | length }} record{{ 's' if files | length != 1 else ''}}
+        {{ files | length }} record{{ 's' if files | length != 1 else '' }}
         {% if keyword or fileType or status %}matching filters{% endif %}
       </span>
     </div>
 
-  </div><!-- /.portal-card -->
-</div><!-- /.portal-wrapper -->
+  </div>
+</div>
 {% endblock %}

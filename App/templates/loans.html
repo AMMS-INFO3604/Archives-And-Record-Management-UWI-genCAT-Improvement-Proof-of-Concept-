@@ -1,0 +1,276 @@
+{% extends "layout.html" %}
+{% block title %}Loan Records{% endblock %}
+
+{% block content %}
+{% set st_all      = 'selected' if not status_filter else '' %}
+{% set st_active   = 'selected' if status_filter == 'active'   else '' %}
+{% set st_returned = 'selected' if status_filter == 'returned' else '' %}
+<style>
+    body { background-color: #fce4ec !important; }
+    .portal-wrapper { display: flex; justify-content: center; padding: 32px 16px 64px; }
+    .portal-card {
+        background: #fff; border: 1.5px solid #ef9a9a; border-radius: 14px;
+        width: 100%; max-width: 1100px;
+        box-shadow: 0 6px 32px rgba(198,40,40,.08); overflow: hidden;
+    }
+    .portal-header { background: #fff; border-bottom: 1.5px solid #fce4ec; padding: 36px 40px 28px; text-align: center; }
+    .portal-icon-wrap {
+        width: 72px; height: 72px; border-radius: 50%; background: #fce4ec;
+        display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
+    }
+    .portal-icon-wrap i { font-size: 36px; color: #c62828; }
+    .portal-sys-title {
+        font-size: 1.55rem; font-weight: 800; letter-spacing: 1.5px;
+        text-transform: uppercase; color: #1a1a1a; margin: 0 0 10px; line-height: 1.25;
+    }
+    .portal-body { padding: 28px 40px 36px; }
+    .stats-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+    .stat-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #fff9f9; border: 1.5px solid #ef9a9a; border-radius: 10px;
+        padding: 10px 18px;
+    }
+    .stat-chip i { font-size: 22px; color: #c62828; }
+    .stat-chip-body { display: flex; flex-direction: column; }
+    .stat-chip-value { font-size: 1.25rem; font-weight: 800; color: #c62828; line-height: 1; }
+    .stat-chip-label { font-size: 0.72rem; color: #888; letter-spacing: 0.4px; text-transform: uppercase; margin-top: 2px; }
+    .filter-form { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .filter-select {
+        height: 40px; border: 1.5px solid #ef9a9a; border-radius: 8px;
+        padding: 0 12px; font-size: 0.88rem; color: #333; background: #fff9f9;
+        cursor: pointer; outline: none; flex-shrink: 0;
+    }
+    .filter-select:focus { border-color: #c62828; box-shadow: 0 0 0 3px rgba(198,40,40,.08); }
+    .search-wrap { position: relative; flex: 1 1 180px; min-width: 140px; }
+    .search-wrap input[type="text"] {
+        width: 100%; height: 40px;
+        border: 1.5px solid #ef9a9a !important; border-radius: 8px !important;
+        border-bottom: 1.5px solid #ef9a9a !important;
+        padding: 0 12px 0 40px !important; font-size: 0.88rem;
+        background: #fff9f9; color: #333;
+        box-shadow: none !important; margin: 0 !important; box-sizing: border-box; outline: none;
+    }
+    .search-wrap input[type="text"]:focus {
+        border-color: #c62828 !important; box-shadow: 0 0 0 3px rgba(198,40,40,.08) !important;
+    }
+    .search-wrap .s-icon {
+        position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+        color: #e57373; font-size: 18px; pointer-events: none;
+    }
+    .btn-filter {
+        height: 40px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 16px; background: #c62828; color: #fff; border: none; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+        transition: background .15s; flex-shrink: 0; text-decoration: none;
+    }
+    .btn-filter i { font-size: 17px; }
+    .btn-filter:hover { background: #b71c1c; color: #fff; }
+    .btn-clear {
+        height: 40px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 12px; background: transparent; color: #c62828;
+        border: 1.5px solid #ef9a9a; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 600; text-decoration: none;
+        white-space: nowrap; cursor: pointer;
+        transition: background .15s, border-color .15s; flex-shrink: 0;
+    }
+    .btn-clear i { font-size: 17px; }
+    .btn-clear:hover { background: #fce4ec; border-color: #c62828; color: #c62828; }
+    .active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .filter-pill {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #fce4ec; border: 1px solid #ef9a9a; border-radius: 20px;
+        padding: 3px 10px; font-size: 0.78rem; color: #c62828; font-weight: 600;
+    }
+    .filter-pill i { font-size: 13px; }
+    .loans-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+    .loans-table thead tr { background: #fce4ec; border-bottom: 2px solid #ef9a9a; }
+    .loans-table thead th {
+        padding: 10px 14px; font-size: 0.75rem; font-weight: 700;
+        letter-spacing: 0.8px; text-transform: uppercase;
+        color: #c62828; text-align: left; white-space: nowrap;
+    }
+    .loans-table tbody tr { border-bottom: 1px solid #fce4ec; transition: background .12s; cursor: pointer; }
+    .loans-table tbody tr:last-child { border-bottom: none; }
+    .loans-table tbody tr:hover { background: #fff9f9; }
+    .loans-table td { padding: 11px 14px; color: #333; vertical-align: middle; }
+    .loans-table td.cell-id   { font-weight: 700; color: #c62828; white-space: nowrap; }
+    .loans-table td.cell-date { white-space: nowrap; color: #777; font-size: 0.82rem; }
+    .loans-table td.cell-mono { font-family: monospace; font-size: 0.83rem; color: #555; }
+    .status-badge {
+        display: inline-block; padding: 3px 10px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 700; letter-spacing: 0.4px; white-space: nowrap;
+    }
+    .badge-active   { background: #e3f2fd; color: #1565c0; }
+    .badge-returned { background: #e8f5e9; color: #2e7d32; }
+    .file-count-chip {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #fce4ec; border: 1px solid #ef9a9a; border-radius: 6px;
+        padding: 2px 8px; font-size: 0.78rem; font-weight: 600; color: #c62828;
+    }
+    .file-count-chip i { font-size: 13px; }
+    .detail-link {
+        display: inline-flex; align-items: center; gap: 2px;
+        color: #c62828; font-size: 0.82rem; font-weight: 600;
+        text-decoration: none; white-space: nowrap;
+        padding: 4px 8px; border: 1.5px solid #ef9a9a; border-radius: 6px;
+        transition: background .12s, border-color .12s;
+    }
+    .detail-link i { font-size: 15px; }
+    .detail-link:hover { background: #fce4ec; border-color: #c62828; color: #c62828; }
+    .empty-state { text-align: center; padding: 48px 20px; color: #bbb; }
+    .empty-state i { font-size: 52px; color: #ffcdd2; }
+    .empty-state p { margin-top: 12px; font-size: 0.95rem; }
+    .portal-footer {
+        display: flex; align-items: center; justify-content: space-between;
+        border-top: 1.5px solid #fce4ec; padding: 14px 40px;
+        background: #fff9f9; flex-wrap: wrap; gap: 10px;
+    }
+    .count-lbl { font-size: 0.85rem; color: #888; }
+    @media (max-width: 680px) {
+        .portal-header { padding: 24px 20px 20px; }
+        .portal-body   { padding: 20px 20px 28px; }
+        .portal-footer { padding: 12px 20px; }
+        .portal-sys-title { font-size: 1.15rem; }
+        .loans-table td.cell-date { display: none; }
+        .stat-chip { padding: 8px 12px; }
+    }
+</style>
+
+<div class="portal-wrapper">
+  <div class="portal-card">
+
+    <div class="portal-header">
+      <div class="portal-icon-wrap"><i class="material-icons">swap_horiz</i></div>
+      <div class="portal-sys-title">Loan Records</div>
+    </div>
+
+    <div class="portal-body">
+
+      <div class="stats-row">
+        <div class="stat-chip">
+          <i class="material-icons">swap_horiz</i>
+          <div class="stat-chip-body">
+            <span class="stat-chip-value">{{ loans | length }}</span>
+            <span class="stat-chip-label">Total Loans</span>
+          </div>
+        </div>
+        <div class="stat-chip">
+          <i class="material-icons">pending_actions</i>
+          <div class="stat-chip-body">
+            <span class="stat-chip-value">{{ loans | selectattr('returnDate', 'none') | list | length }}</span>
+            <span class="stat-chip-label">Active</span>
+          </div>
+        </div>
+        <div class="stat-chip">
+          <i class="material-icons">assignment_turned_in</i>
+          <div class="stat-chip-body">
+            <span class="stat-chip-value">{{ loans | rejectattr('returnDate', 'none') | list | length }}</span>
+            <span class="stat-chip-label">Returned</span>
+          </div>
+        </div>
+      </div>
+
+      <form method="GET" action="/loans" class="filter-form">
+        <select name="status" class="filter-select">
+          <option value=""         {{ st_all      }}>All Statuses</option>
+          <option value="active"   {{ st_active   }}>Active</option>
+          <option value="returned" {{ st_returned }}>Returned</option>
+        </select>
+
+        <div class="search-wrap">
+          <i class="material-icons s-icon">person</i>
+          <input type="text" name="patronID" value="{{ patron_id }}"
+                 placeholder="Filter by Patron ID...">
+        </div>
+
+        <button type="submit" class="btn-filter waves-effect">
+          <i class="material-icons">filter_list</i>Filter
+        </button>
+
+        {% if status_filter or patron_id %}
+        <a href="/loans" class="btn-clear"><i class="material-icons">close</i>Clear</a>
+        {% endif %}
+      </form>
+
+      {% if status_filter or patron_id %}
+      <div class="active-filters">
+        {% if status_filter %}<span class="filter-pill"><i class="material-icons">info</i>{{ status_filter | capitalize }}</span>{% endif %}
+        {% if patron_id %}<span class="filter-pill"><i class="material-icons">person</i>Patron #{{ patron_id }}</span>{% endif %}
+      </div>
+      {% endif %}
+
+      {% if loans %}
+      <div style="overflow-x: auto;">
+        <table class="loans-table">
+          <thead>
+            <tr>
+              <th>Loan ID</th>
+              <th>Status</th>
+              <th>Patron</th>
+              <th>Processed By</th>
+              <th>Files</th>
+              <th>Loan Date</th>
+              <th>Return Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loan in loans %}
+            <tr onclick="window.location='/loans/{{ loan.loanID }}/detail'">
+              <td class="cell-id">#{{ loan.loanID }}</td>
+              <td>
+                {% if loan.returnDate is none %}<span class="status-badge badge-active">Active</span>
+                {% else %}<span class="status-badge badge-returned">Returned</span>{% endif %}
+              </td>
+              <td class="cell-mono">
+                {% if loan.patron and loan.patron.user %}
+                  {{ loan.patron.user.username }} <span style="color:#bbb;">(#{{ loan.patronID }})</span>
+                {% else %}#{{ loan.patronID }}{% endif %}
+              </td>
+              <td class="cell-mono">
+                {% if loan.staff_user and loan.staff_user.user %}
+                  {{ loan.staff_user.user.username }} <span style="color:#bbb;">(#{{ loan.processedByStaffUserID }})</span>
+                {% elif loan.processedByStaffUserID %}#{{ loan.processedByStaffUserID }}
+                {% else %}<span style="color:#bbb;">&mdash;</span>{% endif %}
+              </td>
+              <td>
+                <span class="file-count-chip">
+                  <i class="material-icons">folder_open</i>{{ loan.files | length }}
+                </span>
+              </td>
+              <td class="cell-date">
+                {% if loan.loanDate %}{{ loan.loanDate.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
+              </td>
+              <td class="cell-date">
+                {% if loan.returnDate %}{{ loan.returnDate.strftime('%d %b %Y') }}
+                {% else %}<span style="color:#1565c0; font-weight:600;">Pending</span>{% endif %}
+              </td>
+              <td>
+                <a href="/loans/{{ loan.loanID }}/detail" class="detail-link" onclick="event.stopPropagation()">
+                  <i class="material-icons">open_in_new</i>Details
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="material-icons">swap_horiz</i>
+        <p>No loan records match your filter.</p>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <div class="portal-footer">
+      <span class="count-lbl">
+        {{ loans | length }} loan{{ 's' if loans | length != 1 else '' }}
+        {% if status_filter or patron_id %}matching filters{% endif %}
+      </span>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
