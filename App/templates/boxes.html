@@ -1,0 +1,530 @@
+{% extends "layout.html" %}
+{% block title %}Box Records{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #e3f2fd !important; }
+
+    /* ── Wrapper ────────────────────────────────────────────────────────── */
+    .boxes-wrapper {
+        max-width: 1100px;
+        margin: 32px auto;
+        padding: 0 16px 64px;
+    }
+
+    /* ── Page title ─────────────────────────────────────────────────────── */
+    .page-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .page-title i { font-size: 32px; color: #1565c0; }
+    .page-title h4 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 0.5px;
+    }
+
+    /* ── Stats row ──────────────────────────────────────────────────────── */
+    .stats-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .stat-chip {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #fff; border: 1.5px solid #90caf9; border-radius: 10px;
+        padding: 10px 18px;
+        box-shadow: 0 1px 6px rgba(21,101,192,.06);
+    }
+    .stat-chip i { font-size: 22px; color: #1565c0; }
+    .stat-chip-body { display: flex; flex-direction: column; }
+    .stat-chip-value { font-size: 1.25rem; font-weight: 800; color: #1565c0; line-height: 1; }
+    .stat-chip-label { font-size: 0.72rem; color: #888; letter-spacing: 0.4px; text-transform: uppercase; margin-top: 2px; }
+
+    /* ── Filter card ────────────────────────────────────────────────────── */
+    .filter-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(21,101,192,.08);
+        padding: 20px 24px;
+        margin-bottom: 20px;
+    }
+    .filter-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+    .filter-select {
+        height: 42px; padding: 0 12px;
+        border: 1.5px solid #90caf9; border-radius: 8px;
+        font-size: 0.88rem; color: #333; background: #f0f7ff;
+        cursor: pointer; outline: none; flex-shrink: 0;
+        transition: border-color .15s;
+        min-width: 220px;
+    }
+    .filter-select:focus { border-color: #1565c0; box-shadow: 0 0 0 3px rgba(21,101,192,.10); }
+
+    /* buttons */
+    .btn-filter {
+        height: 42px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 18px; background: #1565c0; color: #fff; border: none;
+        border-radius: 8px; font-size: 0.88rem; font-weight: 600;
+        cursor: pointer; transition: background .15s; flex-shrink: 0;
+    }
+    .btn-filter i { font-size: 18px; }
+    .btn-filter:hover { background: #0d47a1; }
+
+    .btn-clear {
+        height: 42px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 14px; background: transparent; color: #1565c0;
+        border: 1.5px solid #90caf9; border-radius: 8px;
+        font-size: 0.88rem; font-weight: 600; text-decoration: none;
+        cursor: pointer; transition: background .15s; flex-shrink: 0;
+    }
+    .btn-clear i { font-size: 18px; }
+    .btn-clear:hover { background: #e3f2fd; color: #1565c0; }
+
+    .btn-add {
+        height: 42px; display: inline-flex; align-items: center; gap: 6px;
+        padding: 0 18px; background: #1565c0; color: #fff; border: none;
+        border-radius: 8px; font-size: 0.88rem; font-weight: 700;
+        cursor: pointer; text-decoration: none;
+        transition: background .15s; flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(21,101,192,.2);
+    }
+    .btn-add i { font-size: 18px; }
+    .btn-add:hover { background: #0d47a1; color: #fff; }
+
+    /* active filter pills */
+    .active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .filter-pill {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #e3f2fd; border: 1px solid #90caf9; border-radius: 20px;
+        padding: 3px 10px; font-size: 0.78rem; color: #1565c0; font-weight: 600;
+    }
+    .filter-pill i { font-size: 13px; }
+
+    /* ── Results card ───────────────────────────────────────────────────── */
+    .results-card {
+        background: #fff; border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(21,101,192,.08); overflow: hidden;
+    }
+    .results-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 20px; border-bottom: 1.5px solid #e3f2fd;
+        flex-wrap: wrap; gap: 8px;
+    }
+    .results-count { font-size: 0.85rem; color: #888; }
+
+    /* ── Table ──────────────────────────────────────────────────────────── */
+    .boxes-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .boxes-table thead tr { background: #e3f2fd; border-bottom: 2px solid #90caf9; }
+    .boxes-table thead th {
+        padding: 11px 16px; font-size: 0.72rem; font-weight: 700;
+        letter-spacing: 0.8px; text-transform: uppercase;
+        color: #1565c0; text-align: left; white-space: nowrap;
+    }
+    .boxes-table tbody tr { border-bottom: 1px solid #e3f2fd; transition: background .12s; }
+    .boxes-table tbody tr:last-child { border-bottom: none; }
+    .boxes-table tbody tr:hover { background: #f0f7ff; }
+    .boxes-table td { padding: 12px 16px; color: #333; vertical-align: middle; }
+    .boxes-table td.col-id { font-weight: 700; color: #1565c0; white-space: nowrap; }
+    .boxes-table td.col-loc { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .boxes-table td.col-mono { font-family: monospace; font-size: 0.83rem; color: #555; white-space: nowrap; }
+    .boxes-table td.col-actions { white-space: nowrap; }
+
+    /* ── File count chip ────────────────────────────────────────────────── */
+    .file-count-chip {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #e3f2fd; border: 1px solid #90caf9; border-radius: 6px;
+        padding: 2px 8px; font-size: 0.78rem; font-weight: 600; color: #1565c0;
+    }
+    .file-count-chip i { font-size: 13px; }
+
+    /* ── Coordinates badge ──────────────────────────────────────────────── */
+    .coords-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #f0f7ff; border: 1px solid #90caf9; border-radius: 6px;
+        padding: 3px 9px; font-family: monospace; font-size: 0.8rem; color: #333;
+    }
+
+    /* ── Action buttons ─────────────────────────────────────────────────── */
+    .btn-action {
+        display: inline-flex; align-items: center; gap: 3px;
+        padding: 4px 10px; border-radius: 6px; font-size: 0.78rem;
+        font-weight: 600; cursor: pointer; text-decoration: none;
+        white-space: nowrap; transition: background .12s, border-color .12s;
+        border: 1.5px solid transparent;
+    }
+    .btn-action i { font-size: 14px; }
+
+    .btn-move {
+        color: #1565c0; border-color: #90caf9; background: transparent;
+    }
+    .btn-move:hover { background: #e3f2fd; border-color: #1565c0; color: #1565c0; }
+
+    .btn-delete {
+        color: #c62828; border-color: #ef9a9a; background: transparent;
+    }
+    .btn-delete:hover { background: #ffebee; border-color: #c62828; color: #c62828; }
+
+    /* ── Empty state ────────────────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 56px 20px; color: #bbb; }
+    .empty-state i { font-size: 56px; color: #bbdefb; }
+    .empty-state p { margin-top: 12px; font-size: 0.95rem; }
+
+    /* ── Modal shared ───────────────────────────────────────────────────── */
+    .m-modal-title {
+        display: flex; align-items: center; gap: 10px;
+        font-size: 1.05rem; font-weight: 700; color: #1565c0; margin-bottom: 20px;
+    }
+    .m-modal-title i { font-size: 22px; color: #1565c0; }
+    .m-form-group { margin-bottom: 16px; }
+    .m-form-label {
+        display: block; font-size: 0.8rem; font-weight: 700; color: #555;
+        letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 5px;
+    }
+    .m-form-input {
+        width: 100%; height: 42px;
+        border: 1.5px solid #90caf9 !important;
+        border-bottom: 1.5px solid #90caf9 !important;
+        border-radius: 8px !important;
+        padding: 0 12px !important;
+        font-size: 0.9rem; color: #333; background: #f0f7ff;
+        box-shadow: none !important; margin: 0 !important;
+        box-sizing: border-box; outline: none;
+    }
+    .m-form-input:focus {
+        border-color: #1565c0 !important;
+        box-shadow: 0 0 0 3px rgba(21,101,192,.10) !important;
+    }
+    .m-form-select {
+        width: 100%; height: 42px;
+        border: 1.5px solid #90caf9; border-radius: 8px;
+        padding: 0 12px; font-size: 0.9rem; color: #333;
+        background: #f0f7ff; cursor: pointer; outline: none;
+    }
+    .m-form-select:focus { border-color: #1565c0; box-shadow: 0 0 0 3px rgba(21,101,192,.10); }
+    .m-form-hint { font-size: 0.78rem; color: #999; margin-top: 4px; }
+    .m-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .m-btn-cancel {
+        height: 38px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 16px; background: transparent; color: #888;
+        border: 1.5px solid #ddd; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        text-decoration: none; transition: background .15s;
+    }
+    .m-btn-cancel:hover { background: #f5f5f5; color: #555; }
+
+    .m-btn-submit {
+        height: 38px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 20px; background: #1565c0; color: #fff; border: none;
+        border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+        cursor: pointer; transition: background .15s;
+    }
+    .m-btn-submit i { font-size: 17px; }
+    .m-btn-submit:hover { background: #0d47a1; }
+
+    .m-btn-danger {
+        height: 38px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 20px; background: #c62828; color: #fff; border: none;
+        border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+        cursor: pointer; transition: background .15s;
+    }
+    .m-btn-danger i { font-size: 17px; }
+    .m-btn-danger:hover { background: #b71c1c; }
+
+    .warn-box {
+        display: flex; align-items: flex-start; gap: 8px;
+        background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+        padding: 12px 14px; font-size: 0.85rem; color: #5d4037;
+        margin-bottom: 16px;
+    }
+    .warn-box i { font-size: 18px; color: #f57c00; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+        .boxes-wrapper { margin: 16px auto; }
+        .filter-card  { padding: 16px; }
+        .boxes-table td.col-loc  { display: none; }
+        .boxes-table td.col-mono { display: none; }
+        .m-grid-2 { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="boxes-wrapper">
+
+    <!-- Page title -->
+    <div class="page-title">
+        <i class="material-icons">inventory_2</i>
+        <h4>Box Records</h4>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+        <div class="stat-chip">
+            <i class="material-icons">inventory_2</i>
+            <div class="stat-chip-body">
+                <span class="stat-chip-value">{{ boxes | length }}</span>
+                <span class="stat-chip-label">Boxes</span>
+            </div>
+        </div>
+        <div class="stat-chip">
+            <i class="material-icons">folder_open</i>
+            <div class="stat-chip-body">
+                <span class="stat-chip-value">
+                    {% set total_files = namespace(count=0) %}
+                    {% for box in boxes %}{% set total_files.count = total_files.count + (box.files | length) %}{% endfor %}
+                    {{ total_files.count }}
+                </span>
+                <span class="stat-chip-label">Files in View</span>
+            </div>
+        </div>
+        <div class="stat-chip">
+            <i class="material-icons">location_on</i>
+            <div class="stat-chip-body">
+                <span class="stat-chip-value">{{ locations | length }}</span>
+                <span class="stat-chip-label">Locations</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Add card -->
+    <div class="filter-card">
+        <form method="GET" action="/boxes" class="filter-row">
+            <select name="locationID" class="filter-select">
+                <option value="">All Locations</option>
+                {% for loc in locations %}
+                <option value="{{ loc.locationID }}"
+                    {{ 'selected' if location_filter == loc.locationID | string else '' }}>
+                    {{ loc.geoLocation }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="btn-filter">
+                <i class="material-icons">filter_list</i>Filter
+            </button>
+
+            {% if location_filter %}
+            <a href="/boxes" class="btn-clear">
+                <i class="material-icons">close</i>Clear
+            </a>
+            {% endif %}
+
+            <!-- spacer pushes Add button to right -->
+            <div style="flex:1;"></div>
+
+            <button type="button" class="btn-add modal-trigger" data-target="add-box-modal">
+                <i class="material-icons">add</i>Add Box
+            </button>
+        </form>
+
+        {% if location_filter %}
+        <div class="active-filters">
+            {% for loc in locations %}
+            {% if loc.locationID | string == location_filter %}
+            <span class="filter-pill">
+                <i class="material-icons">location_on</i>{{ loc.geoLocation }}
+            </span>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Results card -->
+    <div class="results-card">
+        <div class="results-header">
+            <span class="results-count">
+                {{ boxes | length }} box{{ 'es' if boxes | length != 1 else '' }}
+                {% if location_filter %}at selected location{% endif %}
+            </span>
+        </div>
+
+        {% if boxes %}
+        <div style="overflow-x: auto;">
+            <table class="boxes-table">
+                <thead>
+                    <tr>
+                        <th>Box ID</th>
+                        <th>Coordinates</th>
+                        <th>Barcode</th>
+                        <th>Location</th>
+                        <th>Files</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for box in boxes %}
+                    <tr>
+                        <td class="col-id">#{{ box.boxID }}</td>
+                        <td>
+                            <span class="coords-badge">
+                                <i class="material-icons" style="font-size:14px;color:#90caf9;">grid_on</i>
+                                Bay&nbsp;{{ box.bayNo }}&nbsp;&middot;&nbsp;Row&nbsp;{{ box.rowNo }}&nbsp;&middot;&nbsp;Col&nbsp;{{ box.columnNo }}
+                            </span>
+                        </td>
+                        <td class="col-mono">{{ box.barcode or '&mdash;' }}</td>
+                        <td class="col-loc">
+                            {% if box.location %}
+                                <span style="display:inline-flex;align-items:center;gap:4px;">
+                                    <i class="material-icons" style="font-size:15px;color:#90caf9;">location_on</i>
+                                    {{ box.location.geoLocation }}
+                                </span>
+                            {% else %}
+                                <span style="color:#bbb;">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="file-count-chip">
+                                <i class="material-icons">folder_open</i>{{ box.files | length }}
+                            </span>
+                        </td>
+                        <td class="col-actions" style="text-align:right;">
+                            <!-- Move button (opens modal with boxID pre-set) -->
+                            <button type="button"
+                                    class="btn-action btn-move modal-trigger"
+                                    data-target="move-box-modal"
+                                    data-boxid="{{ box.boxID }}"
+                                    onclick="openMoveModal({{ box.boxID }})">
+                                <i class="material-icons">drive_file_move</i>Move
+                            </button>
+
+                            <!-- Delete (inline confirmation form) -->
+                            <form method="POST" action="/boxes/{{ box.boxID }}/delete"
+                                  style="display:inline;"
+                                  onsubmit="return confirmDelete({{ box.boxID }}, {{ box.files | length }});">
+                                <button type="submit" class="btn-action btn-delete">
+                                    <i class="material-icons">delete_outline</i>Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="material-icons">inventory_2</i>
+            <p>No boxes found{% if location_filter %} at this location{% endif %}.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div><!-- /.boxes-wrapper -->
+
+
+<!-- ══ Add Box Modal ══════════════════════════════════════════════════════ -->
+<div id="add-box-modal" class="modal" style="border-radius:14px;max-width:540px;">
+    <div class="modal-content" style="padding:28px 28px 0;">
+        <div class="m-modal-title">
+            <i class="material-icons">add_box</i>Add New Box
+        </div>
+        <form method="POST" action="/boxes" id="add-box-form">
+            <!-- Coordinates row -->
+            <div class="m-grid-2">
+                <div class="m-form-group">
+                    <label class="m-form-label" for="ab-bay">Bay No <span style="color:#c62828;">*</span></label>
+                    <input type="number" name="bayNo" id="ab-bay" class="m-form-input"
+                           placeholder="e.g. 1" min="1" required />
+                </div>
+                <div class="m-form-group">
+                    <label class="m-form-label" for="ab-row">Row No <span style="color:#c62828;">*</span></label>
+                    <input type="number" name="rowNo" id="ab-row" class="m-form-input"
+                           placeholder="e.g. 1" min="1" required />
+                </div>
+            </div>
+            <div class="m-grid-2">
+                <div class="m-form-group">
+                    <label class="m-form-label" for="ab-col">Column No <span style="color:#c62828;">*</span></label>
+                    <input type="number" name="columnNo" id="ab-col" class="m-form-input"
+                           placeholder="e.g. 1" min="1" required />
+                </div>
+                <div class="m-form-group">
+                    <label class="m-form-label" for="ab-barcode">Barcode <span style="color:#aaa;font-weight:500;text-transform:none;">(optional)</span></label>
+                    <input type="text" name="barcode" id="ab-barcode" class="m-form-input"
+                           placeholder="e.g. BOX-A-001" />
+                </div>
+            </div>
+
+            <!-- Location -->
+            <div class="m-form-group">
+                <label class="m-form-label" for="ab-location">Location <span style="color:#c62828;">*</span></label>
+                <select name="locationID" id="ab-location" class="m-form-select" required>
+                    <option value="" disabled selected>Select a location&hellip;</option>
+                    {% for loc in locations %}
+                    <option value="{{ loc.locationID }}">{{ loc.geoLocation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer"
+         style="padding:12px 28px 20px;display:flex;justify-content:flex-end;gap:10px;border-top:1.5px solid #e3f2fd;">
+        <a href="#!" class="m-btn-cancel modal-close">Cancel</a>
+        <button type="submit" form="add-box-form" class="m-btn-submit">
+            <i class="material-icons">check</i>Add Box
+        </button>
+    </div>
+</div>
+
+
+<!-- ══ Move Box Modal ═════════════════════════════════════════════════════ -->
+<div id="move-box-modal" class="modal" style="border-radius:14px;max-width:460px;">
+    <div class="modal-content" style="padding:28px 28px 0;">
+        <div class="m-modal-title">
+            <i class="material-icons">drive_file_move</i>Move Box
+        </div>
+        <div class="warn-box">
+            <i class="material-icons">warning_amber</i>
+            <span>Moving a box relocates it and all its files to the new physical location.</span>
+        </div>
+        <form id="move-box-form" method="POST" action="">
+            <div class="m-form-group">
+                <label class="m-form-label" for="mb-location">New Location <span style="color:#c62828;">*</span></label>
+                <select name="newLocationID" id="mb-location" class="m-form-select" required>
+                    <option value="" disabled selected>Select a location&hellip;</option>
+                    {% for loc in locations %}
+                    <option value="{{ loc.locationID }}">{{ loc.geoLocation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <p class="m-form-hint" style="margin-top:-8px;">
+                Moving Box <strong id="mb-box-label">&mdash;</strong>
+            </p>
+        </form>
+    </div>
+    <div class="modal-footer"
+         style="padding:12px 28px 20px;display:flex;justify-content:flex-end;gap:10px;border-top:1.5px solid #e3f2fd;">
+        <a href="#!" class="m-btn-cancel modal-close">Cancel</a>
+        <button type="submit" form="move-box-form" class="m-btn-submit">
+            <i class="material-icons">drive_file_move</i>Move
+        </button>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
+    });
+
+    function openMoveModal(boxID) {
+        document.getElementById('move-box-form').action = '/boxes/' + boxID + '/move';
+        document.getElementById('mb-box-label').textContent = '#' + boxID;
+        // reset selection
+        document.getElementById('mb-location').selectedIndex = 0;
+    }
+
+    function confirmDelete(boxID, fileCount) {
+        if (fileCount > 0) {
+            return confirm(
+                'Box #' + boxID + ' contains ' + fileCount +
+                ' file' + (fileCount === 1 ? '' : 's') + '.\n\n' +
+                'Deleting this box will also remove all associated file records.\n' +
+                'Are you sure you want to continue?'
+            );
+        }
+        return confirm('Delete Box #' + boxID + '? This action cannot be undone.');
+    }
+</script>
+{% endblock %}

@@ -1,30 +1,35 @@
-from App.models import Box, User, Location, File
 from App.database import db
+from App.models import Box, Location
 
-def addBox(bayNo=None, rowNo=None, columnNo=None, barcode=None,locationID=None):
+
+def addBox(bayNo=None, rowNo=None, columnNo=None, barcode=None, locationID=None):
     newbox = Box(
         bayNo=bayNo,
         rowNo=rowNo,
         columnNo=columnNo,
         barcode=barcode,
-        locationID=locationID
-           
+        locationID=locationID,
     )
-    
+
     try:
         db.session.add(newbox)
         db.session.commit()
         return newbox
     except Exception as e:
         db.session.rollback()
-        return None # Handle the error as needed 
-        
-def updateBox(boxID, bayNo=None, rowNo=None, columnNo=None, barcode=None, locationID=None):
-    box = Box.query.get(boxID)
-    
+        print(f"Error occurred while adding box: {e}")
+        return None
+
+
+def updateBox(
+    boxID, bayNo=None, rowNo=None, columnNo=None, barcode=None, locationID=None
+):
+    box = db.session.get(Box, boxID)
+
     if not box:
-        return None # Box is not found
-    
+        print(f"Box with ID {boxID} was not found.")
+        return None
+
     if bayNo is not None:
         box.bayNo = bayNo
     if rowNo is not None:
@@ -35,39 +40,50 @@ def updateBox(boxID, bayNo=None, rowNo=None, columnNo=None, barcode=None, locati
         box.barcode = barcode
     if locationID is not None:
         box.locationID = locationID
-        
+
     try:
         db.session.commit()
         return box
     except Exception as e:
         db.session.rollback()
         print(f"Error occurred while updating box with ID {boxID}: {e}")
-        return None # Handle the error as needed
+        return None
+
 
 def moveBoxLocation(boxID, newLocationID):
-    box = Box.query.get(boxID)
-    
-    if not box: 
-        return None # Bos was not found
-    
+    box = db.session.get(Box, boxID)
+
+    if not box:
+        print(f"Box with ID {boxID} was not found.")
+        return None
+
+    location = db.session.get(Location, newLocationID)
+    if not location:
+        print(f"Location with ID {newLocationID} was not found.")
+        return None
+
     box.locationID = newLocationID
-    
+
     try:
         db.session.commit()
         print(f"Box with ID {boxID} was moved to location with ID {newLocationID}")
         return box
     except Exception as e:
         db.session.rollback()
-        print(f"Error occurred while moving box with ID {boxID} to location with ID {newLocationID}: {e}")
-        return None # Handle the error as needed
+        print(
+            f"Error occurred while moving box with ID {boxID} "
+            f"to location with ID {newLocationID}: {e}"
+        )
+        return None
+
 
 def deleteBox(boxID):
-    box = Box.query.get(boxID)
-    
+    box = db.session.get(Box, boxID)
+
     if not box:
         print(f"Box with ID {boxID} was not found.")
-        return False # Box was not found
-    
+        return False
+
     try:
         db.session.delete(box)
         db.session.commit()
@@ -76,26 +92,49 @@ def deleteBox(boxID):
     except Exception as e:
         db.session.rollback()
         print(f"Error occurred while deleting box with ID {boxID}: {e}")
-        return False # Handle the error as needed
-    
-def getBoxByID(boxID):
-    box = Box.query.get(boxID)
-    
-    if not box:
-     print(f"Box with ID {boxID} was not found.")
-     return None # Box was not found
-  
-    return box 
+        return False
 
-    
+
+def getBoxByID(boxID):
+    box = db.session.get(Box, boxID)
+
+    if not box:
+        print(f"Box with ID {boxID} was not found.")
+        return None
+
+    return box
+
 
 def getAllBoxes():
-    return Box.query.all()
+    return db.session.scalars(db.select(Box)).all()
+
+
+def getBoxJSON(box):
+    """Return a plain dict representation of a Box instance."""
+    return {
+        "boxID": box.boxID,
+        "bayNo": box.bayNo,
+        "rowNo": box.rowNo,
+        "columnNo": box.columnNo,
+        "barcode": box.barcode,
+        "locationID": box.locationID,
+        "fileCount": len(box.files),
+    }
+
+
+def getAllBoxesJSON():
+    return [getBoxJSON(b) for b in getAllBoxes()]
+
 
 def searchBoxesByLocation(locationID):
-    box = Box.query.filter(Box.locationID == locationID).all()
-    
-    if not box:
+    boxes = db.session.scalars(db.select(Box).where(Box.locationID == locationID)).all()
+
+    if not boxes:
         print(f"No boxes found for location with ID {locationID}.")
-        return None # No boxes found for the given location
-    return box
+        return []
+
+    return boxes
+
+
+def searchBoxesByLocationJSON(locationID):
+    return [getBoxJSON(b) for b in searchBoxesByLocation(locationID)]

@@ -30,6 +30,7 @@ from App.controllers.loan import (
     return_loan,
     update_loan,
 )
+from App.controllers.patron import get_all_patrons
 
 loan_views = Blueprint("loan_views", __name__, template_folder="templates")
 
@@ -59,11 +60,14 @@ def get_loans_page():
     else:
         loans = get_all_loans()
 
+    patrons = get_all_patrons()
+
     return render_template(
         "loans.html",
         loans=loans,
         status_filter=status_filter,
         patron_id=patron_id,
+        patrons=patrons,
     )
 
 
