@@ -1,4 +1,5 @@
-from App.models.box import Box, Location, File
+from App.models.box import Box
+from App.models.location import Location from App.models.file import File
 from App.database import db
 
 def addBox(bayNo=None, rowNo=None, columnNo=None, barcode=None,locationID=None):
