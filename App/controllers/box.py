@@ -1,7 +1,5 @@
 from App.models.box import Box
-from App.models.user import User
-from App.models.location import Location
-from App.models.file import File
+from App.models.location import Location from App.models.file import File
 from App.database import db
 
 def addBox(bayNo=None, rowNo=None, columnNo=None, barcode=None,locationID=None):
@@ -23,7 +21,7 @@ def addBox(bayNo=None, rowNo=None, columnNo=None, barcode=None,locationID=None):
         return None # Handle the error as needed 
         
 def updateBox(boxID, bayNo=None, rowNo=None, columnNo=None, barcode=None, locationID=None):
-    box = Box.query.get(boxID)
+    box = db.session.get(Box, boxID)
     
     if not box:
         return None # Box is not found
@@ -48,7 +46,7 @@ def updateBox(boxID, bayNo=None, rowNo=None, columnNo=None, barcode=None, locati
         return None # Handle the error as needed
 
 def moveBoxLocation(boxID, newLocationID):
-    box = Box.query.get(boxID)
+    box = db.session.get(Box, boxID)
     
     if not box: 
         return None # Bos was not found
@@ -65,7 +63,7 @@ def moveBoxLocation(boxID, newLocationID):
         return None # Handle the error as needed
 
 def deleteBox(boxID):
-    box = Box.query.get(boxID)
+    box = db.session.get(Box, boxID)
     
     if not box:
         print(f"Box with ID {boxID} was not found.")
@@ -82,7 +80,7 @@ def deleteBox(boxID):
         return False # Handle the error as needed
     
 def getBoxByID(boxID):
-    box = Box.query.get(boxID)
+    box = db.session.get(Box, boxID)
     
     if not box:
      print(f"Box with ID {boxID} was not found.")
@@ -96,9 +94,19 @@ def getAllBoxes():
     return Box.query.all()
 
 def searchBoxesByLocation(locationID):
-    box = Box.query.filter(Box.locationID == locationID).all()
-    
-    if not box:
-        print(f"No boxes found for location with ID {locationID}.")
-        return None # No boxes found for the given location
-    return box
+    boxes = Box.query.filter(Box.locationID == locationID).all()
+    return boxes if boxes else None
+
+def searchBoxesByBarcode(keyword):
+    return db.session.scalars(
+        db.select(Box).where(Box.barcode.ilike(f"%{keyword}%"))
+    ).all()
+
+
+
+
+
+
+
+
+
