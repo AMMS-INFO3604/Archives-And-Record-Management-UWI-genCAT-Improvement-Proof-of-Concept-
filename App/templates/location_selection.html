@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Location – GEN2 Archives</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+    :root {
+      --uwi-green: #004a2f;
+      --uwi-gold: #b8922a;
+      --uwi-light-gold: #d4a93a;
+      --bg: #f5f2ec;
+      --card-bg: #ffffff;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --border: #e2d9c8;
+    }
+ 
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+ 
+    /* Top navbar */
+    .navbar {
+      background: var(--uwi-green);
+      padding: 0 40px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+ 
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+ 
+    .nav-brand img {
+      height: 40px;
+      width: auto;
+      filter: brightness(0) invert(1);
+    }
+ 
+    .nav-brand span {
+      font-family: 'EB Garamond', serif;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+ 
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+ 
+    .nav-user .greeting {
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+    }
+ 
+    .nav-user .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: 2px solid rgba(255,255,255,0.25);
+    }
+ 
+    .nav-user .logout-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.8);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-user .logout-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+ 
+    /* Main content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+    }
+ 
+    .page-heading {
+      text-align: center;
+      margin-bottom: 52px;
+      animation: fadeUp 0.4s ease both;
+    }
+ 
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+ 
+    .system-title {
+      font-family: 'EB Garamond', serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--uwi-gold);
+      margin-bottom: 12px;
+    }
+ 
+    .welcome-text {
+      font-family: 'EB Garamond', serif;
+      font-size: 38px;
+      font-weight: 600;
+      color: var(--uwi-green);
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+ 
+    .welcome-text .staff-name {
+      color: var(--uwi-gold);
+    }
+ 
+    .instruction {
+      color: var(--muted);
+      font-size: 15px;
+      margin-top: 4px;
+    }
+ 
+    /* Location cards grid */
+    .locations-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 820px;
+    }
+ 
+    .location-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 28px;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      text-decoration: none;
+      display: block;
+      animation: fadeUp 0.45s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+ 
+    .location-card:nth-child(1) { animation-delay: 0.1s; }
+    .location-card:nth-child(2) { animation-delay: 0.2s; }
+    .location-card:nth-child(3) { animation-delay: 0.3s; }
+ 
+    .location-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--uwi-green);
+      transform: scaleX(0);
+      transition: transform 0.25s ease;
+    }
+ 
+    .location-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,74,47,0.12), 0 4px 12px rgba(0,0,0,0.06);
+      border-color: rgba(0,74,47,0.2);
+    }
+ 
+    .location-card:hover::before {
+      transform: scaleX(1);
+    }
+ 
+    .location-icon {
+      width: 52px; height: 52px;
+      background: rgba(0,74,47,0.07);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+      transition: background 0.2s;
+    }
+ 
+    .location-card:hover .location-icon {
+      background: rgba(0,74,47,0.12);
+    }
+ 
+    .location-icon svg {
+      width: 26px; height: 26px;
+      stroke: var(--uwi-green);
+      stroke-width: 1.8;
+      fill: none;
+    }
+ 
+    .location-name {
+      font-family: 'EB Garamond', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+ 
+    .location-meta {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+    }
+ 
+    .location-badge {
+      display: inline-block;
+      margin-top: 14px;
+      background: rgba(0,74,47,0.07);
+      color: var(--uwi-green);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+ 
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+    }
+ 
+    @media (max-width: 600px) {
+      .navbar { padding: 0 20px; }
+      .nav-brand span { display: none; }
+      .welcome-text { font-size: 28px; }
+      .locations-grid { grid-template-columns: 1fr; max-width: 360px; }
+    }
+  </style>
+</head>
+<body>
+ 
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <img src="uwi_logo.png" alt="UWI Logo"/>
+      <span>GEN2 Records Management</span>
+    </div>
+    <div class="nav-user">
+      <span class="greeting">Logged in as Staff</span>
+      <div class="avatar">JS</div>
+      <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button>
+    </div>
+  </nav>
+ 
+  <!-- Main -->
+  <main class="main">
+    <div class="page-heading">
+      <p class="system-title">GEN2 Records Management System</p>
+      <h1 class="welcome-text">Welcome, <span class="staff-name">[Staff Member]</span></h1>
+      <p class="instruction">Select your location to continue</p>
+    </div>
+ 
+    <div class="locations-grid">
+ 
+      <!-- Location 1 -->
+      <a href="/dashboard?location=lloyd-brathwaite-sta" class="location-card">
+        <div class="location-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V11h6v10"/><path d="M3 7h18"/></svg>
+        </div>
+        <div class="location-name">Lloyd Brathwaite Building</div>
+        <div class="location-meta">St. Augustine Campus</div>
+        <span class="location-badge">Registry</span>
+      </a>
+ 
+      <!-- Location 2 -->
+      <a href="/dashboard?location=south-campus" class="location-card">
+        <div class="location-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <div class="location-name">South Campus</div>
+        <div class="location-meta">Debe, Trinidad</div>
+        <span class="location-badge">Records Center</span>
+      </a>
+ 
+    </div>
+  </main>
+ 
+  <footer class="footer">
+    &copy; 2025 The University of the West Indies, St. Augustine. All rights reserved.
+  </footer>
+ 
+</body>
+</html>
