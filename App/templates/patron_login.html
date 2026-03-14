@@ -1,326 +1,193 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Patron Login – GEN2 Archives</title>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+{% extends "layout.html" %}
+{% block title %}Patron Login{% endblock %}
  
-    :root {
-      --uwi-blue: #1a3a5c;
-      --uwi-gold: #b8922a;
-      --uwi-light-gold: #d4a93a;
-      --bg: #f0f4f8;
-      --card-bg: #ffffff;
-      --text: #1a1a1a;
-      --muted: #6b7280;
-      --border: #dce4ed;
-      --input-bg: #f7f9fc;
+{% block content %}
+<style>
+    body { background-color: #e3f2fd !important; }
+ 
+    .login-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 56px - 40px);
+        padding: 32px 16px;
     }
  
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
+    .login-card {
+        background: #fff;
+        border: 1.5px solid #90caf9;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 6px 32px rgba(21,101,192,.10);
+        overflow: hidden;
     }
  
-    body::before {
-      content: '';
-      position: fixed;
-      top: -200px; left: -200px;
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(26,58,92,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    body::after {
-      content: '';
-      position: fixed;
-      bottom: -200px; right: -200px;
-      width: 700px; height: 700px;
-      background: radial-gradient(circle, rgba(184,146,42,0.07) 0%, transparent 70%);
-      pointer-events: none;
+    .login-header {
+        background: #1565c0;
+        padding: 28px 32px 24px;
+        text-align: center;
     }
  
-    .page-wrapper {
-      display: flex;
-      width: 900px;
-      max-width: 95vw;
-      min-height: 560px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.12), 0 4px 20px rgba(0,0,0,0.06);
-      border-radius: 16px;
-      overflow: hidden;
-      animation: fadeUp 0.5s ease both;
+    .login-header .logo-area {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 10px;
     }
  
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .login-header .logo-area i {
+        font-size: 32px;
+        color: #90caf9;
     }
  
-    /* Right panel (form comes first on patron page) */
-    .left-panel {
-      flex: 1;
-      background: var(--card-bg);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 52px 48px;
-      order: 1;
+    .login-header h1 {
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+        margin: 0;
     }
  
-    /* Branding panel on right */
-    .right-panel {
-      width: 340px;
-      flex-shrink: 0;
-      background: var(--uwi-blue);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 36px;
-      position: relative;
-      overflow: hidden;
-      order: 2;
+    .login-header .role-badge {
+        display: inline-block;
+        margin-top: 10px;
+        background: rgba(255,255,255,.15);
+        color: #bbdefb;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 3px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,.2);
     }
  
-    .right-panel::before {
-      content: '';
-      position: absolute;
-      top: -80px; right: -80px;
-      width: 280px; height: 280px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.04);
-    }
-    .right-panel::after {
-      content: '';
-      position: absolute;
-      bottom: -60px; left: -60px;
-      width: 220px; height: 220px;
-      border-radius: 50%;
-      background: rgba(184,146,42,0.12);
+    .login-body {
+        padding: 32px 32px 28px;
     }
  
-    .logo-container {
-      position: relative;
-      z-index: 1;
-      text-align: center;
+    .login-body h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0 0 6px;
     }
  
-    .logo-container img {
-      width: 120px;
-      height: auto;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
-      margin-bottom: 24px;
+    .login-body .subtitle {
+        font-size: .85rem;
+        color: #757575;
+        margin: 0 0 24px;
     }
  
-    .right-panel h1 {
-      font-family: 'EB Garamond', serif;
-      color: #fff;
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 1.35;
-      text-align: center;
-      letter-spacing: 0.3px;
+    .login-body .input-field label {
+        color: #1976d2 !important;
+        font-weight: 600;
+        font-size: .82rem;
     }
  
-    .right-panel .subtitle {
-      margin-top: 8px;
-      color: var(--uwi-light-gold);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-align: center;
+    .login-body .input-field input:focus + label,
+    .login-body .input-field input.active + label {
+        color: #1565c0 !important;
     }
  
-    .divider-line {
-      width: 48px;
-      height: 2px;
-      background: var(--uwi-gold);
-      margin: 20px auto;
+    .login-body .input-field input {
+        border-bottom: 1.5px solid #90caf9 !important;
+        box-shadow: none !important;
     }
  
-    .right-panel .tagline {
-      color: rgba(255,255,255,0.6);
-      font-size: 12px;
-      text-align: center;
-      line-height: 1.6;
+    .login-body .input-field input:focus {
+        border-bottom: 2px solid #1565c0 !important;
+        box-shadow: none !important;
     }
- 
-    /* Form */
-    .form-header {
-      margin-bottom: 32px;
-    }
- 
-    .form-header .role-badge {
-      display: inline-block;
-      background: rgba(26,58,92,0.08);
-      color: var(--uwi-blue);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 4px;
-      margin-bottom: 12px;
-    }
- 
-    .form-header h2 {
-      font-family: 'EB Garamond', serif;
-      font-size: 30px;
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.2;
-    }
- 
-    .form-header p {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 13.5px;
-    }
- 
-    .form-group {
-      margin-bottom: 20px;
-    }
- 
-    .form-group label {
-      display: block;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 7px;
-      letter-spacing: 0.3px;
-    }
- 
-    .form-group input {
-      width: 100%;
-      padding: 11px 14px;
-      background: var(--input-bg);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: 'Inter', sans-serif;
-      color: var(--text);
-      transition: border-color 0.2s, box-shadow 0.2s;
-      outline: none;
-    }
- 
-    .form-group input:focus {
-      border-color: var(--uwi-blue);
-      box-shadow: 0 0 0 3px rgba(26,58,92,0.08);
-      background: #fff;
-    }
- 
-    .form-group input::placeholder { color: #b0aaa0; }
- 
-    .field-footer {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 6px;
-    }
- 
-    .field-footer a {
-      font-size: 12px;
-      color: var(--uwi-gold);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    .field-footer a:hover { color: var(--uwi-blue); }
  
     .btn-login {
-      width: 100%;
-      padding: 13px;
-      background: var(--uwi-blue);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-      box-shadow: 0 4px 14px rgba(26,58,92,0.25);
+        width: 100%;
+        background: #1565c0 !important;
+        color: #fff !important;
+        font-weight: 700 !important;
+        letter-spacing: .5px;
+        border-radius: 8px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        font-size: .9rem !important;
+        margin-top: 8px;
+        box-shadow: 0 4px 14px rgba(21,101,192,.25) !important;
+        transition: background .2s !important;
     }
+ 
     .btn-login:hover {
-      background: #214972;
-      box-shadow: 0 6px 18px rgba(26,58,92,0.3);
+        background: #1976d2 !important;
+        box-shadow: 0 6px 18px rgba(21,101,192,.3) !important;
     }
-    .btn-login:active { transform: scale(0.99); }
  
     .switch-link {
-      margin-top: 24px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--muted);
+        text-align: center;
+        margin-top: 20px;
+        font-size: .84rem;
+        color: #757575;
     }
+ 
     .switch-link a {
-      color: var(--uwi-gold);
-      text-decoration: none;
-      font-weight: 600;
-      transition: color 0.2s;
+        color: #1565c0;
+        font-weight: 700;
+        text-decoration: none;
+        transition: color .15s;
     }
-    .switch-link a:hover { color: var(--uwi-blue); }
  
-    @media (max-width: 660px) {
-      .page-wrapper { flex-direction: column; }
-      .left-panel, .right-panel { width: 100%; order: unset; padding: 32px 24px; }
+    .switch-link a:hover { color: #0d47a1; }
+ 
+    .login-footer {
+        border-top: 1px solid #e3f2fd;
+        padding: 14px 32px;
+        text-align: center;
+        font-size: .75rem;
+        color: #bdbdbd;
     }
-  </style>
-</head>
-<body>
-  <div class="page-wrapper">
+</style>
  
-    <!-- LEFT: Login Form -->
-    <div class="left-panel">
-      <div class="form-header">
-        <span class="role-badge">Patron Portal</span>
-        <h2>Welcome back</h2>
-        <p>Sign in to view and request files from the archive.</p>
-      </div>
+<div class="login-wrapper">
+    <div class="login-card">
  
-      <form action="/login/patron" method="POST">
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email" placeholder="you@sta.uwi.edu" required/>
+        <div class="login-header">
+            <div class="logo-area">
+                <i class="material-icons">archive</i>
+                <h1>genCAT</h1>
+            </div>
+            <span class="role-badge">Patron Portal</span>
         </div>
  
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" placeholder="Enter your password" required/>
-          <div class="field-footer">
-            <a href="/forgot-password">Forgot password?</a>
-          </div>
+        <div class="login-body">
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to view and request files from the archive.</p>
+ 
+            <form method="POST" action="/login">
+                <div class="input-field">
+                    <input type="text" id="username" name="username" required />
+                    <label for="username">Username</label>
+                </div>
+ 
+                <div class="input-field">
+                    <input type="password" id="password" name="password" required />
+                    <label for="password">Password</label>
+                </div>
+ 
+                <button type="submit" class="btn waves-effect waves-light btn-login">
+                    Login
+                </button>
+            </form>
+ 
+            <p class="switch-link">
+                Not a Patron? <a href="{{ url_for('auth_views.staff_login_page') }}">Login as a Staff</a>
+            </p>
         </div>
  
-        <button type="submit" class="btn-login">Login</button>
-      </form>
+        <div class="login-footer">
+            &copy; 2026 genCAT &mdash; GEN2 Records Management System, UWI
+        </div>
  
-      <p class="switch-link">
-        Not a Patron? <a href="/login/staff">Login as a Staff</a>
-      </p>
     </div>
- 
-    <!-- RIGHT: Branding -->
-    <div class="right-panel">
-      <div class="logo-container">
-        <img src="uwi_logo.png" alt="UWI St. Augustine Logo"/>
-        <h1>GEN2 Archive &amp; Records Management System</h1>
-        <div class="divider-line"></div>
-        <p class="subtitle">St. Augustine Campus</p>
-        <p class="tagline">Access and request archival files across all UWI campus locations.</p>
-      </div>
-    </div>
- 
-  </div>
-</body>
-</html>
+</div>
+{% endblock %}
