@@ -90,46 +90,7 @@
             .tb-brand:hover { background: rgba(255,255,255,.1); color: #fff; }
             .tb-brand i { font-size: 20px; }
 
-            /* Divider between brand and nav */
-            .tb-divider {
-                width: 1px;
-                height: 24px;
-                background: rgba(255,255,255,.2);
-                margin: 0 6px;
-                flex-shrink: 0;
-            }
-
-            /* Horizontal nav links — desktop only */
-            .tb-nav {
-                display: flex;
-                align-items: center;
-                gap: 2px;
-                overflow: hidden;
-            }
-            .tb-nav a {
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                color: rgba(255,255,255,.72);
-                font-size: .8rem;
-                font-weight: 500;
-                text-decoration: none;
-                padding: 6px 10px;
-                border-radius: 6px;
-                white-space: nowrap;
-                transition: background .15s, color .15s;
-            }
-            .tb-nav a i { font-size: 16px; }
-            .tb-nav a:hover {
-                background: rgba(255,255,255,.12);
-                color: #fff;
-            }
-            /* Active colours match sidebar */
-            .tb-nav a.tb-active-location { background: rgba(255,255,255,.18); color: #fff; }
-            .tb-nav a.tb-active-boxes    { background: rgba(76,175,80,.25);   color: #c8e6c9; }
-            .tb-nav a.tb-active-files    { background: rgba(244,67,54,.22);   color: #ffcdd2; }
-            .tb-nav a.tb-active-loans    { background: rgba(33,150,243,.22);  color: #bbdefb; }
-
+    
             /* ── Right section ── */
             .tb-right {
                 display: flex;
@@ -447,28 +408,6 @@
                     genCAT
                 </a>
 
-                {% if is_authenticated %}
-                <span class="tb-divider" aria-hidden="true"></span>
-
-                <nav class="tb-nav" aria-label="Main navigation">
-                    <a href="/location"
-                       class="{{ 'tb-active-location' if request.path.startswith('/location') else '' }}">
-                        <i class="material-icons">location_on</i>Location
-                    </a>
-                    <a href="/boxes"
-                       class="{{ 'tb-active-boxes' if request.path.startswith('/boxes') else '' }}">
-                        <i class="material-icons">inventory_2</i>Boxes
-                    </a>
-                    <a href="/files"
-                       class="{{ 'tb-active-files' if request.path.startswith('/files') else '' }}">
-                        <i class="material-icons">folder_open</i>File Records
-                    </a>
-                    <a href="/loans"
-                       class="{{ 'tb-active-loans' if request.path.startswith('/loans') else '' }}">
-                        <i class="material-icons">swap_horiz</i>Loaned Records
-                    </a>
-                </nav>
-                {% endif %}
 
             </div>
 

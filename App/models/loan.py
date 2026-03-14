@@ -12,6 +12,7 @@ class Loan(db.Model):
         db.Integer, db.ForeignKey('staff_user.staffUserID'), nullable=True
     )
     patronID = db.Column(db.Integer, db.ForeignKey('patron.patronID'), nullable=False)
+    damageNotes = db.Column(db.Text, nullable=True)
 
     files = db.relationship('File', backref='loan', lazy=True)
 
