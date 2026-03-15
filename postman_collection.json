@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "genCAT Integration Test Suite",
-    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into four folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Location Tests - Validates GET and POST location endpoints.\n3. Box Tests - Validates GET, POST, PUT, and DELETE box endpoints.\n4. Integration Test Flow - 12-step end-to-end workflow.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
+    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into five folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Location Tests - Validates GET and POST location endpoints.\n3. Box Tests - Validates GET, POST, PUT, and DELETE box endpoints.\n4. File Tests - Validates GET, POST, PUT, DELETE file endpoints, search with filters, detail view, and status changes.\n5. Integration Test Flow - 12-step end-to-end workflow.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -27,6 +27,11 @@
     },
     {
       "key": "newBoxID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newFileID",
       "value": "",
       "type": "string"
     }
@@ -3110,6 +3115,1845 @@
               "path": [
                 "api",
                 "boxes",
+                "1"
+              ]
+            },
+            "description": "No JWT. Expects 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Tests",
+      "description": "File API test suite covering GET (all, single, not found, search by type/status/keyword/location), POST (create, validation), PUT (update, status change), and DELETE endpoints. Seed creates 11 files: 8 Student and 3 Staff. Files 10-11 are On Loan.",
+      "item": [
+        {
+          "name": "File Setup - Initialize Database",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Database initialized', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().message).to.eql('db initialized!');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/init",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "init"
+              ]
+            },
+            "description": "Seeds DB with 11 files across 7 boxes and 4 locations."
+          }
+        },
+        {
+          "name": "File Setup - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('access_token');",
+                  "});",
+                  "var j = pm.response.json();",
+                  "if (j.access_token) pm.collectionVariables.set('jwt_token', j.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Auth for file tests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin\",\"password\":\"adminpass\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/files - Retrieve all files",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Response is an array of 11 files', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(11);",
+                  "});",
+                  "",
+                  "pm.test('Each file has required fields', function () {",
+                  "    pm.response.json().forEach(function (f) {",
+                  "        pm.expect(f).to.have.all.keys('fileID','boxID','fileType','description','status','dateCreated');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Files include both Student and Staff types', function () {",
+                  "    var types = [...new Set(pm.response.json().map(function (f) { return f.fileType; }))];",
+                  "    pm.expect(types).to.include('Student');",
+                  "    pm.expect(types).to.include('Staff');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files"
+              ]
+            },
+            "description": "Retrieves every file. Seed creates 11."
+          }
+        },
+        {
+          "name": "GET /api/files - Reject unauthenticated request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files"
+              ]
+            },
+            "description": "No JWT. Expects 401."
+          }
+        },
+        {
+          "name": "GET /files/1 - Retrieve file 1 (Student, Available)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Correct file returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.fileID).to.eql(1);",
+                  "    pm.expect(j.fileType).to.eql('Student');",
+                  "    pm.expect(j.status).to.eql('Available');",
+                  "});",
+                  "",
+                  "pm.test('File has all detail fields', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.have.all.keys(",
+                  "        'fileID','boxID','locationID','loanID','fileType',",
+                  "        'description','previousDesignation','createdByStaffUserID',",
+                  "        'dateCreated','status'",
+                  "    );",
+                  "});",
+                  "",
+                  "pm.test('File 1 is in box 1', function () {",
+                  "    pm.expect(pm.response.json().boxID).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('File 1 description contains transcript', function () {",
+                  "    pm.expect(pm.response.json().description).to.include('transcript');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "1"
+              ]
+            },
+            "description": "File 1: Student transcript - BSc Computer Science, box 1, Available."
+          }
+        },
+        {
+          "name": "GET /files/7 - Retrieve file 7 (Staff, Available)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Correct file returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.fileID).to.eql(7);",
+                  "    pm.expect(j.fileType).to.eql('Staff');",
+                  "    pm.expect(j.status).to.eql('Available');",
+                  "});",
+                  "",
+                  "pm.test('Staff file is in box 7', function () {",
+                  "    pm.expect(pm.response.json().boxID).to.eql(7);",
+                  "});",
+                  "",
+                  "pm.test('Description mentions personnel file', function () {",
+                  "    pm.expect(pm.response.json().description.toLowerCase()).to.include('personnel');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "7"
+              ]
+            },
+            "description": "File 7: Staff personnel file - Senior Lecturer, box 7, Available."
+          }
+        },
+        {
+          "name": "GET /files/10 - Retrieve file 10 (On Loan)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('File 10 is On Loan', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.fileID).to.eql(10);",
+                  "    pm.expect(j.status).to.eql('On Loan');",
+                  "});",
+                  "",
+                  "pm.test('File 10 has a loanID set', function () {",
+                  "    pm.expect(pm.response.json().loanID).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test('File 10 is Student type in box 4', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.fileType).to.eql('Student');",
+                  "    pm.expect(j.boxID).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "10"
+              ]
+            },
+            "description": "File 10: Student transcript - BSc Mathematics, box 4, On Loan with active loan."
+          }
+        },
+        {
+          "name": "GET /files/11 - Retrieve file 11 (On Loan)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('File 11 is On Loan', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.fileID).to.eql(11);",
+                  "    pm.expect(j.status).to.eql('On Loan');",
+                  "});",
+                  "",
+                  "pm.test('File 11 has a loanID set', function () {",
+                  "    pm.expect(pm.response.json().loanID).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test('File 11 is Student type in box 5', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.fileType).to.eql('Student');",
+                  "    pm.expect(j.boxID).to.eql(5);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/11",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "11"
+              ]
+            },
+            "description": "File 11: Student transcript - MA History, box 5, On Loan with active loan."
+          }
+        },
+        {
+          "name": "GET /files/999 - File not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "999"
+              ]
+            },
+            "description": "Non-existent file. Expects 404."
+          }
+        },
+        {
+          "name": "GET /files/1 - Reject unauthenticated single file request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/files/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "1"
+              ]
+            },
+            "description": "No JWT on single file. Expects 401."
+          }
+        },
+        {
+          "name": "GET /api/files/search?fileType=Student - Search by type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 8 Student files', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(8);",
+                  "});",
+                  "",
+                  "pm.test('All results are Student type', function () {",
+                  "    pm.response.json().forEach(function (f) {",
+                  "        pm.expect(f.fileType).to.eql('Student');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?fileType=Student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "fileType",
+                  "value": "Student"
+                }
+              ]
+            },
+            "description": "Search files by fileType=Student. Seed has 8 Student files."
+          }
+        },
+        {
+          "name": "GET /api/files/search?fileType=Staff - Search Staff files",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 3 Staff files', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.test('All results are Staff type', function () {",
+                  "    pm.response.json().forEach(function (f) {",
+                  "        pm.expect(f.fileType).to.eql('Staff');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?fileType=Staff",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "fileType",
+                  "value": "Staff"
+                }
+              ]
+            },
+            "description": "Search files by fileType=Staff. Seed has 3 Staff files."
+          }
+        },
+        {
+          "name": "GET /api/files/search?status=Available - Search by status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 9 Available files', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(9);",
+                  "});",
+                  "",
+                  "pm.test('All results have Available status', function () {",
+                  "    pm.response.json().forEach(function (f) {",
+                  "        pm.expect(f.status).to.eql('Available');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?status=Available",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Available"
+                }
+              ]
+            },
+            "description": "Search files by status=Available. Seed has 9 Available files (11 minus 2 On Loan)."
+          }
+        },
+        {
+          "name": "GET /api/files/search?status=On Loan - Search On Loan files",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 2 On Loan files', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('All results have On Loan status', function () {",
+                  "    pm.response.json().forEach(function (f) {",
+                  "        pm.expect(f.status).to.eql('On Loan');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?status=On Loan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "On Loan"
+                }
+              ]
+            },
+            "description": "Search files by status=On Loan. Seed has 2 files on active loans."
+          }
+        },
+        {
+          "name": "GET /api/files/search?keyword=transcript - Search by keyword",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns files matching keyword transcript', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.be.at.least(5);",
+                  "});",
+                  "",
+                  "pm.test('All results contain transcript in description', function () {",
+                  "    pm.response.json().forEach(function (f) {",
+                  "        pm.expect(f.description.toLowerCase()).to.include('transcript');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?keyword=transcript",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "transcript"
+                }
+              ]
+            },
+            "description": "Search files by keyword. Several student files have 'transcript' in description."
+          }
+        },
+        {
+          "name": "GET /api/files/search?keyword=personnel - Search Staff keyword",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 3 personnel files', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.test('All results contain personnel in description', function () {",
+                  "    pm.response.json().forEach(function (f) {",
+                  "        pm.expect(f.description.toLowerCase()).to.include('personnel');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?keyword=personnel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "personnel"
+                }
+              ]
+            },
+            "description": "Search files by keyword=personnel. All 3 Staff files have 'Personnel file' in description."
+          }
+        },
+        {
+          "name": "GET /api/files/search?keyword=NonExistentXYZ - No results",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('No files found message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('No files found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?keyword=NonExistentXYZ",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "NonExistentXYZ"
+                }
+              ]
+            },
+            "description": "Search with a keyword that matches nothing. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/files/search?fileID=1 - Search by fileID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns exactly 1 file', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Returned file has fileID 1', function () {",
+                  "    pm.expect(pm.response.json()[0].fileID).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?fileID=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "fileID",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Search files by fileID=1. Should return exactly one result."
+          }
+        },
+        {
+          "name": "GET /api/files/search - No filters (returns all)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns all 11 files when no filters given', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(11);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ]
+            },
+            "description": "Search with no filters should return all files."
+          }
+        },
+        {
+          "name": "GET /api/files/search?status=Archived - No archived files",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('No files found message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('No files found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/search?status=Archived",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Archived"
+                }
+              ]
+            },
+            "description": "No files have Archived status in seed data. Expects 404."
+          }
+        },
+        {
+          "name": "POST /files - Create a new file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('added successfully');",
+                  "});",
+                  "",
+                  "pm.test('fileID is returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('fileID');",
+                  "});",
+                  "",
+                  "var j = pm.response.json();",
+                  "if (j.fileID) pm.collectionVariables.set('newFileID', j.fileID.toString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files"
+              ]
+            },
+            "description": "Creates a new Student file in box 1.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"boxID\":1,\"fileType\":\"Student\",\"description\":\"Test file - BSc Chemistry\",\"previousDesignation\":\"T/CH/2024/001\",\"createdByStaffUserID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /files/{{newFileID}} - Verify created file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('New file has correct fields', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.fileType).to.eql('Student');",
+                  "    pm.expect(j.description).to.eql('Test file - BSc Chemistry');",
+                  "    pm.expect(j.previousDesignation).to.eql('T/CH/2024/001');",
+                  "    pm.expect(j.boxID).to.eql(1);",
+                  "    pm.expect(j.status).to.eql('Available');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}"
+              ]
+            },
+            "description": "Fetches the newly created file to verify all fields."
+          }
+        },
+        {
+          "name": "GET /api/files - Verify file count is now 12",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Total files is now 12', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(12);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files"
+              ]
+            },
+            "description": "Verify count increased to 12 after creating one file."
+          }
+        },
+        {
+          "name": "POST /files - Missing boxID (required field)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 or 500 (validation error)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files"
+              ]
+            },
+            "description": "Creates file without boxID. Expects 400 or 500.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fileType\":\"Student\",\"description\":\"Missing boxID test\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /files - Empty request body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files"
+              ]
+            },
+            "description": "No JSON body. Expects 400."
+          }
+        },
+        {
+          "name": "POST /files - Reject unauthenticated create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files"
+              ]
+            },
+            "description": "No JWT. Expects 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"boxID\":1,\"fileType\":\"Student\",\"description\":\"Unauth test\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /files/{{newFileID}} - Update file description and type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('updated successfully');",
+                  "});",
+                  "",
+                  "pm.test('fileID matches', function () {",
+                  "    var expected = parseInt(pm.collectionVariables.get('newFileID'));",
+                  "    pm.expect(pm.response.json().fileID).to.eql(expected);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}"
+              ]
+            },
+            "description": "Updates the description and previousDesignation of the new file.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fileID\":\"{{newFileID}}\",\"description\":\"Updated - BSc Chemistry (Honours)\",\"fileType\":\"Student\",\"previousDesignation\":\"T/CH/2024/001-UPD\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /files/{{newFileID}} - Verify update applied",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Description was updated', function () {",
+                  "    pm.expect(pm.response.json().description).to.eql('Updated - BSc Chemistry (Honours)');",
+                  "});",
+                  "",
+                  "pm.test('Previous designation was updated', function () {",
+                  "    pm.expect(pm.response.json().previousDesignation).to.eql('T/CH/2024/001-UPD');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}"
+              ]
+            },
+            "description": "Re-fetch to confirm update was applied."
+          }
+        },
+        {
+          "name": "PUT /files/999 - Update non-existent file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "999"
+              ]
+            },
+            "description": "File 999 does not exist. Expects 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fileID\":999,\"description\":\"Does not exist\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /files/1 - Empty request body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "1"
+              ]
+            },
+            "description": "No JSON body. Expects 400."
+          }
+        },
+        {
+          "name": "PUT /files/{{newFileID}}/status - Change status to Archived",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('status updated successfully');",
+                  "});",
+                  "",
+                  "pm.test('New status is Archived', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('Archived');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}",
+                "status"
+              ]
+            },
+            "description": "Changes the new file status from Available to Archived.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"Archived\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /files/{{newFileID}} - Verify status is Archived",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('File status is now Archived', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('Archived');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}"
+              ]
+            },
+            "description": "Re-fetch to confirm status changed to Archived."
+          }
+        },
+        {
+          "name": "PUT /files/{{newFileID}}/status - Change status back to Available",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('New status is Available', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('Available');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}",
+                "status"
+              ]
+            },
+            "description": "Changes the file status back to Available.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"Available\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /files/999/status - Status change on non-existent file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/999/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "999",
+                "status"
+              ]
+            },
+            "description": "File 999 does not exist. Expects 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"Archived\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /files/1/status - Missing status field in body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error indicates status required', function () {",
+                  "    pm.expect(pm.response.json().error).to.include('required');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/1/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "1",
+                "status"
+              ]
+            },
+            "description": "Body without status field. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"description\":\"No status field\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /files/{{newFileID}} - Delete the test file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('deleted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}"
+              ]
+            },
+            "description": "Deletes the file created earlier."
+          }
+        },
+        {
+          "name": "GET /files/{{newFileID}} - Verify file was deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/{{newFileID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "{{newFileID}}"
+              ]
+            },
+            "description": "Fetch deleted file. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/files - Verify file count back to 11",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Total files is back to 11', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(11);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "files"
+              ]
+            },
+            "description": "Confirms 11 files after deletion."
+          }
+        },
+        {
+          "name": "DELETE /files/999 - Delete non-existent file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "999"
+              ]
+            },
+            "description": "File 999 not found. Expects 404."
+          }
+        },
+        {
+          "name": "DELETE /files/1 - Reject unauthenticated delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/files/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
                 "1"
               ]
             },
