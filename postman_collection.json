@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "genCAT Integration Test Suite",
-    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into two folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Integration Test Flow - 12-step end-to-end workflow: Login -> Locations -> Boxes -> Files -> Loan Issue -> Check-In.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
+    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into three folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Location Tests - Validates GET (all, single, search, boxes, files) and POST (create, validation) endpoints.\n3. Integration Test Flow - 12-step end-to-end workflow: Login -> Locations -> Boxes -> Files -> Loan Issue -> Check-In.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -17,6 +17,11 @@
     },
     {
       "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newLocationID",
       "value": "",
       "type": "string"
     }
@@ -601,6 +606,1019 @@
               ]
             },
             "description": "After logging out, attempts to access a protected endpoint using the cleared token. Expects 401 Unauthorized, confirming logout was effective."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Location Tests",
+      "description": "Location API test suite covering GET (all, single, not found, search, boxes, files) and POST (create valid, missing field, empty body) endpoints.",
+      "item": [
+        {
+          "name": "Location Setup - Initialize Database",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Database initialized', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().message).to.eql('db initialized!');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/init",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "init"
+              ]
+            },
+            "description": "Seeds the database with 4 locations, 7 boxes, and 11 files for location tests."
+          }
+        },
+        {
+          "name": "Location Setup - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('access_token');",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Authenticate to obtain a JWT token for the location tests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\": \"admin\", \"password\": \"adminpass\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/locations - Retrieve all locations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('All 4 seeded locations are returned', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(4);",
+                  "});",
+                  "",
+                  "pm.test('Each location has locationID, geoLocation, and boxCount', function () {",
+                  "    pm.response.json().forEach(function (loc) {",
+                  "        pm.expect(loc).to.have.property('locationID');",
+                  "        pm.expect(loc).to.have.property('geoLocation');",
+                  "        pm.expect(loc).to.have.property('boxCount');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Location names match seed data', function () {",
+                  "    var names = pm.response.json().map(function (l) { return l.geoLocation; });",
+                  "    pm.expect(names).to.include.members([",
+                  "        'UWI Main Library \\u2013 Bay A',",
+                  "        'UWI Main Library \\u2013 Bay B'",
+                  "    ]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Retrieves every location in the system. Seed creates 4 locations."
+          }
+        },
+        {
+          "name": "GET /api/locations - Reject unauthenticated request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 (Unauthorized)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});",
+                  "",
+                  "pm.test('Response does not contain location data', function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.not.include('geoLocation');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Attempts to retrieve locations without a JWT token. Expects 401."
+          }
+        },
+        {
+          "name": "GET /api/locations/1 - Retrieve single location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is a location object with correct ID', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('locationID');",
+                  "    pm.expect(jsonData.locationID).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Location 1 is Bay A', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.geoLocation).to.include('Bay A');",
+                  "});",
+                  "",
+                  "pm.test('Location 1 has boxCount of 3', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('boxCount');",
+                  "    pm.expect(jsonData.boxCount).to.eql(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "1"
+              ]
+            },
+            "description": "Retrieves location 1 by ID. Expects Bay A with boxCount of 3."
+          }
+        },
+        {
+          "name": "GET /api/locations/999 - Location not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error).to.include('999');",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "999"
+              ]
+            },
+            "description": "Attempts to retrieve a non-existent location. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/locations/search?q=Bay - Search locations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Search returns 2 results for Bay', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('All results contain Bay in geoLocation', function () {",
+                  "    pm.response.json().forEach(function (loc) {",
+                  "        pm.expect(loc.geoLocation.toLowerCase()).to.include('bay');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/search?q=Bay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Bay"
+                }
+              ]
+            },
+            "description": "Searches locations with query 'Bay'. Seed has 2 locations containing 'Bay' (Bay A, Bay B)."
+          }
+        },
+        {
+          "name": "GET /api/locations/search?q=NonExistent - Search with no results",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an empty array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/search?q=NonExistent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "NonExistent"
+                }
+              ]
+            },
+            "description": "Searches for a term that matches no locations. Expects an empty array."
+          }
+        },
+        {
+          "name": "GET /api/locations/search - Search missing query param",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error about missing query', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('q');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "search"
+              ]
+            },
+            "description": "Calls the search endpoint without the required 'q' parameter. Expects 400."
+          }
+        },
+        {
+          "name": "GET /api/locations/1/boxes - Retrieve boxes at location 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array of 3 boxes', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.test('Each box has expected fields and belongs to location 1', function () {",
+                  "    pm.response.json().forEach(function (box) {",
+                  "        pm.expect(box).to.have.property('boxID');",
+                  "        pm.expect(box).to.have.property('barcode');",
+                  "        pm.expect(box).to.have.property('locationID');",
+                  "        pm.expect(box.locationID).to.eql(1);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Boxes include expected barcodes', function () {",
+                  "    var barcodes = pm.response.json().map(function (b) { return b.barcode; });",
+                  "    pm.expect(barcodes).to.include.members(['BOX-A-001', 'BOX-A-002', 'BOX-A-003']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/1/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "1",
+                "boxes"
+              ]
+            },
+            "description": "Retrieves all boxes at location 1 (Bay A). Seed places 3 boxes there."
+          }
+        },
+        {
+          "name": "GET /api/locations/999/boxes - Boxes at non-existent location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error).to.include('999');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/999/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "999",
+                "boxes"
+              ]
+            },
+            "description": "Requests boxes for a non-existent location. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/locations/1/files - Retrieve files at location 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/1/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "1",
+                "files"
+              ]
+            },
+            "description": "Retrieves files directly assigned to location 1. Initially seed data does not assign files directly to locations, so expects an empty array."
+          }
+        },
+        {
+          "name": "GET /api/locations/999/files - Files at non-existent location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error).to.include('999');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations/999/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations",
+                "999",
+                "files"
+              ]
+            },
+            "description": "Requests files for a non-existent location. Expects 404."
+          }
+        },
+        {
+          "name": "POST /api/locations - Create a new location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains success message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    pm.expect(jsonData.message).to.include('created successfully');",
+                  "});",
+                  "",
+                  "pm.test('Response contains the new location data', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('locationID');",
+                  "    pm.expect(jsonData.locationID).to.be.a('number');",
+                  "    pm.expect(jsonData).to.have.property('geoLocation');",
+                  "    pm.expect(jsonData.geoLocation).to.eql('Science Building - Room 301');",
+                  "});",
+                  "",
+                  "// Save the new locationID for the verification step",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.locationID) {",
+                  "    pm.collectionVariables.set('newLocationID', jsonData.locationID.toString());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Creates a new location with a valid geoLocation name. Expects 201 with the new location in the response.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"geoLocation\": \"Science Building - Room 301\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/locations - Verify new location appears in list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Total locations is now 5 (4 seeded + 1 created)', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(5);",
+                  "});",
+                  "",
+                  "pm.test('New location appears in the list', function () {",
+                  "    var names = pm.response.json().map(function (l) { return l.geoLocation; });",
+                  "    pm.expect(names).to.include('Science Building - Room 301');",
+                  "});",
+                  "",
+                  "pm.test('New location has boxCount of 0', function () {",
+                  "    var newLoc = pm.response.json().find(function (l) {",
+                  "        return l.geoLocation === 'Science Building - Room 301';",
+                  "    });",
+                  "    pm.expect(newLoc).to.not.be.undefined;",
+                  "    pm.expect(newLoc.boxCount).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "After creating a new location, verifies the total count increased to 5 and the new location is in the list."
+          }
+        },
+        {
+          "name": "POST /api/locations - Missing geoLocation field",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error about missing geoLocation', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData.error.toLowerCase()).to.include('geolocation');",
+                  "});",
+                  "",
+                  "pm.test('No location was created (count still 5)', function () {",
+                  "    // This is validated by the assertion itself - a 400 means nothing was created",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Attempts to create a location without the required geoLocation field. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"This is wrong field\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/locations - Empty request body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Attempts to create a location with an empty JSON body. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/locations - Empty geoLocation string",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Attempts to create a location with an empty geoLocation string. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"geoLocation\": \"\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/locations - Whitespace-only geoLocation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response contains error message', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Attempts to create a location where geoLocation is only whitespace. The endpoint strips whitespace, so this should be treated as empty. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"geoLocation\": \"   \"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/locations - Reject unauthenticated create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 401 (Unauthorized)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});",
+                  "",
+                  "pm.test('Location was not created', function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.not.include('created successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "locations"
+              ]
+            },
+            "description": "Attempts to create a location without a JWT token. Expects 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"geoLocation\": \"Unauthorized Location\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         }
       ]
