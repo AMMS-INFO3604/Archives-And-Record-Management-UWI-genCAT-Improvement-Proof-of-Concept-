@@ -1,7 +1,10 @@
 from datetime import datetime
 
 from App.database import db
-from App.models import File, Loan, Patron, StaffUser
+from App.models.file import File
+from App.models.loan import Loan
+from App.models.patron import Patron
+from App.models.staff_user import StaffUser
 
 # ---------------------------------------------------------------------------
 # Create / Checkout
@@ -169,7 +172,7 @@ def get_loans_by_staff_json(staffUserID):
 # ---------------------------------------------------------------------------
 
 
-def return_loan(loanID, returnDate=None):
+def return_loan(loanID, returnDate=None, damage_notes=None, file_conditions=None):
     """Mark a loan as returned and set all its files back to 'Available'.
 
     Args:
@@ -183,23 +186,30 @@ def return_loan(loanID, returnDate=None):
     if not loan:
         print(f"Loan with ID {loanID} not found.")
         return None
-
+ 
     if loan.returnDate is not None:
         print(f"Loan {loanID} has already been returned on {loan.returnDate}.")
-        return loan  # idempotent – return the existing record
-
+        return loan  # idempotent
+ 
     try:
         loan.returnDate = returnDate or datetime.utcnow()
+        if damage_notes:
+            loan.damageNotes = damage_notes
+ 
+        file_conditions = file_conditions or {}
         for file in loan.files:
+            note = file_conditions.get(file.fileID, '').strip()
+            if note:
+                file.conditionNotes = note
             file.status = "Available"
             file.loanID = None
+ 
         db.session.commit()
         return loan
     except Exception as e:
         db.session.rollback()
         print(f"Error returning loan {loanID}: {e}")
         return None
-
 
 # ---------------------------------------------------------------------------
 # Update
@@ -296,6 +306,7 @@ def get_loan_files_json(loanID):
             "description": f.description,
             "previousDesignation": f.previousDesignation,
             "status": f.status,
+            "conditionNotes": f.conditionNotes or None,
             "boxID": f.boxID,
             "locationID": f.locationID,
             "dateCreated": str(f.dateCreated),
@@ -310,10 +321,18 @@ def get_loan_files_json(loanID):
 
 
 def _loan_to_dict(loan):
+    
+    processed_by = None
+    if loan.processedByStaffUserID:
+        staff = db.session.get(StaffUser, loan.processedByStaffUserID)
+        if staff and staff.user:
+            processed_by = staff.user.username
+            
     return {
         "loanID": loan.loanID,
         "loanDate": str(loan.loanDate),
         "returnDate": str(loan.returnDate) if loan.returnDate else None,
+        "damageNotes": loan.damageNotes or None,
         "processedByStaffUserID": loan.processedByStaffUserID,
         "patronID": loan.patronID,
         "fileCount": len(loan.files),
