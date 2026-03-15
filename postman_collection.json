@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "genCAT Integration Test Suite",
-    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into three folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Location Tests - Validates GET (all, single, search, boxes, files) and POST (create, validation) endpoints.\n3. Integration Test Flow - 12-step end-to-end workflow: Login -> Locations -> Boxes -> Files -> Loan Issue -> Check-In.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
+    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into four folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Location Tests - Validates GET and POST location endpoints.\n3. Box Tests - Validates GET, POST, PUT, and DELETE box endpoints.\n4. Integration Test Flow - 12-step end-to-end workflow.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -22,6 +22,11 @@
     },
     {
       "key": "newLocationID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newBoxID",
       "value": "",
       "type": "string"
     }
@@ -1619,6 +1624,1496 @@
                 }
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Box Tests",
+      "description": "Box API test suite covering GET (all, single, not found, search by location), POST (create, validation), PUT (update, move location), and DELETE endpoints.",
+      "item": [
+        {
+          "name": "Box Setup - Initialize Database",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Database initialized', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().message).to.eql('db initialized!');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/init",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "init"
+              ]
+            },
+            "description": "Seeds DB."
+          }
+        },
+        {
+          "name": "Box Setup - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('access_token');",
+                  "});",
+                  "var j = pm.response.json();",
+                  "if (j.access_token) pm.collectionVariables.set('jwt_token', j.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Auth for box tests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin\",\"password\":\"adminpass\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/boxes - Retrieve all boxes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Response is an array of 7 boxes', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(7);",
+                  "});",
+                  "",
+                  "pm.test('Each box has required fields', function () {",
+                  "    pm.response.json().forEach(function (b) {",
+                  "        pm.expect(b).to.have.all.keys('boxID','bayNo','rowNo','columnNo','barcode','locationID','fileCount');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Boxes span multiple locations', function () {",
+                  "    var locs = [...new Set(pm.response.json().map(function (b) { return b.locationID; }))];",
+                  "    pm.expect(locs.length).to.be.at.least(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "Retrieves every box. Seed creates 7."
+          }
+        },
+        {
+          "name": "GET /api/boxes - Reject unauthenticated request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "No JWT. Expects 401."
+          }
+        },
+        {
+          "name": "GET /api/boxes/1 - Retrieve box 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Correct box returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.boxID).to.eql(1);",
+                  "    pm.expect(j.barcode).to.eql('BOX-A-001');",
+                  "    pm.expect(j.locationID).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Box 1 has 2 files', function () {",
+                  "    pm.expect(pm.response.json().fileCount).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('Box 1 position is bay 1, row 1, col 1', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.bayNo).to.eql(1);",
+                  "    pm.expect(j.rowNo).to.eql(1);",
+                  "    pm.expect(j.columnNo).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "1"
+              ]
+            },
+            "description": "Box 1: bay1 row1 col1, BOX-A-001, location 1, 2 files."
+          }
+        },
+        {
+          "name": "GET /api/boxes/4 - Retrieve box at different location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Correct box returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.boxID).to.eql(4);",
+                  "    pm.expect(j.barcode).to.eql('BOX-B-001');",
+                  "    pm.expect(j.locationID).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "4"
+              ]
+            },
+            "description": "Box 4 at location 2, barcode BOX-B-001."
+          }
+        },
+        {
+          "name": "GET /api/boxes/999 - Box not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message mentions box 999', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('message');",
+                  "    pm.expect(j.message).to.include('999');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "999"
+              ]
+            },
+            "description": "Non-existent box. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/boxes/search?locationID=1 - Search boxes at location 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('3 boxes returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.test('All belong to location 1', function () {",
+                  "    pm.response.json().forEach(function (b) { pm.expect(b.locationID).to.eql(1); });",
+                  "});",
+                  "",
+                  "pm.test('Expected barcodes present', function () {",
+                  "    var codes = pm.response.json().map(function (b) { return b.barcode; });",
+                  "    pm.expect(codes).to.include.members(['BOX-A-001','BOX-A-002','BOX-A-003']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/search?locationID=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "locationID",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "3 boxes at location 1."
+          }
+        },
+        {
+          "name": "GET /api/boxes/search?locationID=2 - Search boxes at location 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('2 boxes returned', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array').with.lengthOf(2);",
+                  "});",
+                  "",
+                  "pm.test('Barcodes are BOX-B-001 and BOX-B-002', function () {",
+                  "    var codes = pm.response.json().map(function (b) { return b.barcode; });",
+                  "    pm.expect(codes).to.include.members(['BOX-B-001','BOX-B-002']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/search?locationID=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "locationID",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": "2 boxes at location 2."
+          }
+        },
+        {
+          "name": "GET /api/boxes/search?locationID=999 - No boxes at location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Message indicates no boxes', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('no boxes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/search?locationID=999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "locationID",
+                  "value": "999"
+                }
+              ]
+            },
+            "description": "No boxes. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/boxes/search - Missing locationID param",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error mentions locationID', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('locationid');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "search"
+              ]
+            },
+            "description": "Missing required param. Expects 400."
+          }
+        },
+        {
+          "name": "GET /api/boxes/search?locationID=abc - Non-numeric locationID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error about whole number', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('whole number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/search?locationID=abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "locationID",
+                  "value": "abc"
+                }
+              ]
+            },
+            "description": "Non-numeric param. Expects 400."
+          }
+        },
+        {
+          "name": "POST /api/boxes - Create a new box",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('added successfully');",
+                  "});",
+                  "",
+                  "pm.test('Full box object returned', function () {",
+                  "    var box = pm.response.json().box;",
+                  "    pm.expect(box).to.have.all.keys('boxID','bayNo','rowNo','columnNo','barcode','locationID','fileCount');",
+                  "    pm.expect(box.bayNo).to.eql(3);",
+                  "    pm.expect(box.rowNo).to.eql(1);",
+                  "    pm.expect(box.columnNo).to.eql(1);",
+                  "    pm.expect(box.barcode).to.eql('BOX-NEW-001');",
+                  "    pm.expect(box.locationID).to.eql(1);",
+                  "    pm.expect(box.fileCount).to.eql(0);",
+                  "});",
+                  "",
+                  "var box = pm.response.json().box;",
+                  "if (box && box.boxID) pm.collectionVariables.set('newBoxID', box.boxID.toString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "Creates box at location 1.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bayNo\":3,\"rowNo\":1,\"columnNo\":1,\"barcode\":\"BOX-NEW-001\",\"locationID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/boxes - Verify new box in list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Total boxes is now 8', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(8);",
+                  "});",
+                  "",
+                  "pm.test('BOX-NEW-001 is in the list', function () {",
+                  "    var codes = pm.response.json().map(function (b) { return b.barcode; });",
+                  "    pm.expect(codes).to.include('BOX-NEW-001');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "Verify count is 8 and new barcode present."
+          }
+        },
+        {
+          "name": "POST /api/boxes - Empty request body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "No JSON body. Expects 400."
+          }
+        },
+        {
+          "name": "POST /api/boxes - Missing required fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Failure message', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "Only barcode, no position or location. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"barcode\":\"BOX-FAIL-001\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/boxes - Non-existent locationID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Failure message', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('failed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "Location 9999 does not exist. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bayNo\":1,\"rowNo\":1,\"columnNo\":1,\"barcode\":\"BOX-BAD-LOC\",\"locationID\":9999}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/boxes - Reject unauthenticated create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "No JWT. Expects 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bayNo\":1,\"rowNo\":1,\"columnNo\":1,\"barcode\":\"BOX-UNAUTH\",\"locationID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/boxes/{{newBoxID}} - Update box fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('updated successfully');",
+                  "});",
+                  "",
+                  "pm.test('Updated fields reflected', function () {",
+                  "    var box = pm.response.json().box;",
+                  "    pm.expect(box.bayNo).to.eql(5);",
+                  "    pm.expect(box.rowNo).to.eql(2);",
+                  "    pm.expect(box.barcode).to.eql('BOX-UPDATED-001');",
+                  "});",
+                  "",
+                  "pm.test('Unchanged fields preserved', function () {",
+                  "    var box = pm.response.json().box;",
+                  "    pm.expect(box.columnNo).to.eql(1);",
+                  "    pm.expect(box.locationID).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/{{newBoxID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "{{newBoxID}}"
+              ]
+            },
+            "description": "Changes bayNo, rowNo, barcode on the new box.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bayNo\":5,\"rowNo\":2,\"barcode\":\"BOX-UPDATED-001\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/boxes/{{newBoxID}} - Verify update persisted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Updated values persisted', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.bayNo).to.eql(5);",
+                  "    pm.expect(j.rowNo).to.eql(2);",
+                  "    pm.expect(j.barcode).to.eql('BOX-UPDATED-001');",
+                  "    pm.expect(j.columnNo).to.eql(1);",
+                  "    pm.expect(j.locationID).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/{{newBoxID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "{{newBoxID}}"
+              ]
+            },
+            "description": "Re-fetch to confirm changes."
+          }
+        },
+        {
+          "name": "PUT /api/boxes/999 - Update non-existent box",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Not found message', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "999"
+              ]
+            },
+            "description": "Box 999 does not exist. Expects 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"bayNo\":99}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/boxes/1 - Update with empty body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error about missing data', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('no input');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "1"
+              ]
+            },
+            "description": "No JSON body. Expects 400."
+          }
+        },
+        {
+          "name": "PUT /api/boxes/{{newBoxID}}/move - Move box to location 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('moved successfully');",
+                  "});",
+                  "",
+                  "pm.test('New location is 2', function () {",
+                  "    pm.expect(pm.response.json().newLocationID).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/{{newBoxID}}/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "{{newBoxID}}",
+                "move"
+              ]
+            },
+            "description": "Moves test box from location 1 to location 2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"newLocationID\":2}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/boxes/{{newBoxID}} - Verify move persisted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Box is now at location 2', function () {",
+                  "    pm.expect(pm.response.json().locationID).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/{{newBoxID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "{{newBoxID}}"
+              ]
+            },
+            "description": "Re-fetch to confirm location changed."
+          }
+        },
+        {
+          "name": "PUT /api/boxes/999/move - Move non-existent box",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Failure message', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('failed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/999/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "999",
+                "move"
+              ]
+            },
+            "description": "Box 999 not found. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"newLocationID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/boxes/1/move - Move to non-existent location",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Failure message', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('failed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/1/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "1",
+                "move"
+              ]
+            },
+            "description": "Location 9999 not found. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"newLocationID\":9999}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/boxes/1/move - Missing newLocationID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error mentions newLocationID', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('newlocationid');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/1/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "1",
+                "move"
+              ]
+            },
+            "description": "Missing required field. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/boxes/{{newBoxID}} - Delete the test box",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Deleted successfully', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('deleted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/{{newBoxID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "{{newBoxID}}"
+              ]
+            },
+            "description": "Deletes the box created earlier."
+          }
+        },
+        {
+          "name": "GET /api/boxes/{{newBoxID}} - Verify box deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/{{newBoxID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "{{newBoxID}}"
+              ]
+            },
+            "description": "Fetch deleted box. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/boxes - Verify count back to 7",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Box count is 7', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(7);",
+                  "});",
+                  "",
+                  "pm.test('Deleted barcode is gone', function () {",
+                  "    var codes = pm.response.json().map(function (b) { return b.barcode; });",
+                  "    pm.expect(codes).to.not.include('BOX-UPDATED-001');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes"
+              ]
+            },
+            "description": "Confirms 7 boxes after deletion."
+          }
+        },
+        {
+          "name": "DELETE /api/boxes/999 - Delete non-existent box",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Not found message', function () {",
+                  "    pm.expect(pm.response.json().message.toLowerCase()).to.include('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "999"
+              ]
+            },
+            "description": "Box 999 not found. Expects 404."
+          }
+        },
+        {
+          "name": "DELETE /api/boxes/1 - Reject unauthenticated delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/boxes/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boxes",
+                "1"
+              ]
+            },
+            "description": "No JWT. Expects 401."
           }
         }
       ]
