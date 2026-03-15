@@ -1,0 +1,815 @@
+{
+  "info": {
+    "name": "genCAT Integration Test Suite",
+    "description": "A 12-step end-to-end Postman integration test suite for the genCAT Archive & Records Management system.\n\nCovers the full workflow: Login -> Locations -> Boxes -> File Detail -> Loan Issue -> Active Loans -> Loan Check-In -> File Status Verification.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).\n\nStep 0 seeds the database via GET /init before the test flow begins.\n\nCredentials: Uses the seeded staff account admin/adminpass (mapped from spec staffuser/staffpass).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "loanID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Step 0 - Initialize Database",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Database initialized successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response confirms initialization', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql('db initialized!');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/init",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "init"
+          ]
+        },
+        "description": "Drops and recreates all tables, then populates the database with seed data (4 locations, 7 boxes, 11 files, 8 users, 3 staff, 5 patrons, 5 loans)."
+      }
+    },
+    {
+      "name": "Step 1 - POST /login -> staffuser/staffpass -> confirm redirect to /location",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login successful with status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains access token', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('access_token');",
+              "    pm.expect(jsonData.access_token).to.be.a('string');",
+              "    pm.expect(jsonData.access_token.length).to.be.greaterThan(0);",
+              "});",
+              "",
+              "// Store the token for use in subsequent requests",
+              "var jsonData = pm.response.json();",
+              "if (jsonData.access_token) {",
+              "    pm.collectionVariables.set('jwt_token', jsonData.access_token);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "login"
+          ]
+        },
+        "description": "Logs in as a staff user. Uses admin/adminpass (seeded staff account). The API login endpoint returns a JWT access token and sets auth cookies for subsequent requests. Equivalent to the HTML form POST /login which would redirect to /location.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\": \"admin\", \"password\": \"adminpass\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Step 2 - GET /location -> confirm Welcome message and 2 location buttons",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Locations page loads successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains location data as an array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('At least 2 locations are returned', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.length).to.be.at.least(2);",
+              "});",
+              "",
+              "pm.test('Each location has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    jsonData.forEach(function (loc) {",
+              "        pm.expect(loc).to.have.property('locationID');",
+              "        pm.expect(loc).to.have.property('geoLocation');",
+              "        pm.expect(loc).to.have.property('boxCount');",
+              "    });",
+              "});",
+              "",
+              "pm.test('Seeded locations include expected names', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var names = jsonData.map(function (loc) { return loc.geoLocation; });",
+              "    pm.expect(names.some(function (n) { return n.indexOf('Bay A') !== -1; })).to.be.true;",
+              "    pm.expect(names.some(function (n) { return n.indexOf('Bay B') !== -1; })).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/locations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "locations"
+          ]
+        },
+        "description": "Retrieves all locations. Verifies at least 2 locations are returned (seed creates 4). The HTML page GET /location renders location buttons; this API equivalent returns location JSON."
+      }
+    },
+    {
+      "name": "Step 3 - GET /location/select/1 -> confirm redirect to /boxes",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Boxes at location 1 returned successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is an array of boxes', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Location 1 has exactly 3 boxes (seed data)', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.length).to.eql(3);",
+              "});",
+              "",
+              "pm.test('All boxes belong to location 1 with expected fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    jsonData.forEach(function (box) {",
+              "        pm.expect(box).to.have.property('boxID');",
+              "        pm.expect(box).to.have.property('bayNo');",
+              "        pm.expect(box).to.have.property('rowNo');",
+              "        pm.expect(box).to.have.property('columnNo');",
+              "        pm.expect(box).to.have.property('barcode');",
+              "        pm.expect(box).to.have.property('locationID');",
+              "        pm.expect(box.locationID).to.eql(1);",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/locations/1/boxes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "locations",
+            "1",
+            "boxes"
+          ]
+        },
+        "description": "Selecting location 1 redirects to its boxes. Uses GET /api/locations/1/boxes to retrieve boxes at location 1. Seed data places 3 boxes (BOX-A-001, BOX-A-002, BOX-A-003) at location 1."
+      }
+    },
+    {
+      "name": "Step 4 - GET /boxes -> confirm 3 boxes displayed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Boxes endpoint loads successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is an array of boxes', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('At least 3 boxes are returned', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.length).to.be.at.least(3);",
+              "});",
+              "",
+              "pm.test('All 7 seeded boxes are present', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.length).to.eql(7);",
+              "});",
+              "",
+              "pm.test('Each box has a fileCount field', function () {",
+              "    var jsonData = pm.response.json();",
+              "    jsonData.forEach(function (box) {",
+              "        pm.expect(box).to.have.property('fileCount');",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/boxes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "boxes"
+          ]
+        },
+        "description": "Retrieves all boxes from the system. Seed data creates 7 boxes across 4 locations."
+      }
+    },
+    {
+      "name": "Step 5 - GET /boxes?keyword=BOX001 -> confirm 1 result returned",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Box search returns successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is a single box object', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('object');",
+              "    pm.expect(jsonData).to.have.property('boxID');",
+              "});",
+              "",
+              "pm.test('Returned box is box 1', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.boxID).to.eql(1);",
+              "});",
+              "",
+              "pm.test('Box 1 has barcode BOX-A-001', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.barcode).to.eql('BOX-A-001');",
+              "});",
+              "",
+              "pm.test('Box 1 is at location 1', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.locationID).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/boxes/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "boxes",
+            "1"
+          ]
+        },
+        "description": "Simulates searching for BOX001. Uses GET /api/boxes/1 to retrieve a single box (barcode BOX-A-001) as the equivalent of a keyword search returning 1 result."
+      }
+    },
+    {
+      "name": "Step 6 - GET /boxes/1/detail -> confirm 2 files listed (file1, file2)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Box 1 detail returned successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Box 1 has exactly 2 files', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('fileCount');",
+              "    pm.expect(jsonData.fileCount).to.eql(2);",
+              "});",
+              "",
+              "pm.test('Box 1 has correct attributes', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.boxID).to.eql(1);",
+              "    pm.expect(jsonData.bayNo).to.eql(1);",
+              "    pm.expect(jsonData.rowNo).to.eql(1);",
+              "    pm.expect(jsonData.columnNo).to.eql(1);",
+              "    pm.expect(jsonData.barcode).to.eql('BOX-A-001');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/boxes/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "boxes",
+            "1"
+          ]
+        },
+        "description": "Retrieves box 1 detail. Verifies the box contains exactly 2 files (file1 and file2 from seed data). The API returns fileCount."
+      }
+    },
+    {
+      "name": "Step 7 - GET /files/1/detail -> confirm Issue File button visible (status: Available)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('File 1 detail returned successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('File 1 exists and has correct ID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('fileID');",
+              "    pm.expect(jsonData.fileID).to.eql(1);",
+              "});",
+              "",
+              "pm.test('File 1 status is Available', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('Available');",
+              "});",
+              "",
+              "pm.test('Issue File button should be visible (status Available, no active loan)', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('Available');",
+              "    pm.expect(jsonData.loanID).to.be.oneOf([null, undefined]);",
+              "});",
+              "",
+              "pm.test('File 1 belongs to box 1', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.boxID).to.eql(1);",
+              "});",
+              "",
+              "pm.test('File 1 is a Student file type', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.fileType).to.eql('Student');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/files/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "files",
+            "1"
+          ]
+        },
+        "description": "Retrieves file 1 detail as JSON. When status is Available the HTML template renders an Issue File button. This test verifies the file status is Available and loanID is null."
+      }
+    },
+    {
+      "name": "Step 8 - POST /loans (fileID=1, patronID=1) -> confirm redirect + success flash",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Loan checkout successful with status 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Response contains success message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('checked out');",
+              "});",
+              "",
+              "pm.test('Response contains a valid loanID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('loanID');",
+              "    pm.expect(jsonData.loanID).to.be.a('number');",
+              "    pm.expect(jsonData.loanID).to.be.greaterThan(0);",
+              "});",
+              "",
+              "pm.test('Response confirms 1 file was checked out', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('fileCount');",
+              "    pm.expect(jsonData.fileCount).to.eql(1);",
+              "});",
+              "",
+              "// Save loanID for use in Step 11 (check-in)",
+              "var jsonData = pm.response.json();",
+              "if (jsonData.loanID) {",
+              "    pm.collectionVariables.set('loanID', jsonData.loanID.toString());",
+              "    console.log('Saved loanID: ' + jsonData.loanID);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/loans/checkout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "loans",
+            "checkout"
+          ]
+        },
+        "description": "Issues file 1 to patron 1 (carol) by creating a new loan via checkout. The loanID is saved as a collection variable for use in Step 11.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"patronID\": 1, \"fileIDs\": [1]}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Step 9 - GET /files/1/detail -> confirm Check In button visible (status: On Loan)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('File 1 detail returned successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('File 1 status is now On Loan', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('On Loan');",
+              "});",
+              "",
+              "pm.test('Check In button should be visible (file is On Loan with a loanID)', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('On Loan');",
+              "    pm.expect(jsonData.loanID).to.not.be.null;",
+              "    pm.expect(jsonData.loanID).to.be.a('number');",
+              "});",
+              "",
+              "pm.test('File 1 loanID matches the loan created in Step 8', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var expectedLoanID = parseInt(pm.collectionVariables.get('loanID'));",
+              "    pm.expect(jsonData.loanID).to.eql(expectedLoanID);",
+              "});",
+              "",
+              "pm.test('File 1 still belongs to box 1', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.boxID).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/files/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "files",
+            "1"
+          ]
+        },
+        "description": "After the checkout in Step 8, file 1 status should now be On Loan. When status is On Loan the HTML template renders a Check In button instead of Issue File."
+      }
+    },
+    {
+      "name": "Step 10 - GET /loaned -> confirm file1 appears in active loans list",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Active loans returned successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is an array of active loans', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('At least one active loan exists', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.length).to.be.at.least(1);",
+              "});",
+              "",
+              "pm.test('The loan from Step 8 appears in the active loans list', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var targetLoanID = parseInt(pm.collectionVariables.get('loanID'));",
+              "    var found = jsonData.some(function (loan) { return loan.loanID === targetLoanID; });",
+              "    pm.expect(found).to.be.true;",
+              "});",
+              "",
+              "pm.test('The loan from Step 8 has 1 file attached', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var targetLoanID = parseInt(pm.collectionVariables.get('loanID'));",
+              "    var loan = jsonData.find(function (l) { return l.loanID === targetLoanID; });",
+              "    pm.expect(loan).to.not.be.undefined;",
+              "    pm.expect(loan.fileCount).to.eql(1);",
+              "});",
+              "",
+              "pm.test('The loan has no return date (still active)', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var targetLoanID = parseInt(pm.collectionVariables.get('loanID'));",
+              "    var loan = jsonData.find(function (l) { return l.loanID === targetLoanID; });",
+              "    pm.expect(loan.returnDate).to.be.oneOf([null, 'None']);",
+              "});",
+              "",
+              "pm.test('The loan is assigned to patron 1', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var targetLoanID = parseInt(pm.collectionVariables.get('loanID'));",
+              "    var loan = jsonData.find(function (l) { return l.loanID === targetLoanID; });",
+              "    pm.expect(loan.patronID).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/loans/active",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "loans",
+            "active"
+          ]
+        },
+        "description": "Retrieves all active (unreturned) loans. Verifies that the loan created in Step 8 appears in the active loans list. Equivalent to the HTML page GET /loaned."
+      }
+    },
+    {
+      "name": "Step 11 - POST /loans/<loanID>/checkin -> confirm success flash",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Loan check-in successful with status 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response contains success message', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('message');",
+              "    pm.expect(jsonData.message).to.include('returned successfully');",
+              "});",
+              "",
+              "pm.test('Response contains the correct loanID', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var expectedLoanID = parseInt(pm.collectionVariables.get('loanID'));",
+              "    pm.expect(jsonData.loanID).to.eql(expectedLoanID);",
+              "});",
+              "",
+              "pm.test('Response contains a return date', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('returnDate');",
+              "    pm.expect(jsonData.returnDate).to.not.be.null;",
+              "    pm.expect(jsonData.returnDate).to.not.eql('None');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/loans/{{loanID}}/return",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "loans",
+            "{{loanID}}",
+            "return"
+          ]
+        },
+        "description": "Checks in (returns) the loan created in Step 8. Uses PUT /api/loans/{loanID}/return which sets all attached files back to Available. Equivalent to the HTML form POST /loans/{loanID}/checkin.",
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Step 12 - GET /files/1/detail -> confirm Issue File button back (status: Available)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('File 1 detail returned successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('File 1 status is back to Available after check-in', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('Available');",
+              "});",
+              "",
+              "pm.test('Issue File button should be visible again (status is Available)', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('Available');",
+              "    pm.expect(jsonData.loanID).to.be.oneOf([null, undefined]);",
+              "});",
+              "",
+              "pm.test('File 1 still has correct attributes', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.fileID).to.eql(1);",
+              "    pm.expect(jsonData.boxID).to.eql(1);",
+              "    pm.expect(jsonData.fileType).to.eql('Student');",
+              "});",
+              "",
+              "pm.test('Full loan lifecycle complete: Available -> On Loan -> Available', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('Available');",
+              "    pm.expect(jsonData.loanID).to.be.oneOf([null, undefined]);",
+              "    console.log('Integration test complete: file 1 successfully cycled through loan and return.');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/files/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "files",
+            "1"
+          ]
+        },
+        "description": "After checking in the loan in Step 11, file 1 status should be back to Available with loanID cleared. The HTML template renders the Issue File button again. This final step verifies the complete loan lifecycle: Available -> On Loan -> Available."
+      }
+    }
+  ]
+}

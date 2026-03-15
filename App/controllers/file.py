@@ -81,28 +81,28 @@ def updateFile(
 def searchFile(
     fileID=None, fileType=None, locationID=None, loanID=None, status=None, keyword=None
 ):
-    query = File.query
+    stmt = db.select(File)
 
     if fileID is not None:
-        query = query.filter_by(fileID=fileID)
+        stmt = stmt.where(File.fileID == fileID)
     if fileType is not None:
-        query = query.filter_by(fileType=fileType)
+        stmt = stmt.where(File.fileType == fileType)
     if locationID is not None:
-        query = query.filter_by(locationID=locationID)
+        stmt = stmt.where(File.locationID == locationID)
     if loanID is not None:
-        query = query.filter_by(loanID=loanID)
+        stmt = stmt.where(File.loanID == loanID)
     if status is not None:
-        query = query.filter_by(status=status)
+        stmt = stmt.where(File.status == status)
     if keyword is not None:
         pattern = f"%{keyword}%"
-        query = query.filter(
+        stmt = stmt.where(
             db.or_(
                 File.description.ilike(pattern),
                 File.previousDesignation.ilike(pattern),
             )
         )
 
-    return query.all()
+    return db.session.scalars(stmt).all()
 
 
 def deleteFile(fileID):  # Delete the file with the fileID from the database.
@@ -134,7 +134,7 @@ def viewFile(fileID):
 
 
 def getAllFiles():
-    return File.query.all()  # Get a list of all file  in the database
+    return db.session.scalars(db.select(File)).all()
 
 
 def changeFileStatus(fileID, newStatus):
