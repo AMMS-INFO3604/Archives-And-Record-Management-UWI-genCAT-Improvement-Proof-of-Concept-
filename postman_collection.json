@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "genCAT Integration Test Suite",
-    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into five folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Location Tests - Validates GET and POST location endpoints.\n3. Box Tests - Validates GET, POST, PUT, and DELETE box endpoints.\n4. File Tests - Validates GET, POST, PUT, DELETE file endpoints, search with filters, detail view, and status changes.\n5. Integration Test Flow - 12-step end-to-end workflow.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
+    "description": "Postman test suite for the genCAT Archive & Records Management system.\n\nOrganized into six folders:\n1. Auth Tests - Validates good/bad login credentials, identity verification, and logout.\n2. Location Tests - Validates GET and POST location endpoints.\n3. Box Tests - Validates GET, POST, PUT, and DELETE box endpoints.\n4. File Tests - Validates GET, POST, PUT, DELETE file endpoints, search with filters, detail view, and status changes.\n5. Loan Tests - Validates GET, POST, PUT, DELETE loan endpoints, checkout/return workflows, and queries by patron/staff.\n6. Integration Test Flow - 12-step end-to-end workflow.\n\nPre-requisite: The Flask server must be running at {{baseUrl}} (default http://localhost:8080).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -32,6 +32,16 @@
     },
     {
       "key": "newFileID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "newLoanID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "checkoutLoanID",
       "value": "",
       "type": "string"
     }
@@ -4954,6 +4964,2270 @@
               ],
               "path": [
                 "files",
+                "1"
+              ]
+            },
+            "description": "No JWT. Expects 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Loan Tests",
+      "description": "Loan API test suite covering GET (all, active, returned, single, by patron, by staff, loan files), POST (create bare loan, checkout files, validation errors), PUT (return loan, update loan), and DELETE endpoints. Seed creates 5 loans: 3 returned, 2 active with files attached.",
+      "item": [
+        {
+          "name": "Loan Setup - Initialize Database",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Database initialized', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().message).to.eql('db initialized!');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/init",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "init"
+              ]
+            },
+            "description": "Seeds DB with 5 loans (3 returned, 2 active), 11 files, 5 patrons, 3 staff."
+          }
+        },
+        {
+          "name": "Loan Setup - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.have.property('access_token');",
+                  "});",
+                  "var j = pm.response.json();",
+                  "if (j.access_token) pm.collectionVariables.set('jwt_token', j.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Auth for loan tests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin\",\"password\":\"adminpass\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/loans - Retrieve all loans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Response is an array of 5 loans', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(5);",
+                  "});",
+                  "",
+                  "pm.test('Each loan has required fields', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l).to.have.all.keys(",
+                  "            'loanID','loanDate','returnDate',",
+                  "            'processedByStaffUserID','patronID','fileCount'",
+                  "        );",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Mix of active and returned loans', function () {",
+                  "    var active = pm.response.json().filter(function (l) { return l.returnDate === null; });",
+                  "    var returned = pm.response.json().filter(function (l) { return l.returnDate !== null; });",
+                  "    pm.expect(active.length).to.eql(2);",
+                  "    pm.expect(returned.length).to.eql(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "Retrieves every loan. Seed creates 5 (3 returned, 2 active)."
+          }
+        },
+        {
+          "name": "GET /api/loans - Reject unauthenticated request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "No JWT. Expects 401."
+          }
+        },
+        {
+          "name": "GET /api/loans/active - Retrieve active loans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 2 active loans', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('All active loans have null returnDate', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l.returnDate).to.be.null;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Active loans have files attached', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l.fileCount).to.be.at.least(1);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "active"
+              ]
+            },
+            "description": "Retrieves active (unreturned) loans. Seed has 2."
+          }
+        },
+        {
+          "name": "GET /api/loans/returned - Retrieve returned loans",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 3 returned loans', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.test('All returned loans have a returnDate', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l.returnDate).to.not.be.null;",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/returned",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "returned"
+              ]
+            },
+            "description": "Retrieves returned loans. Seed has 3."
+          }
+        },
+        {
+          "name": "GET /api/loans/1 - Retrieve returned loan 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Correct loan returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.loanID).to.eql(1);",
+                  "    pm.expect(j.patronID).to.eql(1);",
+                  "    pm.expect(j.processedByStaffUserID).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('Loan 1 has been returned', function () {",
+                  "    pm.expect(pm.response.json().returnDate).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "1"
+              ]
+            },
+            "description": "Loan 1: patron=carol(1), staff=alice(2), returned."
+          }
+        },
+        {
+          "name": "GET /api/loans/4 - Retrieve active loan 4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Correct loan returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.loanID).to.eql(4);",
+                  "    pm.expect(j.patronID).to.eql(4);",
+                  "    pm.expect(j.processedByStaffUserID).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('Loan 4 is still active (no returnDate)', function () {",
+                  "    pm.expect(pm.response.json().returnDate).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test('Loan 4 has 1 file attached', function () {",
+                  "    pm.expect(pm.response.json().fileCount).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "4"
+              ]
+            },
+            "description": "Loan 4: patron=frank(4), staff=alice(2), active with file 10."
+          }
+        },
+        {
+          "name": "GET /api/loans/5 - Retrieve active loan 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Correct loan returned', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.loanID).to.eql(5);",
+                  "    pm.expect(j.patronID).to.eql(5);",
+                  "    pm.expect(j.processedByStaffUserID).to.eql(3);",
+                  "});",
+                  "",
+                  "pm.test('Loan 5 is still active', function () {",
+                  "    pm.expect(pm.response.json().returnDate).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test('Loan 5 has 1 file attached', function () {",
+                  "    pm.expect(pm.response.json().fileCount).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "5"
+              ]
+            },
+            "description": "Loan 5: patron=grace(5), staff=bob(3), active with file 11."
+          }
+        },
+        {
+          "name": "GET /api/loans/999 - Loan not found",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "999"
+              ]
+            },
+            "description": "Non-existent loan. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/loans/4/files - Files on active loan 4",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns array with 1 file', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Attached file is file 10 (BSc Mathematics)', function () {",
+                  "    var f = pm.response.json()[0];",
+                  "    pm.expect(f.fileID).to.eql(10);",
+                  "    pm.expect(f.fileType).to.eql('Student');",
+                  "    pm.expect(f.status).to.eql('On Loan');",
+                  "    pm.expect(f.description).to.include('Mathematics');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/4/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "4",
+                "files"
+              ]
+            },
+            "description": "Loan 4 has file 10 (BSc Mathematics) attached."
+          }
+        },
+        {
+          "name": "GET /api/loans/5/files - Files on active loan 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns array with 1 file', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Attached file is file 11 (MA History)', function () {",
+                  "    var f = pm.response.json()[0];",
+                  "    pm.expect(f.fileID).to.eql(11);",
+                  "    pm.expect(f.fileType).to.eql('Student');",
+                  "    pm.expect(f.status).to.eql('On Loan');",
+                  "    pm.expect(f.description).to.include('History');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/5/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "5",
+                "files"
+              ]
+            },
+            "description": "Loan 5 has file 11 (MA History) attached."
+          }
+        },
+        {
+          "name": "GET /api/loans/1/files - Files on returned loan 1 (empty)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Response indicates no files attached', function () {",
+                  "    var j = pm.response.json();",
+                  "    // Returned loans have files detached; expect empty array or message",
+                  "    if (Array.isArray(j)) {",
+                  "        pm.expect(j.length).to.eql(0);",
+                  "    } else {",
+                  "        pm.expect(j.message).to.include('No files');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/1/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "1",
+                "files"
+              ]
+            },
+            "description": "Loan 1 is returned; files were detached. Expects empty result."
+          }
+        },
+        {
+          "name": "GET /api/loans/999/files - Files on non-existent loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/999/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "999",
+                "files"
+              ]
+            },
+            "description": "Loan 999 not found. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/loans/patron/4 - Loans for patron frank",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 1 loan for frank', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('All loans belong to patron 4', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l.patronID).to.eql(4);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/patron/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "patron",
+                "4"
+              ]
+            },
+            "description": "Frank (patron 4) has 1 active loan."
+          }
+        },
+        {
+          "name": "GET /api/loans/patron/1 - Loans for patron carol",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 1 loan for carol', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Loan is returned', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l.returnDate).to.not.be.null;",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/patron/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "patron",
+                "1"
+              ]
+            },
+            "description": "Carol (patron 1) has 1 returned loan."
+          }
+        },
+        {
+          "name": "GET /api/loans/patron/999 - Loans for non-existent patron",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('No loans found message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('No loans found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/patron/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "patron",
+                "999"
+              ]
+            },
+            "description": "Patron 999 does not exist. Expects 404."
+          }
+        },
+        {
+          "name": "GET /api/loans/staff/2 - Loans processed by alice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 2 loans processed by alice', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('All loans processed by staff 2', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l.processedByStaffUserID).to.eql(2);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/staff/2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "staff",
+                "2"
+              ]
+            },
+            "description": "Alice (staff 2) processed loans 1 and 4."
+          }
+        },
+        {
+          "name": "GET /api/loans/staff/3 - Loans processed by bob",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 2 loans processed by bob', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('All loans processed by staff 3', function () {",
+                  "    pm.response.json().forEach(function (l) {",
+                  "        pm.expect(l.processedByStaffUserID).to.eql(3);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/staff/3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "staff",
+                "3"
+              ]
+            },
+            "description": "Bob (staff 3) processed loans 2 and 5."
+          }
+        },
+        {
+          "name": "GET /api/loans/staff/1 - Loans processed by admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Returns 1 loan processed by admin', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.be.an('array');",
+                  "    pm.expect(j.length).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/staff/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "staff",
+                "1"
+              ]
+            },
+            "description": "Admin (staff 1) processed loan 3."
+          }
+        },
+        {
+          "name": "GET /api/loans/staff/999 - Loans for non-existent staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('No loans found message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('No loans found');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/staff/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "staff",
+                "999"
+              ]
+            },
+            "description": "Staff 999 does not exist. Expects 404."
+          }
+        },
+        {
+          "name": "POST /api/loans - Create a bare loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('created successfully');",
+                  "});",
+                  "",
+                  "pm.test('loanID is returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('loanID');",
+                  "});",
+                  "",
+                  "var j = pm.response.json();",
+                  "if (j.loanID) pm.collectionVariables.set('newLoanID', j.loanID.toString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "Creates a bare loan for patron carol(1), processed by admin(1).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":1,\"processedByStaffUserID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/loans/{{newLoanID}} - Verify created loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Loan has correct patron and staff', function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.patronID).to.eql(1);",
+                  "    pm.expect(j.processedByStaffUserID).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Loan is active (not returned)', function () {",
+                  "    pm.expect(pm.response.json().returnDate).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test('No files attached to bare loan', function () {",
+                  "    pm.expect(pm.response.json().fileCount).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{newLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{newLoanID}}"
+              ]
+            },
+            "description": "Fetches the newly created bare loan to verify fields."
+          }
+        },
+        {
+          "name": "GET /api/loans - Verify loan count is now 6",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Total loans is now 6', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(6);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "Verify count increased to 6 after creating one loan."
+          }
+        },
+        {
+          "name": "POST /api/loans - Missing patronID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error mentions patronID', function () {",
+                  "    pm.expect(pm.response.json().error).to.include('patronID');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "Creates loan without patronID. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"processedByStaffUserID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/loans - Empty request body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "No JSON body. Expects 400."
+          }
+        },
+        {
+          "name": "POST /api/loans - Invalid patronID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "Patron 9999 does not exist. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":9999}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/loans - Reject unauthenticated create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "No JWT. Expects 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/loans/checkout - Checkout file 1 to carol",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('checked out successfully');",
+                  "});",
+                  "",
+                  "pm.test('loanID returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('loanID');",
+                  "});",
+                  "",
+                  "pm.test('fileCount is 1', function () {",
+                  "    pm.expect(pm.response.json().fileCount).to.eql(1);",
+                  "});",
+                  "",
+                  "var j = pm.response.json();",
+                  "if (j.loanID) pm.collectionVariables.set('checkoutLoanID', j.loanID.toString());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "checkout"
+              ]
+            },
+            "description": "Checks out file 1 (Available) to carol. Creates loan + attaches file.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":1,\"fileIDs\":[1],\"processedByStaffUserID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/loans/{{checkoutLoanID}} - Verify checkout loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Loan has 1 file attached', function () {",
+                  "    pm.expect(pm.response.json().fileCount).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('Loan is active', function () {",
+                  "    pm.expect(pm.response.json().returnDate).to.be.null;",
+                  "});",
+                  "",
+                  "pm.test('Loan patron is carol (1)', function () {",
+                  "    pm.expect(pm.response.json().patronID).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{checkoutLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{checkoutLoanID}}"
+              ]
+            },
+            "description": "Verify the checkout loan has 1 file and is active."
+          }
+        },
+        {
+          "name": "GET /files/1 - Verify file 1 is now On Loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('File 1 status is On Loan', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('On Loan');",
+                  "});",
+                  "",
+                  "pm.test('File 1 loanID matches checkout loan', function () {",
+                  "    var expected = parseInt(pm.collectionVariables.get('checkoutLoanID'));",
+                  "    pm.expect(pm.response.json().loanID).to.eql(expected);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "1"
+              ]
+            },
+            "description": "After checkout, file 1 should be On Loan with loanID set."
+          }
+        },
+        {
+          "name": "POST /api/loans/checkout - Missing fileIDs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error mentions fileIDs', function () {",
+                  "    pm.expect(pm.response.json().error).to.include('fileIDs');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "checkout"
+              ]
+            },
+            "description": "Checkout without fileIDs. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/loans/checkout - Missing patronID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error mentions patronID', function () {",
+                  "    pm.expect(pm.response.json().error).to.include('patronID');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "checkout"
+              ]
+            },
+            "description": "Checkout without patronID. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fileIDs\":[2]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/loans/checkout - File already On Loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "checkout"
+              ]
+            },
+            "description": "File 1 is already On Loan from previous checkout. Expects 400.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":2,\"fileIDs\":[1]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/loans/checkout - Empty request body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "checkout"
+              ]
+            },
+            "description": "No JSON body on checkout. Expects 400."
+          }
+        },
+        {
+          "name": "PUT /api/loans/{{checkoutLoanID}}/return - Return the checkout loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('returned successfully');",
+                  "});",
+                  "",
+                  "pm.test('returnDate is set', function () {",
+                  "    pm.expect(pm.response.json().returnDate).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test('loanID matches', function () {",
+                  "    var expected = parseInt(pm.collectionVariables.get('checkoutLoanID'));",
+                  "    pm.expect(pm.response.json().loanID).to.eql(expected);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{checkoutLoanID}}/return",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{checkoutLoanID}}",
+                "return"
+              ]
+            },
+            "description": "Returns the checkout loan. Files should revert to Available.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /files/1 - Verify file 1 is Available after return",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('File 1 status is back to Available', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('Available');",
+                  "});",
+                  "",
+                  "pm.test('File 1 loanID is cleared', function () {",
+                  "    pm.expect(pm.response.json().loanID).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "1"
+              ]
+            },
+            "description": "After returning the loan, file 1 should be Available with loanID null."
+          }
+        },
+        {
+          "name": "GET /api/loans/{{checkoutLoanID}} - Verify loan is now returned",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('returnDate is set', function () {",
+                  "    pm.expect(pm.response.json().returnDate).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test('File count is 0 after return', function () {",
+                  "    pm.expect(pm.response.json().fileCount).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{checkoutLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{checkoutLoanID}}"
+              ]
+            },
+            "description": "Re-fetch checkout loan to confirm it is returned and files detached."
+          }
+        },
+        {
+          "name": "PUT /api/loans/999/return - Return non-existent loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/999/return",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "999",
+                "return"
+              ]
+            },
+            "description": "Loan 999 does not exist. Expects 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/loans/{{newLoanID}} - Update loan patron and staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('updated successfully');",
+                  "});",
+                  "",
+                  "pm.test('loanID matches', function () {",
+                  "    var expected = parseInt(pm.collectionVariables.get('newLoanID'));",
+                  "    pm.expect(pm.response.json().loanID).to.eql(expected);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{newLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{newLoanID}}"
+              ]
+            },
+            "description": "Changes patron from carol(1) to dave(2) and staff from admin(1) to bob(3).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":2,\"processedByStaffUserID\":3}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/loans/{{newLoanID}} - Verify update applied",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Patron updated to dave (2)', function () {",
+                  "    pm.expect(pm.response.json().patronID).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test('Staff updated to bob (3)', function () {",
+                  "    pm.expect(pm.response.json().processedByStaffUserID).to.eql(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{newLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{newLoanID}}"
+              ]
+            },
+            "description": "Re-fetch to confirm patron and staff were updated."
+          }
+        },
+        {
+          "name": "PUT /api/loans/999 - Update non-existent loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "999"
+              ]
+            },
+            "description": "Loan 999 does not exist. Expects 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"patronID\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/loans/1 - Empty request body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "1"
+              ]
+            },
+            "description": "No JSON body on update. Expects 400."
+          }
+        },
+        {
+          "name": "DELETE /api/loans/{{newLoanID}} - Delete the bare loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('deleted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{newLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{newLoanID}}"
+              ]
+            },
+            "description": "Deletes the bare loan created earlier."
+          }
+        },
+        {
+          "name": "GET /api/loans/{{newLoanID}} - Verify bare loan deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{newLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{newLoanID}}"
+              ]
+            },
+            "description": "Fetch deleted loan. Expects 404."
+          }
+        },
+        {
+          "name": "DELETE /api/loans/{{checkoutLoanID}} - Delete the checkout loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Success message', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('deleted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/{{checkoutLoanID}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "{{checkoutLoanID}}"
+              ]
+            },
+            "description": "Deletes the returned checkout loan."
+          }
+        },
+        {
+          "name": "GET /api/loans - Verify loan count back to 5",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "",
+                  "pm.test('Total loans is back to 5', function () {",
+                  "    pm.expect(pm.response.json().length).to.eql(5);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans"
+              ]
+            },
+            "description": "Confirms 5 loans after deleting both test loans."
+          }
+        },
+        {
+          "name": "DELETE /api/loans/999 - Delete non-existent loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
+                "999"
+              ]
+            },
+            "description": "Loan 999 not found. Expects 404."
+          }
+        },
+        {
+          "name": "DELETE /api/loans/1 - Reject unauthenticated delete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or redirect', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 302, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loans/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loans",
                 "1"
               ]
             },
