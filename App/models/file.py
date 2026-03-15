@@ -20,6 +20,8 @@ class File(db.Model):
 
     student_record = db.relationship('Student', backref='file', uselist=False)
     staff_record = db.relationship('StaffRecord', backref='file', uselist=False)
+    
+    conditionNotes = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f'<File {self.fileID} - {self.fileType}>'

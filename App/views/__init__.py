@@ -8,6 +8,7 @@ from .index import index_views
 from .loan import loan_views
 from .location import location_views
 from .user import user_views
+from .loan import loan_views
 
 views = [
     user_views,

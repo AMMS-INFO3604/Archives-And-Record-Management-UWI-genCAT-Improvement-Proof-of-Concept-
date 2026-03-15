@@ -26,6 +26,22 @@ from App.controllers.location import get_all_locations
 
 box_views = Blueprint("box_views", __name__, template_folder="templates")
 
+@box_views.route("/boxes", methods=["GET"])
+@jwt_required()
+def get_boxes_page():
+    keyword = request.args.get("keyword", "").strip()
+    boxes = searchBoxesByBarcode(keyword) if keyword else getAllBoxes()
+    return render_template("boxes.html", boxes=boxes, keyword=keyword)
+
+
+@box_views.route("/boxes/<int:boxID>/detail", methods=["GET"])
+@jwt_required()
+def get_box_detail_page(boxID):
+    box = getBoxByID(boxID)
+    if not box:
+        flash("Box not found.", "error")
+        return redirect(url_for("box_views.get_boxes_page"))
+    return render_template("box_detail.html", box=box)
 
 # ---------------------------------------------------------------------------
 # HTML – List page

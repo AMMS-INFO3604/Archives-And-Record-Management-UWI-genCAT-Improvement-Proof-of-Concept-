@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+{% block title %}Staff Login{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #ede7f6 !important; }
+
+    .login-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 56px - 40px);
+        padding: 32px 16px;
+    }
+
+    .login-card {
+        background: #fff;
+        border: 1.5px solid #ce93d8;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 6px 32px rgba(74,20,140,.10);
+        overflow: hidden;
+    }
+
+    .login-header {
+        background: #4a148c;
+        padding: 28px 32px 24px;
+        text-align: center;
+    }
+
+    .login-header .logo-area {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .login-header .logo-area i { font-size: 32px; color: #ce93d8; }
+
+    .login-header h1 {
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+        margin: 0;
+    }
+
+    .login-header .role-badge {
+        display: inline-block;
+        margin-top: 10px;
+        background: rgba(255,255,255,.15);
+        color: #e1bee7;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 3px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,.2);
+    }
+
+    .login-body { padding: 32px 32px 28px; }
+
+    .login-body h2 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0 0 6px;
+    }
+
+    .login-body .subtitle {
+        font-size: .85rem;
+        color: #757575;
+        margin: 0 0 24px;
+    }
+
+    .login-body .input-field label {
+        color: #7b1fa2 !important;
+        font-weight: 600;
+        font-size: .82rem;
+    }
+
+    .login-body .input-field input:focus + label,
+    .login-body .input-field input.active + label {
+        color: #4a148c !important;
+    }
+
+    .login-body .input-field input {
+        border-bottom: 1.5px solid #ce93d8 !important;
+        box-shadow: none !important;
+    }
+
+    .login-body .input-field input:focus {
+        border-bottom: 2px solid #4a148c !important;
+        box-shadow: none !important;
+    }
+
+    .btn-login {
+        width: 100%;
+        background: #4a148c !important;
+        color: #fff !important;
+        font-weight: 700 !important;
+        letter-spacing: .5px;
+        border-radius: 8px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        font-size: .9rem !important;
+        margin-top: 8px;
+        box-shadow: 0 4px 14px rgba(74,20,140,.25) !important;
+    }
+
+    .btn-login:hover { background: #6a1b9a !important; }
+
+    .switch-link {
+        text-align: center;
+        margin-top: 20px;
+        font-size: .84rem;
+        color: #757575;
+    }
+
+    .switch-link a {
+        color: #7b1fa2;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .switch-link a:hover { color: #4a148c; }
+
+    .login-footer {
+        border-top: 1px solid #f3e5f5;
+        padding: 14px 32px;
+        text-align: center;
+        font-size: .75rem;
+        color: #bdbdbd;
+    }
+</style>
+
+<div class="login-wrapper">
+    <div class="login-card">
+
+        <div class="login-header">
+            <div class="logo-area">
+                <i class="material-icons">archive</i>
+                <h1>genCAT</h1>
+            </div>
+            <span class="role-badge">Staff Portal</span>
+        </div>
+
+        <div class="login-body">
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to your staff account to continue.</p>
+
+            <form method="POST" action="/login">
+                <div class="input-field">
+                    <input type="text" id="username" name="username" required />
+                    <label for="username">Username</label>
+                </div>
+
+                <div class="input-field">
+                    <input type="password" id="password" name="password" required />
+                    <label for="password">Password</label>
+                </div>
+
+                <button type="submit" class="btn waves-effect waves-light btn-login">
+                    Login
+                </button>
+            </form>
+
+            <p class="switch-link">
+                Not a Staff member? <a href="{{ url_for('auth_views.patron_login_page') }}">Login as a Patron</a>
+            </p>
+        </div>
+
+        <div class="login-footer">
+            &copy; 2026 genCAT &mdash; GEN2 Records Management System, UWI
+        </div>
+
+    </div>
+</div>
+{% endblock %}
