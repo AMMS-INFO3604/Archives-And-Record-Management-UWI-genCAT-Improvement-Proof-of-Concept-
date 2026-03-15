@@ -34,6 +34,14 @@ def identify_page():
         message=f"You are logged in as {current_user.userID} - {current_user.username}",
     )
 
+@auth_views.route("/login/staff", methods=["GET"])
+def staff_login_page():
+    return render_template("staff_login.html")
+
+
+@auth_views.route("/login/patron", methods=["GET"])
+def patron_login_page():
+    return render_template("patron_login.html")
 
 @auth_views.route("/login", methods=["POST"])
 def login_action():
