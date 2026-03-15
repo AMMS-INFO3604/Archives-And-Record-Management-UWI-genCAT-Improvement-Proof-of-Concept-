@@ -6,19 +6,37 @@
         <title>{% block title %}genCAT{% endblock %} | GEN2 Records</title>
 
         <!-- Material Icons -->
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        <link
+            href="https://fonts.googleapis.com/icon?family=Material+Icons"
+            rel="stylesheet"
+        />
         <!-- Materialize CSS -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+        />
         <!-- Project styles -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
 
         <style>
             /* ── Reset ─────────────────────────────────────────────────── */
-            *, *::before, *::after { box-sizing: border-box; }
-            html, body { height: 100%; margin: 0; padding: 0; }
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
             body {
                 background: #f3e5f5;
-                font-family: 'Roboto', sans-serif;
+                font-family: "Roboto", sans-serif;
                 display: flex;
                 flex-direction: column;
                 min-height: 100vh;
@@ -38,7 +56,7 @@
                 position: sticky;
                 top: 0;
                 z-index: 300;
-                box-shadow: 0 2px 10px rgba(0,0,0,.30);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
                 gap: 8px;
             }
 
@@ -65,10 +83,14 @@
                 justify-content: center;
                 color: #fff;
                 flex-shrink: 0;
-                transition: background .15s;
+                transition: background 0.15s;
             }
-            .tb-hamburger:hover { background: rgba(255,255,255,.12); }
-            .tb-hamburger i { font-size: 22px; }
+            .tb-hamburger:hover {
+                background: rgba(255, 255, 255, 0.12);
+            }
+            .tb-hamburger i {
+                font-size: 22px;
+            }
 
             /* Brand */
             .tb-brand {
@@ -76,21 +98,25 @@
                 align-items: center;
                 gap: 6px;
                 color: #fff;
-                font-size: .92rem;
+                font-size: 0.92rem;
                 font-weight: 800;
-                letter-spacing: .8px;
+                letter-spacing: 0.8px;
                 text-transform: uppercase;
                 text-decoration: none;
                 white-space: nowrap;
                 padding: 4px 8px;
                 border-radius: 6px;
-                transition: background .15s;
+                transition: background 0.15s;
                 flex-shrink: 0;
             }
-            .tb-brand:hover { background: rgba(255,255,255,.1); color: #fff; }
-            .tb-brand i { font-size: 20px; }
+            .tb-brand:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+            }
+            .tb-brand i {
+                font-size: 20px;
+            }
 
-    
             /* ── Right section ── */
             .tb-right {
                 display: flex;
@@ -104,14 +130,16 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                color: rgba(255,255,255,.65);
-                font-size: .75rem;
+                color: rgba(255, 255, 255, 0.65);
+                font-size: 0.75rem;
                 white-space: nowrap;
                 padding: 4px 8px;
-                border: 1px solid rgba(255,255,255,.18);
+                border: 1px solid rgba(255, 255, 255, 0.18);
                 border-radius: 20px;
             }
-            .tb-date i { font-size: 14px; }
+            .tb-date i {
+                font-size: 14px;
+            }
 
             /* Search bar */
             .tb-search {
@@ -121,22 +149,27 @@
             .tb-search input {
                 height: 32px;
                 width: 180px;
-                background: rgba(255,255,255,.12) !important;
-                border: 1px solid rgba(255,255,255,.22) !important;
-                border-bottom: 1px solid rgba(255,255,255,.22) !important;
+                background: rgba(255, 255, 255, 0.12) !important;
+                border: 1px solid rgba(255, 255, 255, 0.22) !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.22) !important;
                 border-radius: 20px !important;
                 color: #fff !important;
-                font-size: .8rem;
+                font-size: 0.8rem;
                 padding: 0 12px 0 32px !important;
                 box-shadow: none !important;
                 margin: 0 !important;
-                transition: background .2s, border-color .2s, width .2s;
+                transition:
+                    background 0.2s,
+                    border-color 0.2s,
+                    width 0.2s;
                 outline: none;
             }
-            .tb-search input::placeholder { color: rgba(255,255,255,.5); }
+            .tb-search input::placeholder {
+                color: rgba(255, 255, 255, 0.5);
+            }
             .tb-search input:focus {
-                background: rgba(255,255,255,.2) !important;
-                border-color: rgba(255,255,255,.5) !important;
+                background: rgba(255, 255, 255, 0.2) !important;
+                border-color: rgba(255, 255, 255, 0.5) !important;
                 width: 220px;
             }
             .tb-search .search-icon {
@@ -144,7 +177,7 @@
                 left: 9px;
                 top: 50%;
                 transform: translateY(-50%);
-                color: rgba(255,255,255,.55);
+                color: rgba(255, 255, 255, 0.55);
                 font-size: 16px;
                 pointer-events: none;
             }
@@ -154,12 +187,12 @@
                 width: 32px;
                 height: 32px;
                 border-radius: 50%;
-                background: rgba(255,255,255,.2);
-                border: 1.5px solid rgba(255,255,255,.35);
+                background: rgba(255, 255, 255, 0.2);
+                border: 1.5px solid rgba(255, 255, 255, 0.35);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: .78rem;
+                font-size: 0.78rem;
                 font-weight: 800;
                 color: #fff;
                 text-transform: uppercase;
@@ -170,8 +203,8 @@
 
             /* Username label */
             .tb-username {
-                color: rgba(255,255,255,.85);
-                font-size: .8rem;
+                color: rgba(255, 255, 255, 0.85);
+                font-size: 0.8rem;
                 white-space: nowrap;
                 max-width: 110px;
                 overflow: hidden;
@@ -183,20 +216,25 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                color: rgba(255,255,255,.65);
-                font-size: .78rem;
+                color: rgba(255, 255, 255, 0.65);
+                font-size: 0.78rem;
                 text-decoration: none;
                 padding: 5px 10px;
                 border-radius: 6px;
-                border: 1px solid rgba(255,255,255,.18);
+                border: 1px solid rgba(255, 255, 255, 0.18);
                 white-space: nowrap;
-                transition: background .15s, color .15s, border-color .15s;
+                transition:
+                    background 0.15s,
+                    color 0.15s,
+                    border-color 0.15s;
             }
-            .tb-logout i { font-size: 15px; }
+            .tb-logout i {
+                font-size: 15px;
+            }
             .tb-logout:hover {
-                background: rgba(255,255,255,.1);
+                background: rgba(255, 255, 255, 0.1);
                 color: #fff;
-                border-color: rgba(255,255,255,.35);
+                border-color: rgba(255, 255, 255, 0.35);
             }
 
             /* Login form (unauthenticated) */
@@ -209,16 +247,18 @@
             .tb-login-form input {
                 height: 32px;
                 width: 120px;
-                background: rgba(255,255,255,.12) !important;
+                background: rgba(255, 255, 255, 0.12) !important;
                 border: none !important;
-                border-bottom: 1.5px solid rgba(255,255,255,.45) !important;
+                border-bottom: 1.5px solid rgba(255, 255, 255, 0.45) !important;
                 color: #fff !important;
-                font-size: .82rem;
+                font-size: 0.82rem;
                 padding: 0 8px !important;
                 box-shadow: none !important;
                 margin: 0 !important;
             }
-            .tb-login-form input::placeholder { color: rgba(255,255,255,.5); }
+            .tb-login-form input::placeholder {
+                color: rgba(255, 255, 255, 0.5);
+            }
             .tb-login-form input:focus {
                 border-bottom-color: #fff !important;
                 box-shadow: none !important;
@@ -230,13 +270,15 @@
                 border-radius: 6px;
                 height: 32px;
                 padding: 0 14px;
-                font-size: .8rem;
+                font-size: 0.8rem;
                 font-weight: 700;
                 cursor: pointer;
                 white-space: nowrap;
-                transition: background .15s;
+                transition: background 0.15s;
             }
-            .tb-login-btn:hover { background: #ede7f6; }
+            .tb-login-btn:hover {
+                background: #ede7f6;
+            }
 
             /* ════════════════════════════════════════════════════════════
                APP SHELL
@@ -259,7 +301,10 @@
                 flex-shrink: 0;
                 overflow-y: auto;
                 overflow-x: hidden;
-                transition: width .22s ease, min-width .22s ease, border-color .22s;
+                transition:
+                    width 0.22s ease,
+                    min-width 0.22s ease,
+                    border-color 0.22s;
             }
             /* Collapsed state (desktop) */
             .sidebar.collapsed {
@@ -269,7 +314,7 @@
             }
 
             .sidebar-menu-hdr {
-                font-size: .68rem;
+                font-size: 0.68rem;
                 font-weight: 800;
                 letter-spacing: 1.4px;
                 text-transform: uppercase;
@@ -282,47 +327,87 @@
                 margin: 0;
                 padding: 0 8px;
             }
-            .sidebar nav ul li { margin: 2px 0; }
+            .sidebar nav ul li {
+                margin: 2px 0;
+            }
             .sidebar nav ul li a {
                 display: flex;
                 align-items: center;
                 gap: 9px;
                 padding: 9px 10px;
                 border-radius: 8px;
-                font-size: .85rem;
+                font-size: 0.85rem;
                 font-weight: 500;
                 color: #424242;
                 text-decoration: none;
                 white-space: nowrap;
-                transition: background .15s, color .15s;
+                transition:
+                    background 0.15s,
+                    color 0.15s;
             }
             .sidebar nav ul li a i {
                 font-size: 18px;
                 color: #9e9e9e;
-                transition: color .15s;
+                transition: color 0.15s;
                 flex-shrink: 0;
             }
-            .sidebar nav ul li a:hover            { background: #f3e5f5; color: #4a148c; }
-            .sidebar nav ul li a:hover i          { color: #7b1fa2; }
+            .sidebar nav ul li a:hover {
+                background: #f3e5f5;
+                color: #4a148c;
+            }
+            .sidebar nav ul li a:hover i {
+                color: #7b1fa2;
+            }
 
             /* Active states — colour-coded per section */
-            .sidebar nav ul li.active-location > a   { background: #ede7f6; color: #4a148c; font-weight: 600; }
-            .sidebar nav ul li.active-location > a i { color: #7b1fa2; }
-            .sidebar nav ul li.active-boxes > a      { background: #e8f5e9; color: #2e7d32; font-weight: 600; }
-            .sidebar nav ul li.active-boxes > a i    { color: #388e3c; }
-            .sidebar nav ul li.active-files > a      { background: #fce4ec; color: #c62828; font-weight: 600; }
-            .sidebar nav ul li.active-files > a i    { color: #e53935; }
-            .sidebar nav ul li.active-loans > a      { background: #e3f2fd; color: #1565c0; font-weight: 600; }
-            .sidebar nav ul li.active-loans > a i    { color: #1976d2; }
+            .sidebar nav ul li.active-location > a {
+                background: #ede7f6;
+                color: #4a148c;
+                font-weight: 600;
+            }
+            .sidebar nav ul li.active-location > a i {
+                color: #7b1fa2;
+            }
+            .sidebar nav ul li.active-boxes > a {
+                background: #e8f5e9;
+                color: #2e7d32;
+                font-weight: 600;
+            }
+            .sidebar nav ul li.active-boxes > a i {
+                color: #388e3c;
+            }
+            .sidebar nav ul li.active-files > a {
+                background: #fce4ec;
+                color: #c62828;
+                font-weight: 600;
+            }
+            .sidebar nav ul li.active-files > a i {
+                color: #e53935;
+            }
+            .sidebar nav ul li.active-loans > a {
+                background: #e3f2fd;
+                color: #1565c0;
+                font-weight: 600;
+            }
+            .sidebar nav ul li.active-loans > a i {
+                color: #1976d2;
+            }
 
             .sidebar-divider {
                 height: 1px;
                 background: #f3e5f5;
                 margin: 6px 14px;
             }
-            .sidebar nav ul li.logout-item > a       { color: #9e9e9e; }
-            .sidebar nav ul li.logout-item > a:hover { background: #fce4ec; color: #c62828; }
-            .sidebar nav ul li.logout-item > a:hover i { color: #e53935; }
+            .sidebar nav ul li.logout-item > a {
+                color: #9e9e9e;
+            }
+            .sidebar nav ul li.logout-item > a:hover {
+                background: #fce4ec;
+                color: #c62828;
+            }
+            .sidebar nav ul li.logout-item > a:hover i {
+                color: #e53935;
+            }
 
             /* ── Main content ─────────────────────────────────────────── */
             .main-content {
@@ -333,16 +418,24 @@
             }
 
             /* ── Flash toasts ─────────────────────────────────────────── */
-            .toast.toast-success { background-color: #2e7d32 !important; }
-            .toast.toast-error   { background-color: #c62828 !important; }
-            .toast.toast-warning { background-color: #ef6c00 !important; }
-            .toast.toast-info    { background-color: #1565c0 !important; }
+            .toast.toast-success {
+                background-color: #2e7d32 !important;
+            }
+            .toast.toast-error {
+                background-color: #c62828 !important;
+            }
+            .toast.toast-warning {
+                background-color: #ef6c00 !important;
+            }
+            .toast.toast-info {
+                background-color: #1565c0 !important;
+            }
 
             /* ── Footer ───────────────────────────────────────────────── */
             .app-footer {
                 background: #311b92;
-                color: rgba(255,255,255,.55);
-                font-size: .76rem;
+                color: rgba(255, 255, 255, 0.55);
+                font-size: 0.76rem;
                 padding: 10px 24px;
                 text-align: center;
                 flex-shrink: 0;
@@ -353,11 +446,21 @@
             ════════════════════════════════════════════════════════════ */
             @media (max-width: 768px) {
                 /* Hide items that don't fit */
-                .tb-nav    { display: none; }
-                .tb-divider{ display: none; }
-                .tb-date   { display: none; }
-                .tb-search { display: none; }
-                .tb-username { display: none; }
+                .tb-nav {
+                    display: none;
+                }
+                .tb-divider {
+                    display: none;
+                }
+                .tb-date {
+                    display: none;
+                }
+                .tb-search {
+                    display: none;
+                }
+                .tb-username {
+                    display: none;
+                }
 
                 /* Sidebar becomes a fixed off-canvas drawer */
                 .sidebar {
@@ -366,40 +469,50 @@
                     left: -172px;
                     height: calc(100vh - 56px);
                     z-index: 400;
-                    transition: left .25s ease;
-                    box-shadow: 4px 0 20px rgba(0,0,0,.18);
+                    transition: left 0.25s ease;
+                    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
                     /* override desktop collapsed state on mobile */
                     width: 168px !important;
                     min-width: 168px !important;
                     border-right-color: #e1bee7 !important;
                 }
-                .sidebar.open { left: 0; }
+                .sidebar.open {
+                    left: 0;
+                }
 
                 /* Backdrop */
                 .sidebar-overlay {
                     display: none;
                     position: fixed;
                     inset: 56px 0 0;
-                    background: rgba(0,0,0,.38);
+                    background: rgba(0, 0, 0, 0.38);
                     z-index: 399;
                 }
-                .sidebar-overlay.open { display: block; }
+                .sidebar-overlay.open {
+                    display: block;
+                }
 
-                .main-content { padding: 16px 14px 48px; }
+                .main-content {
+                    padding: 16px 14px 48px;
+                }
 
-                .tb-login-form input { width: 88px; }
+                .tb-login-form input {
+                    width: 88px;
+                }
             }
         </style>
     </head>
     <body>
-
         <!-- ════════════ TOP BAR ════════════ -->
+        {% if is_authenticated %}
         <header class="top-bar" role="banner">
-
             <!-- LEFT: hamburger · brand · (divider) · nav links -->
             <div class="tb-left">
-
-                <button class="tb-hamburger" id="sidebar-toggle" aria-label="Toggle navigation">
+                <button
+                    class="tb-hamburger"
+                    id="sidebar-toggle"
+                    aria-label="Toggle navigation"
+                >
                     <i class="material-icons">menu</i>
                 </button>
 
@@ -407,13 +520,10 @@
                     <i class="material-icons">archive</i>
                     genCAT
                 </a>
-
-
             </div>
 
             <!-- RIGHT: date · search · avatar · username · logout  /  login form -->
             <div class="tb-right">
-
                 {% if is_authenticated %}
 
                 <!-- Date chip -->
@@ -425,16 +535,20 @@
                 <!-- Global search -->
                 <div class="tb-search">
                     <i class="material-icons search-icon">search</i>
-                    <input type="text"
-                           id="tb-global-search"
-                           placeholder="search/keyword"
-                           aria-label="Global search" />
+                    <input
+                        type="text"
+                        id="tb-global-search"
+                        placeholder="search/keyword"
+                        aria-label="Global search"
+                    />
                 </div>
 
                 <!-- Avatar circle -->
-                <span class="tb-avatar"
-                      title="{{ current_user.username }}"
-                      aria-label="Logged in as {{ current_user.username }}">
+                <span
+                    class="tb-avatar"
+                    title="{{ current_user.username }}"
+                    aria-label="Logged in as {{ current_user.username }}"
+                >
                     {{ current_user.username[0] | upper }}
                 </span>
 
@@ -451,21 +565,34 @@
 
                 <!-- Login form -->
                 <form class="tb-login-form" method="POST" action="/login">
-                    <input type="text"     name="username" placeholder="Username" required />
-                    <input type="password" name="password" placeholder="Password" required />
+                    <input
+                        type="text"
+                        name="username"
+                        placeholder="Username"
+                        required
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        required
+                    />
                     <button type="submit" class="tb-login-btn">Login</button>
                 </form>
 
                 {% endif %}
             </div>
-
         </header>
+        {% endif %}
 
         <!-- ════════════ APP SHELL ════════════ -->
         <div class="app-shell">
-
             <!-- Backdrop (mobile sidebar) -->
-            <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+            <div
+                class="sidebar-overlay"
+                id="sidebar-overlay"
+                aria-hidden="true"
+            ></div>
 
             {% if is_authenticated %}
             <!-- ── Sidebar nav ──────────────────────────────────────── -->
@@ -473,24 +600,35 @@
                 <div class="sidebar-menu-hdr">Menu</div>
                 <nav>
                     <ul>
-                        <li class="{{ 'active-location' if request.path.startswith('/location') else '' }}">
+                        <li
+                            class="{{ 'active-location' if request.path.startswith('/location') else '' }}"
+                        >
                             <a href="/location">
-                                <i class="material-icons">location_on</i>Location
+                                <i class="material-icons">location_on</i
+                                >Location
                             </a>
                         </li>
-                        <li class="{{ 'active-boxes' if request.path.startswith('/boxes') else '' }}">
+                        <li
+                            class="{{ 'active-boxes' if request.path.startswith('/boxes') else '' }}"
+                        >
                             <a href="/boxes">
                                 <i class="material-icons">inventory_2</i>Boxes
                             </a>
                         </li>
-                        <li class="{{ 'active-files' if request.path.startswith('/files') else '' }}">
+                        <li
+                            class="{{ 'active-files' if request.path.startswith('/files') else '' }}"
+                        >
                             <a href="/files">
-                                <i class="material-icons">folder_open</i>File Records
+                                <i class="material-icons">folder_open</i>File
+                                Records
                             </a>
                         </li>
-                        <li class="{{ 'active-loans' if request.path.startswith('/loans') else '' }}">
+                        <li
+                            class="{{ 'active-loans' if request.path.startswith('/loans') else '' }}"
+                        >
                             <a href="/loans">
-                                <i class="material-icons">swap_horiz</i>Loaned Records
+                                <i class="material-icons">swap_horiz</i>Loaned
+                                Records
                             </a>
                         </li>
                     </ul>
@@ -517,8 +655,8 @@
             <main class="main-content" id="main-content">
                 {% block content %}{% endblock %}
             </main>
-
-        </div><!-- /.app-shell -->
+        </div>
+        <!-- /.app-shell -->
 
         <!-- ════════════ FOOTER ════════════ -->
         <footer class="app-footer">
@@ -528,91 +666,90 @@
         <!-- Materialize JS -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
         <script>
-        document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function () {
 
-            /* ── Materialize modals ── */
-            M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
+                /* ── Materialize modals ── */
+                M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
 
-            /* ── Flash toasts (category-aware) ── */
-            var msgs = [
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                  {% for cat, msg in messages %}
-                    { text: {{ msg | tojson }}, cat: {{ cat | tojson }} },
-                  {% endfor %}
-                {% endwith %}
-            ];
-            msgs.forEach(function (m) {
-                var cls = 'rounded';
-                if      (m.cat === 'success') cls += ' toast-success';
-                else if (m.cat === 'error')   cls += ' toast-error';
-                else if (m.cat === 'warning') cls += ' toast-warning';
-                else if (m.cat === 'info')    cls += ' toast-info';
-                M.toast({ html: m.text, classes: cls, displayLength: 4000 });
-            });
-
-            /* ── Live date in top bar ── */
-            var dateEl = document.getElementById('tb-date-text');
-            if (dateEl) {
-                var d = new Date();
-                dateEl.textContent = d.toLocaleDateString('en-US', {
-                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                /* ── Flash toasts (category-aware) ── */
+                var msgs = [
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% for cat, msg in messages %}
+                        { text: {{ msg | tojson }}, cat: {{ cat | tojson }} },
+                      {% endfor %}
+                    {% endwith %}
+                ];
+                msgs.forEach(function (m) {
+                    var cls = 'rounded';
+                    if      (m.cat === 'success') cls += ' toast-success';
+                    else if (m.cat === 'error')   cls += ' toast-error';
+                    else if (m.cat === 'warning') cls += ' toast-warning';
+                    else if (m.cat === 'info')    cls += ' toast-info';
+                    M.toast({ html: m.text, classes: cls, displayLength: 4000 });
                 });
-            }
 
-            /* ── Sidebar toggle ── */
-            var toggle  = document.getElementById('sidebar-toggle');
-            var sidebar = document.getElementById('sidebar');
-            var overlay = document.getElementById('sidebar-overlay');
-            var MOBILE  = 768;
-
-            function isMobile() { return window.innerWidth <= MOBILE; }
-
-            function openDrawer() {
-                if (sidebar) sidebar.classList.add('open');
-                if (overlay) overlay.classList.add('open');
-            }
-            function closeDrawer() {
-                if (sidebar) sidebar.classList.remove('open');
-                if (overlay) overlay.classList.remove('open');
-            }
-            function collapseDesktop() {
-                if (sidebar) sidebar.classList.add('collapsed');
-                localStorage.setItem('sidebarCollapsed', '1');
-            }
-            function expandDesktop() {
-                if (sidebar) sidebar.classList.remove('collapsed');
-                localStorage.setItem('sidebarCollapsed', '0');
-            }
-
-            /* Restore previous sidebar state on desktop */
-            if (!isMobile() && sidebar) {
-                if (localStorage.getItem('sidebarCollapsed') === '1') {
-                    sidebar.classList.add('collapsed');
+                /* ── Live date in top bar ── */
+                var dateEl = document.getElementById('tb-date-text');
+                if (dateEl) {
+                    var d = new Date();
+                    dateEl.textContent = d.toLocaleDateString('en-US', {
+                        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                    });
                 }
-            }
 
-            if (toggle) {
-                toggle.addEventListener('click', function () {
-                    if (isMobile()) {
-                        sidebar && sidebar.classList.contains('open')
-                            ? closeDrawer() : openDrawer();
-                    } else {
-                        sidebar && sidebar.classList.contains('collapsed')
-                            ? expandDesktop() : collapseDesktop();
+                /* ── Sidebar toggle ── */
+                var toggle  = document.getElementById('sidebar-toggle');
+                var sidebar = document.getElementById('sidebar');
+                var overlay = document.getElementById('sidebar-overlay');
+                var MOBILE  = 768;
+
+                function isMobile() { return window.innerWidth <= MOBILE; }
+
+                function openDrawer() {
+                    if (sidebar) sidebar.classList.add('open');
+                    if (overlay) overlay.classList.add('open');
+                }
+                function closeDrawer() {
+                    if (sidebar) sidebar.classList.remove('open');
+                    if (overlay) overlay.classList.remove('open');
+                }
+                function collapseDesktop() {
+                    if (sidebar) sidebar.classList.add('collapsed');
+                    localStorage.setItem('sidebarCollapsed', '1');
+                }
+                function expandDesktop() {
+                    if (sidebar) sidebar.classList.remove('collapsed');
+                    localStorage.setItem('sidebarCollapsed', '0');
+                }
+
+                /* Restore previous sidebar state on desktop */
+                if (!isMobile() && sidebar) {
+                    if (localStorage.getItem('sidebarCollapsed') === '1') {
+                        sidebar.classList.add('collapsed');
                     }
+                }
+
+                if (toggle) {
+                    toggle.addEventListener('click', function () {
+                        if (isMobile()) {
+                            sidebar && sidebar.classList.contains('open')
+                                ? closeDrawer() : openDrawer();
+                        } else {
+                            sidebar && sidebar.classList.contains('collapsed')
+                                ? expandDesktop() : collapseDesktop();
+                        }
+                    });
+                }
+                if (overlay) overlay.addEventListener('click', closeDrawer);
+
+                /* Close drawer on resize to desktop */
+                window.addEventListener('resize', function () {
+                    if (!isMobile()) closeDrawer();
                 });
-            }
-            if (overlay) overlay.addEventListener('click', closeDrawer);
 
-            /* Close drawer on resize to desktop */
-            window.addEventListener('resize', function () {
-                if (!isMobile()) closeDrawer();
             });
-
-        });
         </script>
 
         {% block scripts %}{% endblock %}
-
     </body>
 </html>
