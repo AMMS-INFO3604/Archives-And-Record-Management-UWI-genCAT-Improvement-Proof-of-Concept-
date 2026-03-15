@@ -1,8 +1,8 @@
-from .box import Box
-from .file import File
-from .file_record import StaffRecord, Student
-from .loan import Loan
-from .location import Location
+from .user import User
 from .patron import Patron
 from .staff_user import StaffUser
-from .user import User
+from .location import Location
+from .box import Box
+from .loan import Loan
+from .file import File
+from .file_record import Student, StaffRecord
