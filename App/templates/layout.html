@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{% block title %}genCAT{% endblock %} | GEN2 Records</title>
-
+ 
         <!-- Material Icons -->
         <link
             href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -20,7 +20,7 @@
             rel="stylesheet"
             href="{{ url_for('static', filename='style.css') }}"
         />
-
+ 
         <style>
             /* ── Reset ─────────────────────────────────────────────────── */
             *,
@@ -41,7 +41,7 @@
                 flex-direction: column;
                 min-height: 100vh;
             }
-
+ 
             /* ════════════════════════════════════════════════════════════
                TOP BAR
             ════════════════════════════════════════════════════════════ */
@@ -59,7 +59,7 @@
                 box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
                 gap: 8px;
             }
-
+ 
             /* ── Left section: hamburger + brand + nav links ── */
             .tb-left {
                 display: flex;
@@ -68,9 +68,8 @@
                 min-width: 0;
                 flex: 1;
             }
-
-            /* Hamburger — always visible; collapses sidebar on desktop,
-               opens drawer on mobile */
+ 
+            /* Hamburger */
             .tb-hamburger {
                 background: none;
                 border: none;
@@ -91,7 +90,7 @@
             .tb-hamburger i {
                 font-size: 22px;
             }
-
+ 
             /* Brand */
             .tb-brand {
                 display: flex;
@@ -116,7 +115,7 @@
             .tb-brand i {
                 font-size: 20px;
             }
-
+ 
             /* ── Right section ── */
             .tb-right {
                 display: flex;
@@ -124,7 +123,7 @@
                 gap: 6px;
                 flex-shrink: 0;
             }
-
+ 
             /* Date chip */
             .tb-date {
                 display: flex;
@@ -140,7 +139,7 @@
             .tb-date i {
                 font-size: 14px;
             }
-
+ 
             /* Search bar */
             .tb-search {
                 position: relative;
@@ -181,7 +180,7 @@
                 font-size: 16px;
                 pointer-events: none;
             }
-
+ 
             /* Avatar circle */
             .tb-avatar {
                 width: 32px;
@@ -200,7 +199,7 @@
                 flex-shrink: 0;
                 letter-spacing: 0;
             }
-
+ 
             /* Username label */
             .tb-username {
                 color: rgba(255, 255, 255, 0.85);
@@ -210,7 +209,7 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
-
+ 
             /* Logout button */
             .tb-logout {
                 display: flex;
@@ -236,7 +235,7 @@
                 color: #fff;
                 border-color: rgba(255, 255, 255, 0.35);
             }
-
+ 
             /* Login form (unauthenticated) */
             .tb-login-form {
                 display: flex;
@@ -279,7 +278,7 @@
             .tb-login-btn:hover {
                 background: #ede7f6;
             }
-
+ 
             /* ════════════════════════════════════════════════════════════
                APP SHELL
             ════════════════════════════════════════════════════════════ */
@@ -289,7 +288,7 @@
                 min-height: 0;
                 overflow: hidden;
             }
-
+ 
             /* ── Sidebar ─────────────────────────────────────────────── */
             .sidebar {
                 width: 168px;
@@ -312,7 +311,7 @@
                 min-width: 0;
                 border-right-color: transparent;
             }
-
+ 
             .sidebar-menu-hdr {
                 font-size: 0.68rem;
                 font-weight: 800;
@@ -358,7 +357,7 @@
             .sidebar nav ul li a:hover i {
                 color: #7b1fa2;
             }
-
+ 
             /* Active states — colour-coded per section */
             .sidebar nav ul li.active-location > a {
                 background: #ede7f6;
@@ -392,7 +391,15 @@
             .sidebar nav ul li.active-loans > a i {
                 color: #1976d2;
             }
-
+            .sidebar nav ul li.active-scanner > a {
+                background: #e0f7fa;
+                color: #006064;
+                font-weight: 600;
+            }
+            .sidebar nav ul li.active-scanner > a i {
+                color: #00838f;
+            }
+ 
             .sidebar-divider {
                 height: 1px;
                 background: #f3e5f5;
@@ -408,7 +415,7 @@
             .sidebar nav ul li.logout-item > a:hover i {
                 color: #e53935;
             }
-
+ 
             /* ── Main content ─────────────────────────────────────────── */
             .main-content {
                 flex: 1;
@@ -416,7 +423,7 @@
                 padding: 28px 28px 56px;
                 min-width: 0;
             }
-
+ 
             /* ── Flash toasts ─────────────────────────────────────────── */
             .toast.toast-success {
                 background-color: #2e7d32 !important;
@@ -430,7 +437,7 @@
             .toast.toast-info {
                 background-color: #1565c0 !important;
             }
-
+ 
             /* ── Footer ───────────────────────────────────────────────── */
             .app-footer {
                 background: #311b92;
@@ -440,12 +447,11 @@
                 text-align: center;
                 flex-shrink: 0;
             }
-
+ 
             /* ════════════════════════════════════════════════════════════
                MOBILE  (≤ 768px)
             ════════════════════════════════════════════════════════════ */
             @media (max-width: 768px) {
-                /* Hide items that don't fit */
                 .tb-nav {
                     display: none;
                 }
@@ -461,7 +467,7 @@
                 .tb-username {
                     display: none;
                 }
-
+ 
                 /* Sidebar becomes a fixed off-canvas drawer */
                 .sidebar {
                     position: fixed;
@@ -471,7 +477,6 @@
                     z-index: 400;
                     transition: left 0.25s ease;
                     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
-                    /* override desktop collapsed state on mobile */
                     width: 168px !important;
                     min-width: 168px !important;
                     border-right-color: #e1bee7 !important;
@@ -479,7 +484,7 @@
                 .sidebar.open {
                     left: 0;
                 }
-
+ 
                 /* Backdrop */
                 .sidebar-overlay {
                     display: none;
@@ -491,11 +496,11 @@
                 .sidebar-overlay.open {
                     display: block;
                 }
-
+ 
                 .main-content {
                     padding: 16px 14px 48px;
                 }
-
+ 
                 .tb-login-form input {
                     width: 88px;
                 }
@@ -506,7 +511,7 @@
         <!-- ════════════ TOP BAR ════════════ -->
         {% if is_authenticated %}
         <header class="top-bar" role="banner">
-            <!-- LEFT: hamburger · brand · (divider) · nav links -->
+            <!-- LEFT: hamburger · brand -->
             <div class="tb-left">
                 <button
                     class="tb-hamburger"
@@ -515,23 +520,23 @@
                 >
                     <i class="material-icons">menu</i>
                 </button>
-
+ 
                 <a href="/" class="tb-brand">
                     <i class="material-icons">archive</i>
                     genCAT
                 </a>
             </div>
-
+ 
             <!-- RIGHT: date · search · avatar · username · logout  /  login form -->
             <div class="tb-right">
                 {% if is_authenticated %}
-
+ 
                 <!-- Date chip -->
                 <span class="tb-date" id="tb-date" aria-live="polite">
                     <i class="material-icons">calendar_today</i>
                     <span id="tb-date-text"></span>
                 </span>
-
+ 
                 <!-- Global search -->
                 <div class="tb-search">
                     <i class="material-icons search-icon">search</i>
@@ -542,7 +547,7 @@
                         aria-label="Global search"
                     />
                 </div>
-
+ 
                 <!-- Avatar circle -->
                 <span
                     class="tb-avatar"
@@ -551,18 +556,18 @@
                 >
                     {{ current_user.username[0] | upper }}
                 </span>
-
+ 
                 <!-- Username (hidden on mobile) -->
                 <span class="tb-username">{{ current_user.username }}</span>
-
+ 
                 <!-- Logout -->
                 <a href="/logout" class="tb-logout" aria-label="Logout">
                     <i class="material-icons">logout</i>
                     Logout
                 </a>
-
+ 
                 {% else %}
-
+ 
                 <!-- Login form -->
                 <form class="tb-login-form" method="POST" action="/login">
                     <input
@@ -579,12 +584,12 @@
                     />
                     <button type="submit" class="tb-login-btn">Login</button>
                 </form>
-
+ 
                 {% endif %}
             </div>
         </header>
         {% endif %}
-
+ 
         <!-- ════════════ APP SHELL ════════════ -->
         <div class="app-shell">
             <!-- Backdrop (mobile sidebar) -->
@@ -593,7 +598,7 @@
                 id="sidebar-overlay"
                 aria-hidden="true"
             ></div>
-
+ 
             {% if is_authenticated %}
             <!-- ── Sidebar nav ──────────────────────────────────────── -->
             <aside class="sidebar" id="sidebar" aria-label="Sidebar navigation">
@@ -604,8 +609,7 @@
                             class="{{ 'active-location' if request.path.startswith('/location') else '' }}"
                         >
                             <a href="/location">
-                                <i class="material-icons">location_on</i
-                                >Location
+                                <i class="material-icons">location_on</i>Location
                             </a>
                         </li>
                         <li
@@ -631,10 +635,17 @@
                                 Records
                             </a>
                         </li>
+                        <li
+                            class="{{ 'active-scanner' if request.path.startswith('/scanner') else '' }}"
+                        >
+                            <a href="/scanner">
+                                <i class="material-icons">qr_code_scanner</i>Scanner
+                            </a>
+                        </li>
                     </ul>
-
+ 
                     <div class="sidebar-divider"></div>
-
+ 
                     <ul>
                         <li>
                             <a href="/help">
@@ -650,27 +661,27 @@
                 </nav>
             </aside>
             {% endif %}
-
+ 
             <!-- ── Main content ──────────────────────────────────────── -->
             <main class="main-content" id="main-content">
                 {% block content %}{% endblock %}
             </main>
         </div>
         <!-- /.app-shell -->
-
+ 
         <!-- ════════════ FOOTER ════════════ -->
         <footer class="app-footer">
             &copy; 2026 genCAT &mdash; GEN2 Records Management System, UWI
         </footer>
-
+ 
         <!-- Materialize JS -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-
+ 
                 /* ── Materialize modals ── */
                 M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
-
+ 
                 /* ── Flash toasts (category-aware) ── */
                 var msgs = [
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -687,7 +698,7 @@
                     else if (m.cat === 'info')    cls += ' toast-info';
                     M.toast({ html: m.text, classes: cls, displayLength: 4000 });
                 });
-
+ 
                 /* ── Live date in top bar ── */
                 var dateEl = document.getElementById('tb-date-text');
                 if (dateEl) {
@@ -696,15 +707,15 @@
                         weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
                     });
                 }
-
+ 
                 /* ── Sidebar toggle ── */
                 var toggle  = document.getElementById('sidebar-toggle');
                 var sidebar = document.getElementById('sidebar');
                 var overlay = document.getElementById('sidebar-overlay');
                 var MOBILE  = 768;
-
+ 
                 function isMobile() { return window.innerWidth <= MOBILE; }
-
+ 
                 function openDrawer() {
                     if (sidebar) sidebar.classList.add('open');
                     if (overlay) overlay.classList.add('open');
@@ -721,14 +732,14 @@
                     if (sidebar) sidebar.classList.remove('collapsed');
                     localStorage.setItem('sidebarCollapsed', '0');
                 }
-
+ 
                 /* Restore previous sidebar state on desktop */
                 if (!isMobile() && sidebar) {
                     if (localStorage.getItem('sidebarCollapsed') === '1') {
                         sidebar.classList.add('collapsed');
                     }
                 }
-
+ 
                 if (toggle) {
                     toggle.addEventListener('click', function () {
                         if (isMobile()) {
@@ -741,15 +752,15 @@
                     });
                 }
                 if (overlay) overlay.addEventListener('click', closeDrawer);
-
+ 
                 /* Close drawer on resize to desktop */
                 window.addEventListener('resize', function () {
                     if (!isMobile()) closeDrawer();
                 });
-
+ 
             });
         </script>
-
+ 
         {% block scripts %}{% endblock %}
     </body>
 </html>
