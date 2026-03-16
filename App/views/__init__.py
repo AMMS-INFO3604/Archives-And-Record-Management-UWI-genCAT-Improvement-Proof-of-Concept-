@@ -9,7 +9,8 @@ from .loan import loan_views
 from .location import location_views
 from .user import user_views
 from .loan import loan_views
-
+from .barcode import barcode_views
+ 
 views = [
     user_views,
     index_views,
@@ -18,5 +19,6 @@ views = [
     location_views,
     box_views,
     loan_views,
+    barcode_views,
 ]
 # blueprints must be added to this list
