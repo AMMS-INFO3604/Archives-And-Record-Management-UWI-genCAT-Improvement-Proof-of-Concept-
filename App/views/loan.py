@@ -18,20 +18,31 @@ from flask_jwt_extended import jwt_required
 
 # Loan controller functions — all database logic lives here, not in the views.
 from App.controllers.loan import (
-    get_all_loans,          # fetch every loan regardless of status
-    get_loan_json,          # fetch a single loan as a dict (for JSON responses)
-    get_loan,               # fetch a single loan as a model object
-    get_active_loans,       # fetch loans that haven't been returned yet
-    get_returned_loans,     # fetch loans that have been returned
-    get_loan_files_json,    # fetch all files attached to a loan as a list of dicts
-    return_loan,            # mark a loan as returned and free its files
-    checkout_files,         # create a new loan and attach files to it
+    get_all_loans,
+    get_all_loans_json,
+    get_loan,
+    get_loan_json,
+    get_loan_files_json,
+    get_active_loans,
+    get_active_loans_json,
+    get_returned_loans,
+    get_returned_loans_json,
+    get_loans_by_patron,
+    get_loans_by_patron_json,
+    get_loans_by_staff,
+    get_loans_by_staff_json,
+    return_loan,
+    checkout_files,
+    create_loan,
+    delete_loan,
+    update_loan,
 )
 
 # Used to look up the StaffUser profile for whoever is currently logged in.
 from App.controllers.staffUser import get_staff_user_by_user
+from App.controllers.patron import get_all_patrons
 
-from datetime import date
+from datetime import date, datetime
 
 
 # ── Blueprint ─────────────────────────────────────────────────────────────────
@@ -331,3 +342,168 @@ def checkin_loan_route(loanID):
     if file_id:
         return redirect(url_for('file_views.file_detail', fileID=file_id))
     return redirect(url_for('loan_views.loans_page'))
+
+# ── GET /loans/<loanID>/detail ─────────────────────────────────────────────────
+# Separate detail page — kept for test compatibility and direct link access.
+@loan_views.route('/loans/<int:loanID>/detail', methods=['GET'])
+@jwt_required()
+def loan_detail_page(loanID):
+    loan = get_loan(loanID)
+    if not loan:
+        flash(f'Loan {loanID} not found.', 'error')
+        return redirect(url_for('loan_views.loans_page'))
+    return render_template('loan_detail.html', loan=loan)
+
+
+# ── GET /loaned ────────────────────────────────────────────────────────────────
+# Active-checkout dashboard — kept for test compatibility.
+@loan_views.route('/loaned', methods=['GET'])
+@jwt_required()
+def get_loaned_page():
+    loans = get_active_loans()
+    return render_template('loaned.html', loans=loans, now=datetime.utcnow())
+
+
+# ── API routes ─────────────────────────────────────────────────────────────────
+
+@loan_views.route('/api/loans', methods=['GET'])
+@jwt_required()
+def api_get_all_loans():
+    loans = get_all_loans_json()
+    if not loans:
+        return jsonify({'message': 'No loans found'}), 404
+    return jsonify(loans), 200
+
+
+@loan_views.route('/api/loans/active', methods=['GET'])
+@jwt_required()
+def api_get_active_loans():
+    loans = get_active_loans_json()
+    if not loans:
+        return jsonify({'message': 'No active loans found'}), 404
+    return jsonify(loans), 200
+
+
+@loan_views.route('/api/loans/returned', methods=['GET'])
+@jwt_required()
+def api_get_returned_loans():
+    loans = get_returned_loans_json()
+    if not loans:
+        return jsonify({'message': 'No returned loans found'}), 404
+    return jsonify(loans), 200
+
+
+@loan_views.route('/api/loans/patron/<int:patronID>', methods=['GET'])
+@jwt_required()
+def api_get_loans_by_patron(patronID):
+    loans = get_loans_by_patron_json(patronID)
+    if not loans:
+        return jsonify({'message': f'No loans found for patron {patronID}'}), 404
+    return jsonify(loans), 200
+
+
+@loan_views.route('/api/loans/staff/<int:staffUserID>', methods=['GET'])
+@jwt_required()
+def api_get_loans_by_staff(staffUserID):
+    loans = get_loans_by_staff_json(staffUserID)
+    if not loans:
+        return jsonify({'message': f'No loans found for staff user {staffUserID}'}), 404
+    return jsonify(loans), 200
+
+
+@loan_views.route('/api/loans/<int:loanID>', methods=['GET'])
+@jwt_required()
+def api_get_loan(loanID):
+    loan = get_loan_json(loanID)
+    if not loan:
+        return jsonify({'error': 'Loan not found'}), 404
+    return jsonify(loan), 200
+
+
+@loan_views.route('/api/loans/<int:loanID>/files', methods=['GET'])
+@jwt_required()
+def api_get_loan_files(loanID):
+    files = get_loan_files_json(loanID)
+    if files is None:
+        return jsonify({'error': 'Loan not found'}), 404
+    if not files:
+        return jsonify({'message': 'No files attached to this loan'}), 200
+    return jsonify(files), 200
+
+
+@loan_views.route('/api/loans', methods=['POST'])
+@jwt_required()
+def api_create_loan():
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    patron_id = data.get('patronID')
+    if not patron_id:
+        return jsonify({'error': 'patronID is required'}), 400
+    loan = create_loan(
+        patronID=patron_id,
+        processedByStaffUserID=data.get('processedByStaffUserID'),
+        loanDate=data.get('loanDate'),
+    )
+    if not loan:
+        return jsonify({'error': 'Failed to create loan – check patronID and staffUserID'}), 400
+    return jsonify({'message': 'Loan created successfully', 'loanID': loan.loanID}), 201
+
+
+@loan_views.route('/api/loans/checkout', methods=['POST'])
+@jwt_required()
+def api_checkout_files():
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    patron_id = data.get('patronID')
+    file_ids = data.get('fileIDs')
+    if not patron_id:
+        return jsonify({'error': 'patronID is required'}), 400
+    if not file_ids or not isinstance(file_ids, list):
+        return jsonify({'error': 'fileIDs must be a non-empty list'}), 400
+    loan = checkout_files(
+        patronID=patron_id,
+        file_ids=file_ids,
+        processedByStaffUserID=data.get('processedByStaffUserID'),
+    )
+    if not loan:
+        return jsonify({'error': 'Checkout failed – verify patronID and that all files are Available'}), 400
+    return jsonify({'message': 'Files checked out successfully', 'loanID': loan.loanID, 'fileCount': len(loan.files)}), 201
+
+
+@loan_views.route('/api/loans/<int:loanID>/return', methods=['PUT'])
+@jwt_required()
+def api_return_loan(loanID):
+    data = request.json or {}
+    loan = return_loan(loanID, returnDate=data.get('returnDate'))
+    if not loan:
+        return jsonify({'error': 'Loan not found or could not be returned'}), 404
+    return jsonify({'message': f'Loan {loanID} returned successfully', 'loanID': loan.loanID, 'returnDate': str(loan.returnDate)}), 200
+
+
+@loan_views.route('/api/loans/<int:loanID>', methods=['PUT'])
+@jwt_required()
+def api_update_loan(loanID):
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    loan = update_loan(
+        loanID=loanID,
+        patronID=data.get('patronID'),
+        processedByStaffUserID=data.get('processedByStaffUserID'),
+        loanDate=data.get('loanDate'),
+        returnDate=data.get('returnDate'),
+    )
+    if not loan:
+        return jsonify({'error': 'Loan not found or update failed'}), 404
+    return jsonify({'message': f'Loan {loanID} updated successfully', 'loanID': loan.loanID}), 200
+
+
+@loan_views.route('/api/loans/<int:loanID>', methods=['DELETE'])
+@jwt_required()
+def api_delete_loan(loanID):
+    result = delete_loan(loanID)
+    if not result:
+        return jsonify({'error': 'Loan not found'}), 404
+    return jsonify({'message': f'Loan {loanID} deleted successfully'}), 200
