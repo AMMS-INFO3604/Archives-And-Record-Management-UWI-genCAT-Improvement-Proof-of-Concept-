@@ -217,6 +217,28 @@
     .page-btn.disabled { pointer-events: none; opacity: .35; }
     .page-ellipsis { color: #aaa; font-size: 0.82rem; padding: 0 2px; }
 
+    /* ── Stats row ───────────────────────────────────────────────────────────
+       Three summary chips shown between the page header and filter panel.
+       Mirrors the same layout as the filter chips — flex row, wraps on mobile. */
+    .stats-row {
+        display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+    }
+    .stat-chip {
+        display: inline-flex; align-items: center; gap: 10px;
+        background: #fff; border: 1.5px solid #bbdefb;
+        border-radius: 10px; padding: 10px 18px;
+        box-shadow: 0 2px 8px rgba(21,101,192,.07);
+    }
+    .stat-chip i { font-size: 22px; color: #1976d2; }
+    .stat-chip-body { display: flex; flex-direction: column; }
+    .stat-chip-value {
+        font-size: 1.2rem; font-weight: 800; color: #1565c0; line-height: 1;
+    }
+    .stat-chip-label {
+        font-size: 0.7rem; color: #90a4ae; letter-spacing: 0.4px;
+        text-transform: uppercase; margin-top: 2px;
+    }
+
     /* Inline flash messages rendered at the top of the page content area */
     .flash-msg {
         padding: 10px 16px; border-radius: 8px; margin-bottom: 16px;
@@ -467,6 +489,34 @@
             style="height:40px;line-height:40px;padding:0 14px;font-size:.85rem;background:#1976d2;">
       <i class="material-icons left" style="font-size:15px;line-height:40px;">tune</i>Filter
     </button>
+  </div>
+</div>
+
+{# ── Stats row ───────────────────────────────────────────────────────────────
+   Three summary chips: Total loans in the current view, Active count, Returned.
+   Uses the already-fetched `loans` list (before pagination) via `total` for
+   the overall count, and counts active/returned from the full unfiltered set. #}
+<div class="stats-row">
+  <div class="stat-chip">
+    <i class="material-icons">swap_horiz</i>
+    <div class="stat-chip-body">
+      <span class="stat-chip-value">{{ total }}</span>
+      <span class="stat-chip-label">Total Loans</span>
+    </div>
+  </div>
+  <div class="stat-chip">
+    <i class="material-icons">pending_actions</i>
+    <div class="stat-chip-body">
+      <span class="stat-chip-value">{{ active_count }}</span>
+      <span class="stat-chip-label">Active</span>
+    </div>
+  </div>
+  <div class="stat-chip">
+    <i class="material-icons">assignment_turned_in</i>
+    <div class="stat-chip-body">
+      <span class="stat-chip-value">{{ returned_count }}</span>
+      <span class="stat-chip-label">Returned</span>
+    </div>
   </div>
 </div>
 
@@ -977,4 +1027,4 @@ function handleOverlayClick(e) {
 }
 
 </script>
-{% endblock %} 
+{% endblock %}

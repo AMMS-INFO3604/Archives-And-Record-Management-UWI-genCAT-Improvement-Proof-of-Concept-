@@ -11,8 +11,7 @@ from flask import (
     url_for,
 )
 
-# jwt_current_user gives us the logged-in user object inside a protected route.
-# jwt_required() is a decorator that blocks the route if the user isn't logged in.
+
 from flask_jwt_extended import current_user as jwt_current_user
 from flask_jwt_extended import jwt_required
 
@@ -145,22 +144,30 @@ def loans_page():
     paginated   = loans[start:start + per_page]
 
     # ── Render ─────────────────────────────────────────────────────────────────
+    # Count active and returned across ALL loans (not just the filtered/paginated
+    # slice) so the stats chips always show the real system-wide totals.
+    all_loans      = get_all_loans()
+    active_count   = sum(1 for l in all_loans if not l.returnDate)
+    returned_count = sum(1 for l in all_loans if l.returnDate)
+
     # Pass everything the template needs — loans for the current page plus all
     # the filter/search values so the template can pre-fill the form fields and
     # build correct pagination links.
     return render_template('loans.html',
-        loans         = paginated,
-        total         = total,
-        page          = page,
-        total_pages   = total_pages,
-        per_page      = per_page,
-        search        = search,
-        type_filter   = type_filter,
-        date_from     = date_from,
-        date_to       = date_to,
-        days_filter   = days_filter,
-        status_filter = status_filter,
-        today         = date.today(),  # used by the template to calculate overdue status
+        loans          = paginated,
+        total          = total,
+        page           = page,
+        total_pages    = total_pages,
+        per_page       = per_page,
+        search         = search,
+        type_filter    = type_filter,
+        date_from      = date_from,
+        date_to        = date_to,
+        days_filter    = days_filter,
+        status_filter  = status_filter,
+        today          = date.today(),  # used by the template to calculate overdue status
+        active_count   = active_count,
+        returned_count = returned_count,
     )
 
 
