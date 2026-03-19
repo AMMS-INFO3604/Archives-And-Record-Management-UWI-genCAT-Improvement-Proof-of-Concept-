@@ -72,6 +72,62 @@
     .btn-checkin i { font-size: 18px; }
     .btn-checkin:hover { background: #1b5e20; }
 
+     .btn-edit {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 8px 16px; background: transparent; color: #6a1b9a;
+        border: 1.5px solid #ce93d8; border-radius: 8px;
+        font-size: 0.87rem; font-weight: 600; cursor: pointer;
+        transition: background .15s; text-decoration: none;
+    }
+    .btn-edit i { font-size: 18px; }
+    .btn-edit:hover { background: #f3e5f5; color: #6a1b9a; }
+ 
+    .btn-delete {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 8px 16px; background: transparent; color: #c62828;
+        border: 1.5px solid #ef9a9a; border-radius: 8px;
+        font-size: 0.87rem; font-weight: 600; cursor: pointer;
+        transition: background .15s;
+    }
+    .btn-delete i { font-size: 18px; }
+    .btn-delete:hover { background: #fce4ec; }
+ 
+    
+    .delete-warn-box {
+        display: flex; align-items: flex-start; gap: 10px;
+        background: #fce4ec; border: 1px solid #ef9a9a; border-radius: 8px;
+        padding: 12px 16px; font-size: 0.87rem; color: #c62828; margin-bottom: 16px;
+    }
+    .delete-warn-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .btn-modal-delete {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 8px 18px; background: #c62828; color: #fff;
+        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-modal-delete:hover { background: #b71c1c; }
+ 
+    .due-date-result {
+        display: none; align-items: center; gap: 8px;
+        background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px;
+        padding: 10px 14px; font-size: 0.87rem; color: #2e7d32; margin-top: 10px;
+    }
+    .due-date-result.show { display: flex; }
+    .due-date-result i { font-size: 18px; flex-shrink: 0; }
+ 
+    .damage-box {
+        display: flex; align-items: flex-start; gap: 10px;
+        background: #fff8e1; border: 1.5px solid #ffe082; border-radius: 8px;
+        padding: 12px 16px; margin-bottom: 0;
+    }
+    .damage-box i { font-size: 18px; color: #f57f17; flex-shrink: 0; margin-top: 1px; }
+    .damage-box-content { flex: 1; }
+    .damage-box-label {
+        font-size: 0.70rem; font-weight: 800; letter-spacing: 0.8px;
+        text-transform: uppercase; color: #f57f17; margin-bottom: 4px;
+    }
+    .damage-box-text { font-size: 0.87rem; color: #5d4037; margin: 0; white-space: pre-wrap; }
+
     /* ── card body ── */
     .card-body { padding: 24px 28px; }
 
@@ -245,13 +301,19 @@
                     <i class="material-icons">arrow_back</i>All Files
                 </a>
 
+                {% if file.status == 'Available' %}
+                <a href="/files/{{ file.fileID }}/edit" class="btn-edit">
+                    <i class="material-icons">edit</i>Edit
+                </a>
+                {% endif %}
+
                 <!-- Check In (only when on loan) -->
                 {% if file.status == 'On Loan' and file.loanID %}
-                <form method="POST" action="/loans/{{ file.loanID }}/checkin" style="margin:0;">
-                    <button type="submit" class="btn-checkin">
-                        <i class="material-icons">assignment_return</i>Check In
-                    </button>
-                </form>
+                <button class="btn-checkin modal-trigger" data-target="checkin-modal">
+                    <i class="material-icons">assignment_return</i>Check In
+                </button>
+                
+               
                 {% endif %}
 
                 <!-- Issue File (only when available) -->
@@ -430,6 +492,16 @@
                     </div>
                 </div>
 
+                  {% if file.loan.damageNotes %}
+                <div class="damage-box" style="margin-bottom:16px;">
+                    <i class="material-icons">report_problem</i>
+                    <div class="damage-box-content">
+                        <div class="damage-box-label">Condition Notes on Return</div>
+                        <p class="damage-box-text">{{ file.loan.damageNotes }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Loan detail table -->
                 <div style="overflow-x:auto;">
                     <table class="loan-table">
@@ -492,22 +564,32 @@
 
 </div><!-- /.detail-wrapper -->
 
+{% if file.status == 'Available' %}
+<div style="max-width:860px;margin:0 auto 40px;padding:0 16px;display:flex;justify-content:flex-end;">
+    <button class="btn-delete modal-trigger" data-target="delete-modal">
+        <i class="material-icons">delete</i>Delete File
+    </button>
+</div>
+{% endif %}
+
 <!-- ══ Issue File Modal ═════════════════════════════════════════════════════ -->
 {% if file.status == 'Available' %}
 <div id="issue-modal" class="modal">
     <div class="modal-content">
         <div class="modal-title">
             <i class="material-icons">assignment_ind</i>
-            Issue File #{{ file.fileID }}
+            Loan File #{{ file.fileID }}
         </div>
-
         <form method="POST" action="/loans" id="issue-form">
-            <!-- Hidden: the file being issued -->
             <input type="hidden" name="fileIDs" value="{{ file.fileID }}">
-
-            <!-- Patron selector -->
             <div class="form-group">
-                <label class="form-label" for="patronID">Patron *</label>
+                <label class="form-label">Date</label>
+                <input type="text" class="form-input" id="loan-date-display"
+                       readonly style="background:#f5f5f5;color:#555;cursor:default;">
+                <input type="hidden" name="loanDate" id="loan-date-value">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="patronID">Loaned To *</label>
                 <select name="patronID" id="patronID" class="form-select" required>
                     <option value="">— Select a patron —</option>
                     {% for patron in patrons %}
@@ -521,23 +603,125 @@
                     {% endfor %}
                 </select>
             </div>
-
-            <!-- Optional: staff user processing the loan -->
             <div class="form-group">
-                <label class="form-label" for="processedByStaffUserID">Processed By (Staff ID)</label>
-                <input type="number" name="processedByStaffUserID" id="processedByStaffUserID"
-                       class="form-input" placeholder="e.g. 1" min="1">
-                <p class="form-hint">Leave blank to record without a processing staff member.</p>
+                <label class="form-label" for="loan-days">Loan Period (days)</label>
+                <input type="number" id="loan-days" class="form-input"
+                       placeholder="e.g. 14" min="1" max="365" value="14">
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn-modal-cancel"
+                        onclick="calcDueDate()"
+                        style="border-color:#90caf9;color:#1565c0;">
+                    <i class="material-icons" style="font-size:16px;">event</i>
+                    Calculate Due Date
+                </button>
+                <div class="due-date-result" id="due-date-result">
+                    <i class="material-icons">event_available</i>
+                    <span>Due: <strong id="due-date-text"></strong></span>
+                </div>
             </div>
         </form>
     </div>
-
     <div class="modal-footer">
         <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
         <button type="submit" form="issue-form" class="btn-modal-submit">
-            <i class="material-icons">assignment_ind</i>Issue File
+            <i class="material-icons">assignment_ind</i>Loan
         </button>
     </div>
 </div>
 {% endif %}
+
+<!-- Check In modal  -->
+{% if file.status == 'On Loan' and file.loanID %}
+<div id="checkin-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">
+            <i class="material-icons">assignment_return</i>
+            Check In File #{{ file.fileID }}
+        </div>
+        <form method="POST" action="/loans/{{ file.loanID }}/checkin" id="checkin-form">
+            <div class="info-box" style="margin-bottom:18px;">
+                <i class="material-icons">info</i>
+                <div>Checking in <strong>Loan #{{ file.loanID }}</strong> will mark this file as <strong>Available</strong>.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="damage_notes">
+                    Condition / Damage Notes
+                    <span style="color:#aaa;font-weight:500;text-transform:none;">(optional)</span>
+                </label>
+                <textarea name="damage_notes" id="damage_notes" class="form-input"
+                          placeholder="Note any damage — leave blank if undamaged…"
+                          maxlength="1000"
+                          style="height:100px;padding-top:10px;resize:vertical;"></textarea>
+                <p class="form-hint">Saved against the loan record.</p>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
+        <button type="submit" form="checkin-form" class="btn-modal-submit"
+                style="background:#2e7d32;">
+            <i class="material-icons">assignment_return</i>Confirm Check In
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!--  Delete modal  -->
+{% if file.status == 'Available' %}
+<div id="delete-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">
+            <i class="material-icons" style="color:#c62828;">delete</i>
+            Delete File #{{ file.fileID }}
+        </div>
+        <div class="delete-warn-box">
+            <i class="material-icons">warning</i>
+            <div>
+                This will <strong>permanently delete</strong> File #{{ file.fileID }}
+                {% if file.description %}— "{{ file.description }}"{% endif %}.
+                This cannot be undone.
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
+        <form method="POST" action="/files/{{ file.fileID }}/delete" style="margin:0;">
+            <button type="submit" class="btn-modal-delete">
+                <i class="material-icons">delete</i>Yes, Delete
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
+ 
+        var today = new Date();
+        var dd   = String(today.getDate()).padStart(2, '0');
+        var mm   = String(today.getMonth() + 1).padStart(2, '0');
+        var yyyy = today.getFullYear();
+        var el  = document.getElementById('loan-date-display');
+        var val = document.getElementById('loan-date-value');
+        if (el)  el.value  = dd + '/' + mm + '/' + yyyy;
+        if (val) val.value = yyyy + '-' + mm + '-' + dd;
+    });
+ 
+    function calcDueDate() {
+        var days = parseInt(document.getElementById('loan-days').value, 10);
+        if (!days || days < 1) { alert('Enter a valid number of days first.'); return; }
+        var due = new Date();
+        due.setDate(due.getDate() + days);
+        var dd   = String(due.getDate()).padStart(2, '0');
+        var mm   = String(due.getMonth() + 1).padStart(2, '0');
+        var yyyy = due.getFullYear();
+        document.getElementById('due-date-text').textContent = dd + '/' + mm + '/' + yyyy;
+        document.getElementById('due-date-result').classList.add('show');
+    }
+</script>
 {% endblock %}
