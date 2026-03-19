@@ -20,6 +20,7 @@ from App.controllers.file import (
     updateFile,
     viewFile,
 )
+from App.controllers.patron import get_all_patrons
 from App.database import db
 from App.models import File
 
@@ -115,7 +116,8 @@ def file_detail_page(fileID):
     if not file:
         flash(f"File {fileID} not found.", "error")
         return redirect(url_for("file_views.get_files_page"))
-    return render_template("file_detail.html", file=file)
+    patrons = get_all_patrons()
+    return render_template("file_detail.html", file=file, patrons=patrons)
 
 
 @file_views.route("/files", methods=["GET"])

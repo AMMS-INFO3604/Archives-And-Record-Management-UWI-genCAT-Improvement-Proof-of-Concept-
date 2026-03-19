@@ -245,8 +245,22 @@ def update_loan(
             loan.processedByStaffUserID = processedByStaffUserID
 
         if loanDate is not None:
+            if isinstance(loanDate, str):
+                for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
+                    try:
+                        loanDate = datetime.strptime(loanDate, fmt)
+                        break
+                    except ValueError:
+                        continue
             loan.loanDate = loanDate
         if returnDate is not None:
+            if isinstance(returnDate, str):
+                for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
+                    try:
+                        returnDate = datetime.strptime(returnDate, fmt)
+                        break
+                    except ValueError:
+                        continue
             loan.returnDate = returnDate
 
         db.session.commit()

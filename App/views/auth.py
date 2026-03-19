@@ -17,7 +17,6 @@ auth_views = Blueprint("auth_views", __name__, template_folder="../templates")
 Page / Action Routes
 """
 
-
 @auth_views.route("/identify", methods=["GET"])
 @jwt_required()
 def identify_page():
@@ -27,6 +26,14 @@ def identify_page():
         message=f"You are logged in as {current_user.userID} - {current_user.username}",
     )
 
+@auth_views.route("/login/staff", methods=["GET"])
+def staff_login_page():
+    return render_template("staff_login.html")
+
+
+@auth_views.route("/login/patron", methods=["GET"])
+def patron_login_page():
+    return render_template("patron_login.html")
 
 @auth_views.route("/login", methods=["POST"])
 def login_action():
