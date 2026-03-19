@@ -185,7 +185,7 @@ def loans_page():
 # Called when a staff member submits the checkout form on the file detail page.
 @loan_views.route('/loans', methods=['POST'])
 @jwt_required()
-def create_loan():
+def create_loan_view():
 
     # Read fileID and patronID from the submitted form.
     # type=int automatically converts the string value to an integer,
