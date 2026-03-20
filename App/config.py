@@ -24,6 +24,7 @@ def load_config(app, overrides):
     app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token"
     app.config["JWT_TOKEN_LOCATION"] = ["cookies", "headers"]
     app.config["JWT_COOKIE_SECURE"] = True
+    app.config["JWT_ACCESS_COOKIE_SAMESITE"] = "Lax"
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     app.config["FLASK_ADMIN_SWATCH"] = "darkly"
     for key in overrides:

@@ -8,6 +8,7 @@ from werkzeug.datastructures import  FileStorage
 from App.database import init_db, db
 from App.config import load_config
 from flask_migrate import upgrade
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from App.controllers import (
     setup_jwt,
@@ -24,6 +25,7 @@ def add_views(app):
 
 def create_app(overrides={}):
     app = Flask(__name__, static_url_path='/static')
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     load_config(app, overrides)
     CORS(app)
     add_auth_context(app)
