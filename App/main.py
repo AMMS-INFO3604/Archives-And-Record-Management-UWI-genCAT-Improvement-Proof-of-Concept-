@@ -32,8 +32,8 @@ def create_app(overrides={}):
     add_views(app)
     init_db(app)
 
-    with app.app_context():       
-        db.create_all() 
+    #with app.app_context():       
+        #db.create_all() 
          
     jwt = setup_jwt(app)
     setup_admin(app)
