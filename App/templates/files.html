@@ -2,489 +2,154 @@
 {% block title %}File Records{% endblock %}
 
 {% block content %}
-{% set sel_student = 'selected' if fileType == 'Student' else '' %}
-{% set sel_staff   = 'selected' if fileType == 'Staff'   else '' %}
-{% set sel_avail   = 'selected' if status   == 'Available' else '' %}
-{% set sel_loan    = 'selected' if status   == 'On Loan'   else '' %}
-<style>
-    /* ── Page background ───────────────────────────────────────────────── */
-    body { background-color: #f3e5f5 !important; }
-
-    /* ── Outer wrapper ─────────────────────────────────────────────────── */
-    .files-wrapper {
-        max-width: 1080px;
-        margin: 32px auto;
-        padding: 0 16px 64px;
-    }
-
-    /* ── Page title ─────────────────────────────────────────────────────── */
-    .page-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-    .page-title i {
-        font-size: 32px;
-        color: #6a1b9a;
-    }
-    .page-title h4 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1a1a1a;
-        letter-spacing: 0.5px;
-    }
-
-    /* ── Search / filter card ───────────────────────────────────────────── */
-    .filter-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(106,27,154,.10);
-        padding: 20px 24px;
-        margin-bottom: 20px;
-    }
-    .filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 12px;
-    }
-
-    /* search box */
-    .search-group {
-        position: relative;
-        flex: 1 1 240px;
-        min-width: 180px;
-    }
-    .search-group input[type="text"] {
-        width: 100%;
-        height: 42px;
-        padding: 0 12px 0 42px;
-        border: 1.5px solid #ce93d8;
-        border-bottom: 1.5px solid #ce93d8 !important;
-        border-radius: 8px !important;
-        font-size: 0.9rem;
-        color: #333;
-        background: #fdf6ff;
-        box-shadow: none !important;
-        margin: 0 !important;
-        box-sizing: border-box;
-        outline: none;
-        transition: border-color .15s, box-shadow .15s;
-    }
-    .search-group input[type="text"]:focus {
-        border-color: #6a1b9a !important;
-        box-shadow: 0 0 0 3px rgba(106,27,154,.10) !important;
-    }
-    .search-group .search-icon {
-        position: absolute;
-        left: 11px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #ba68c8;
-        font-size: 20px;
-        pointer-events: none;
-    }
-
-    /* selects */
-    .filter-select {
-        height: 42px;
-        padding: 0 12px;
-        border: 1.5px solid #ce93d8;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        color: #333;
-        background: #fdf6ff;
-        cursor: pointer;
-        outline: none;
-        flex-shrink: 0;
-        transition: border-color .15s;
-    }
-    .filter-select:focus {
-        border-color: #6a1b9a;
-        box-shadow: 0 0 0 3px rgba(106,27,154,.10);
-    }
-
-    /* buttons */
-    .btn-search {
-        height: 42px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 0 18px;
-        background: #6a1b9a;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background .15s;
-        flex-shrink: 0;
-    }
-    .btn-search:hover { background: #4a148c; }
-    .btn-search i { font-size: 18px; }
-
-    .btn-clear {
-        height: 42px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 0 14px;
-        background: transparent;
-        color: #6a1b9a;
-        border: 1.5px solid #ce93d8;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background .15s;
-        flex-shrink: 0;
-    }
-    .btn-clear:hover { background: #f3e5f5; color: #6a1b9a; }
-    .btn-clear i { font-size: 18px; }
-
-    /* ── Active filter pills ────────────────────────────────────────────── */
-    .active-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 12px;
-    }
-    .filter-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        background: #f3e5f5;
-        border: 1px solid #ce93d8;
-        border-radius: 20px;
-        padding: 3px 10px;
-        font-size: 0.78rem;
-        color: #6a1b9a;
-        font-weight: 600;
-    }
-    .filter-pill i { font-size: 13px; }
-
-    /* ── Results card ───────────────────────────────────────────────────── */
-    .results-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(106,27,154,.10);
-        overflow: hidden;
-    }
-    .results-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        border-bottom: 1.5px solid #f3e5f5;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .results-count {
-        font-size: 0.85rem;
-        color: #888;
-    }
-
-    /* ── Table ──────────────────────────────────────────────────────────── */
-    .files-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-    }
-    .files-table thead tr {
-        background: #f3e5f5;
-        border-bottom: 2px solid #ce93d8;
-    }
-    .files-table thead th {
-        padding: 11px 16px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        color: #6a1b9a;
-        text-align: left;
-        white-space: nowrap;
-    }
-    .files-table tbody tr {
-        border-bottom: 1px solid #f3e5f5;
-        transition: background .12s;
-    }
-    .files-table tbody tr:last-child { border-bottom: none; }
-    .files-table tbody tr:hover { background: #fdf6ff; }
-    .files-table td {
-        padding: 12px 16px;
-        color: #333;
-        vertical-align: middle;
-    }
-    .files-table td.col-id {
-        font-weight: 700;
-        color: #6a1b9a;
-        white-space: nowrap;
-    }
-    .files-table td.col-desc {
-        max-width: 300px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .files-table td.col-desig {
-        font-family: monospace;
-        font-size: 0.82rem;
-        color: #666;
-        white-space: nowrap;
-    }
-    .files-table td.col-date {
-        white-space: nowrap;
-        color: #888;
-        font-size: 0.82rem;
-    }
-
-    /* ── Type chip ──────────────────────────────────────────────────────── */
-    .type-chip {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-    .chip-student { background: #f3e5f5; color: #6a1b9a; }
-    .chip-staff   { background: #e8eaf6; color: #283593; }
-    .chip-other   { background: #f5f5f5; color: #616161; }
-
-    /* ── Status badges ──────────────────────────────────────────────────── */
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 11px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-    .status-badge .dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-    /* green – Available */
-    .badge-available {
-        background: #e8f5e9;
-        color: #2e7d32;
-    }
-    .badge-available .dot { background: #2e7d32; }
-
-    /* red – On Loan */
-    .badge-on-loan {
-        background: #ffebee;
-        color: #c62828;
-    }
-    .badge-on-loan .dot { background: #c62828; }
-
-    /* grey – anything else */
-    .badge-other {
-        background: #f5f5f5;
-        color: #757575;
-    }
-    .badge-other .dot { background: #9e9e9e; }
-
-    /* ── View button ────────────────────────────────────────────────────── */
-    .btn-view {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 5px 13px;
-        background: #6a1b9a;
-        color: #fff;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-decoration: none;
-        white-space: nowrap;
-        transition: background .15s;
-    }
-    .btn-view i { font-size: 15px; }
-    .btn-view:hover { background: #4a148c; color: #fff; }
-
-    /* ── Empty state ────────────────────────────────────────────────────── */
-    .empty-state {
-        text-align: center;
-        padding: 56px 20px;
-        color: #bbb;
-    }
-    .empty-state i { font-size: 56px; color: #e1bee7; }
-    .empty-state p { margin-top: 12px; font-size: 0.95rem; }
-
-    /* ── Responsive ─────────────────────────────────────────────────────── */
-    @media (max-width: 640px) {
-        .files-wrapper  { margin: 16px auto; }
-        .filter-card    { padding: 16px; }
-        .files-table td.col-desig { display: none; }
-        .files-table td.col-date  { display: none; }
-    }
-</style>
-
-<div class="files-wrapper">
-
-    <!-- Page title -->
-    <div class="page-title">
-        <i class="material-icons">folder_open</i>
-        <h4>File Records</h4>
+<div class="data-header">
+    <div>
+        <h1 style="font-size: 28px; display: flex; align-items: center; gap: 12px;">
+            <i class="material-icons" style="color: var(--primary-color);">folder_open</i>
+            File Records
+        </h1>
+        <p style="color: var(--text-secondary); margin-top: 4px;">Search and manage individual file records across all boxes.</p>
     </div>
+    
+    <button class="btn btn-primary modal-trigger" data-target="addFileModal">
+        <i class="material-icons">add</i> Add New File
+    </button>
+</div>
 
-    <!-- Search & filter card -->
-    <div class="filter-card">
-        <form method="GET" action="/files" class="filter-row">
+<div class="card" style="padding: 16px;">
+    <form class="filter-bar" method="GET" action="{{ url_for('file_views.get_files_page') }}">
+        <div class="search-wrapper" style="min-width: 300px;">
+            <i class="material-icons">search</i>
+            <input type="text" name="search" class="form-control" placeholder="Search by name, ID or keywords..." value="{{ search_query or '' }}">
+        </div>
+        
+        <select name="fileType" class="browser-default form-control" style="width: auto; height: 42px;">
+            <option value="" {{ 'selected' if not fileType else '' }}>All Types</option>
+            <option value="Student" {{ 'selected' if fileType == 'Student' else '' }}>Student</option>
+            <option value="Staff" {{ 'selected' if fileType == 'Staff' else '' }}>Staff</option>
+        </select>
 
-            <!-- Keyword search -->
-            <div class="search-group">
-                <i class="material-icons search-icon">search</i>
-                <input type="text" name="keyword" value="{{ keyword or '' }}"
-                       placeholder="Search by description or designation…">
-            </div>
+        <select name="status" class="browser-default form-control" style="width: auto; height: 42px;">
+            <option value="" {{ 'selected' if not status else '' }}>All Status</option>
+            <option value="Available" {{ 'selected' if status == 'Available' else '' }}>Available</option>
+            <option value="On Loan" {{ 'selected' if status == 'On Loan' else '' }}>On Loan</option>
+        </select>
 
-            <!-- File type filter -->
-            <select name="fileType" class="filter-select">
-                <option value="">All Types</option>
-                <option value="Student" {{ sel_student }}>Student</option>
-                <option value="Staff"   {{ sel_staff   }}>Staff</option>
-            </select>
+        <select name="location" class="browser-default form-control" style="width: auto; height: 42px;">
+            <option value="" {{ 'selected' if not selected_location or selected_location == 'all' else '' }}>All Locations</option>
+            {% for loc in locations %}
+                <option value="{{ loc }}" {{ 'selected' if selected_location == loc else '' }}>{{ loc }}</option>
+            {% endfor %}
+        </select>
 
-            <!-- Status filter -->
-            <select name="status" class="filter-select">
-                <option value="">All Statuses</option>
-                <option value="Available" {{ sel_avail }}>Available</option>
-                <option value="On Loan"   {{ sel_loan  }}>On Loan</option>
-            </select>
-
-            <button type="submit" class="btn-search">
-                <i class="material-icons">filter_list</i>Search
-            </button>
-
-            {% if keyword or fileType or status %}
-            <a href="/files" class="btn-clear">
-                <i class="material-icons">close</i>Clear
+        <button type="submit" class="btn btn-primary">
+            Search
+        </button>
+        
+        {% if search_query or fileType or status or (selected_location and selected_location != 'all') %}
+            <a href="{{ url_for('file_views.get_files_page') }}" class="btn" style="background: #eee; color: var(--text-primary);">
+                Clear
             </a>
-            {% endif %}
-        </form>
-
-        <!-- Active filter pills -->
-        {% if keyword or fileType or status %}
-        <div class="active-filters">
-            {% if keyword %}
-            <span class="filter-pill">
-                <i class="material-icons">search</i>{{ keyword }}
-            </span>
-            {% endif %}
-            {% if fileType %}
-            <span class="filter-pill">
-                <i class="material-icons">label</i>{{ fileType }}
-            </span>
-            {% endif %}
-            {% if status %}
-            <span class="filter-pill">
-                <i class="material-icons">info</i>{{ status }}
-            </span>
-            {% endif %}
-        </div>
         {% endif %}
-    </div>
+    </form>
+</div>
 
-    <!-- Results card -->
-    <div class="results-card">
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>File Name / ID</th>
+                <th style="text-align: center;">Type</th>
+                <th style="text-align: center;">Status</th>
+                <th>Location / Box</th>
+                <th style="text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in files %}
+            <tr>
+                <td>
+                    <div style="font-weight: 700; color: var(--primary-color);">
+                        <a href="{{ url_for('file_views.get_file_details_page', file_id=file.fileID) }}" class="table-row-link">{{ file.description }}</a>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">ID: {{ file.fileID }}</div>
+                </td>
+                <td style="text-align: center;">
+                    <span class="badge {{ 'badge-secondary' if file.fileType == 'Staff' else 'badge-primary' }}">
+                        {{ file.fileType }}
+                    </span>
+                </td>
+                <td style="text-align: center;">
+                    <span class="badge {{ 'badge-success' if file.status == 'Available' else 'badge-error' }} badge-centered">
+                        {{ file.status }}
+                    </span>
+                </td>
+                <td>
+                    <div style="font-size: 13px;">
+                        <strong>Box:</strong> {{ file.boxID }}
+                    </div>
+                </td>
+                <td style="text-align: right;">
+                    <div class="action-buttons" style="justify-content: flex-end;">
+                        <a href="{{ url_for('file_views.get_file_details_page', file_id=file.fileID) }}" class="icon-btn" title="View Details">
+                            <i class="material-icons">visibility</i>
+                        </a>
+                        <form action="{{ url_for('file_views.delete_file_action', file_id=file.fileID) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this file?');">
+                            <button type="submit" class="icon-btn delete" title="Delete File">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 48px; color: var(--text-secondary);">
+                    <i class="material-icons" style="font-size: 48px; color: #ddd; margin-bottom: 12px;">folder_off</i>
+                    <p>No file records found matching your search.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-        <div class="results-header">
-            <span class="results-count">
-                {{ files | length }}
-                result{{ 's' if files | length != 1 else '' }}
-                {% if keyword or fileType or status %}matching your filters{% endif %}
-            </span>
-        </div>
-
-        {% if files %}
-        <div style="overflow-x: auto;">
-            <table class="files-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th>Prev. Designation</th>
-                        <th>Status</th>
-                        <th>Date Created</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for file in files %}
-                    <tr>
-                        <td class="col-id">#{{ file.fileID }}</td>
-
-                        <td>
-                            {% if file.fileType == 'Student' %}
-                                <span class="type-chip chip-student">Student</span>
-                            {% elif file.fileType == 'Staff' %}
-                                <span class="type-chip chip-staff">Staff</span>
-                            {% else %}
-                                <span class="type-chip chip-other">{{ file.fileType }}</span>
-                            {% endif %}
-                        </td>
-
-                        <td class="col-desc" title="{{ file.description or '' }}">
-                            {{ file.description or '&mdash;' }}
-                        </td>
-
-                        <td class="col-desig">
-                            {{ file.previousDesignation or '&mdash;' }}
-                        </td>
-
-                        <td>
-                            {% if file.status == 'Available' %}
-                                <span class="status-badge badge-available">
-                                    <span class="dot"></span>Available
-                                </span>
-                            {% elif file.status == 'On Loan' %}
-                                <span class="status-badge badge-on-loan">
-                                    <span class="dot"></span>On Loan
-                                </span>
-                            {% else %}
-                                <span class="status-badge badge-other">
-                                    <span class="dot"></span>{{ file.status }}
-                                </span>
-                            {% endif %}
-                        </td>
-
-                        <td class="col-date">
-                            {% if file.dateCreated %}
-                                {{ file.dateCreated.strftime('%d %b %Y') }}
-                            {% else %}
-                                &mdash;
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            <a href="/files/{{ file.fileID }}/detail" class="btn-view">
-                                <i class="material-icons">visibility</i>View
-                            </a>
-                        </td>
-                    </tr>
+<!-- Add File Modal -->
+<div id="addFileModal" class="modal">
+    <div class="modal-content">
+        <h4>Add New File Record</h4>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Create a new record and assign it to a box.</p>
+        <form action="{{ url_for('file_views.create_file_action') }}" method="POST">
+            <div class="form-group">
+                <label class="form-label">File ID</label>
+                <input type="text" name="fileID" class="form-control" required placeholder="e.g. STU-12345">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" name="description" class="form-control" required placeholder="e.g. John Doe - Admissions 2024">
+            </div>
+            <div class="form-group">
+                <label class="form-label">File Type</label>
+                <select name="fileType" class="browser-default form-control" required>
+                    <option value="Student">Student</option>
+                    <option value="Staff">Staff</option>
+                    <option value="General">General</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Assign to Box</label>
+                <select name="boxID" class="browser-default form-control" required>
+                    <option value="" disabled selected>Select a Box</option>
+                    {% for box in boxes %}
+                        <option value="{{ box.boxID }}">{{ box.boxID }} ({{ box.location.geoLocation }}, {{ box.location.campus }})</option>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="material-icons">folder_off</i>
-            <p>No file records match your search.</p>
-        </div>
-        {% endif %}
-
-    </div><!-- /.results-card -->
-
-</div><!-- /.files-wrapper -->
+                </select>
+            </div>
+            <div class="modal-footer" style="padding: 0; margin-top: 20px;">
+                <button type="button" class="btn modal-close" style="background: none; color: var(--text-secondary);">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create File</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

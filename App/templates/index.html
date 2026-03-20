@@ -1,13 +1,74 @@
 {% extends "layout.html" %}
-{% block title %}Flask MVC App{% endblock %}
-{% block page %}Flask MVC App{% endblock %}
-
-{{ super() }}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <h1>Flask MVC</h1>
-    {% if is_authenticated %}
-        <p> Welcome {{current_user.username}} </p>
-    {% endif %}
-    <p>This is a boileplate flask application which follows the MVC pattern for structuring the project.</p>
+<script>
+    // Force sidebar to collapse on dashboard page load
+    (function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.classList.add('collapsed');
+            // We don't save to localStorage here so it doesn't affect other pages' default behavior
+        }
+    })();
+</script>
+<div class="data-header">
+    <div>
+        <h1 style="font-size: 28px;">Welcome to genCAT Dashboard</h1>
+        <p style="color: var(--text-secondary); margin-top: 4px;">GEN2 Records Management System at UWI St. Augustine.</p>
+    </div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch;">
+    <div class="card" style="border-left: 4px solid var(--primary-color); flex: 1; min-width: 280px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+        <div>
+            <h3 style="font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="material-icons" style="color: var(--primary-color);">inventory_2</i>
+                Storage Overview
+            </h3>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                View and manage all physical storage boxes across different campus locations.
+            </p>
+        </div>
+        <a href="/boxes" class="btn btn-primary" style="width: 100%; margin-top: auto;">Go to Boxes</a>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--secondary-color); flex: 1; min-width: 280px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+        <div>
+            <h3 style="font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="material-icons" style="color: var(--secondary-color);">folder_open</i>
+                File Records
+            </h3>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                Search for student and staff file records, view their history and current status.
+            </p>
+        </div>
+        <a href="/files" class="btn" style="width: 100%; background: var(--secondary-color); color: white; margin-top: auto;">Go to Files</a>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-color); flex: 1; min-width: 280px; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+        <div>
+            <h3 style="font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="material-icons" style="color: var(--accent-color);">swap_horiz</i>
+                Loan Management
+            </h3>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+                Process new loans, track outstanding records, and manage returns.
+            </p>
+        </div>
+        <a href="/loans" class="btn" style="width: 100%; background: var(--accent-color); color: white; margin-top: auto;">Go to Loans</a>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 32px;">
+    <h3 style="font-size: 18px; margin-bottom: 16px;">Quick Actions</h3>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="/scanner" class="btn btn-primary">
+            <i class="material-icons">qr_code_scanner</i> Launch Scanner
+        </a>
+        <a href="/location" class="btn" style="background: #eee; color: #000000 !important; opacity: 1 !important;">
+            <i class="material-icons" style="color: #000000 !important; opacity: 1 !important;">location_on</i> Switch Location
+        </a>
+    </div>
+</div>
 {% endblock %}

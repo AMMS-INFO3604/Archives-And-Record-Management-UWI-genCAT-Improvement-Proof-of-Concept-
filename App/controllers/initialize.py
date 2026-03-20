@@ -42,10 +42,9 @@ def _seed():
     # ------------------------------------------------------------------
     # 1. Locations
     # ------------------------------------------------------------------
-    loc1 = _add(Location(geoLocation="UWI Main Library – Bay A"))
-    loc2 = _add(Location(geoLocation="UWI Main Library – Bay B"))
-    loc3 = _add(Location(geoLocation="Faculty of Social Sciences – Archive Room"))
-    loc4 = _add(Location(geoLocation="Registry – Secure Vault"))
+    loc1 = _add(Location(geoLocation="Records Center", campus="Debe"))
+    loc2 = _add(Location(geoLocation="Records Center", campus="St. Augustine"))
+    loc3 = _add(Location(geoLocation="Registry", campus="St. Augustine"))
 
     # ------------------------------------------------------------------
     # 2. Boxes
@@ -110,7 +109,7 @@ def _seed():
             rowNo=1,
             columnNo=1,
             barcode="BOX-REG-001",
-            locationID=loc4.locationID,
+            locationID=loc3.locationID,
         )
     )
 

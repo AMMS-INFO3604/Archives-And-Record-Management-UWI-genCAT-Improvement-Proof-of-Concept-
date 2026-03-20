@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from flask_uploads import DOCUMENTS, IMAGES, TEXT, UploadSet, configure_uploads
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -32,9 +32,25 @@ def create_app(overrides={}):
     init_db(app)
     jwt = setup_jwt(app)
     setup_admin(app)
+
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        if request.path.startswith('/api/'):
+            return jsonify({"msg": "Token has expired"}), 401
+        flash("Your session has expired. Please log in again.", "warning")
+        return redirect(url_for('auth_views.staff_login_page'))
+
     @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        if request.path.startswith('/api/'):
+            return jsonify({"msg": str(error)}), 401
+        return redirect(url_for('auth_views.staff_login_page'))
+
     @jwt.unauthorized_loader
-    def custom_unauthorized_response(error):
-        return render_template('401.html', error=error), 401
+    def unauthorized_callback(error):
+        if request.path.startswith('/api/'):
+            return jsonify({"msg": str(error)}), 401
+        return redirect(url_for('auth_views.staff_login_page'))
+
     app.app_context().push()
     return app

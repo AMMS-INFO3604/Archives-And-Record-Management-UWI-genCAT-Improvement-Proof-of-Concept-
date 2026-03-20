@@ -14,7 +14,11 @@ class Loan(db.Model):
     patronID = db.Column(db.Integer, db.ForeignKey('patron.patronID'), nullable=False)
     damageNotes = db.Column(db.Text, nullable=True)
 
-    files = db.relationship('File', backref='loan', lazy=True)
+    files = db.relationship('File', backref='loans', lazy=True)
+
+    @property
+    def status(self):
+        return "Returned" if self.returnDate else "Active"
 
     def __repr__(self):
         return f'<Loan {self.loanID}>'
