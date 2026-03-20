@@ -15,7 +15,7 @@ class User(db.Model):
 
     def __init__(self, username, password, userType=False):
         self.username = username
-        self.password = generate_password_hash(password)
+        self.password = generate_password_hash(password,  method="pbkdf2:sha256")
         self.userType = userType
 
     def check_password(self, password):
