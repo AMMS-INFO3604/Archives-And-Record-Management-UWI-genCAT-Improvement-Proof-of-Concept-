@@ -7,6 +7,7 @@ from werkzeug.datastructures import  FileStorage
 
 from App.database import init_db
 from App.config import load_config
+from flask_migrate import upgrade
 
 from App.controllers import (
     setup_jwt,
@@ -32,7 +33,7 @@ def create_app(overrides={}):
     init_db(app)
 
      with app.app_context():       
-        db.create_all() 
+        upgrade() 
          
     jwt = setup_jwt(app)
     setup_admin(app)
