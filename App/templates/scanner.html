@@ -1,460 +1,195 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>File Scanner</title>
- 
-  <!-- ZXing barcode decoding library (no install needed, CDN) -->
-  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
- 
-  <style>
-    /* ── design tokens ──────────────────────────────────────────────────── */
-    :root {
-      --bg:        #0f1117;
-      --surface:   #1a1d27;
-      --border:    #2a2d3a;
-      --accent:    #4f8ef7;
-      --accent-dim:#1e3a6e;
-      --success:   #22c97a;
-      --error:     #f75a5a;
-      --text:      #e8eaf0;
-      --muted:     #6b7280;
-      --radius:    14px;
-      --font:      'DM Mono', 'Fira Code', monospace;
-      --font-ui:   'DM Sans', system-ui, sans-serif;
+{% extends "layout.html" %}
+{% block title %}Scanner{% endblock %}
+
+{% block head %}
+<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+<style>
+    .scanner-container {
+        max-width: 500px;
+        margin: 0 auto;
     }
- 
-    /* ── reset ──────────────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%; background: var(--bg); color: var(--text);
-      font-family: var(--font-ui); -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
+    .viewfinder {
+        position: relative;
+        aspect-ratio: 1/1;
+        background: #000;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        border: 2px solid var(--border-color);
+        margin-bottom: 20px;
     }
- 
-    /* ── layout ─────────────────────────────────────────────────────────── */
-    .app {
-      min-height: 100dvh;
-      display: flex; flex-direction: column;
-      max-width: 480px; margin: 0 auto;
-      padding: 0 0 env(safe-area-inset-bottom);
-    }
- 
-    /* ── header ─────────────────────────────────────────────────────────── */
-    header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 20px 20px 0;
-    }
-    .logo {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: var(--accent); display: grid; place-items: center;
-      flex-shrink: 0;
-    }
-    .logo svg { width: 20px; height: 20px; fill: #fff; }
-    header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
-    header p  { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
- 
-    /* ── viewfinder ─────────────────────────────────────────────────────── */
-    .viewfinder-wrap {
-      position: relative;
-      margin: 20px 20px 0;
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: #000;
-      aspect-ratio: 1 / 1;
-      border: 1.5px solid var(--border);
-    }
- 
     #preview {
-      width: 100%; height: 100%;
-      object-fit: cover; display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
- 
-    /* scanning animation overlay */
+    .scan-overlay {
+        position: absolute;
+        inset: 0;
+        border: 40px solid rgba(0,0,0,0.5);
+        pointer-events: none;
+    }
     .scan-line {
-      position: absolute; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      top: 0; animation: scan 2.2s ease-in-out infinite;
-      opacity: 0; transition: opacity .3s;
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        height: 2px;
+        background: var(--primary-color);
+        box-shadow: 0 0 8px var(--primary-color);
+        top: 40px;
+        animation: scan 2s ease-in-out infinite;
     }
-    .scanning .scan-line { opacity: 1; }
     @keyframes scan {
-      0%   { top: 10%; }
-      50%  { top: 88%; }
-      100% { top: 10%; }
+        0%, 100% { top: 40px; }
+        50% { top: calc(100% - 42px); }
     }
- 
-    /* corner markers */
-    .corners {
-      position: absolute; inset: 0; pointer-events: none;
+    .scanner-status {
+        padding: 16px;
+        border-radius: 8px;
+        background: white;
+        border: 1px solid var(--border-color);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
-    .corners::before, .corners::after,
-    .corners span::before, .corners span::after {
-      content: '';
-      position: absolute;
-      width: 22px; height: 22px;
-      border-color: var(--accent); border-style: solid;
-      border-width: 0;
+    .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ccc;
     }
-    .corners::before  { top:12px; left:12px;  border-top-width:2.5px; border-left-width:2.5px;  border-radius: 3px 0 0 0; }
-    .corners::after   { top:12px; right:12px; border-top-width:2.5px; border-right-width:2.5px; border-radius: 0 3px 0 0; }
-    .corners span::before { bottom:12px; left:12px;  border-bottom-width:2.5px; border-left-width:2.5px;  border-radius: 0 0 0 3px; }
-    .corners span::after  { bottom:12px; right:12px; border-bottom-width:2.5px; border-right-width:2.5px; border-radius: 0 0 3px 0; }
- 
-    /* camera placeholder */
-    .cam-placeholder {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 10px;
-      color: var(--muted); font-size: 0.82rem; text-align: center; padding: 20px;
+    .status-dot.active {
+        background: var(--success-color);
+        box-shadow: 0 0 8px var(--success-color);
     }
-    .cam-placeholder svg { width: 44px; opacity: .4; }
- 
-    /* ── status badge ────────────────────────────────────────────────────── */
-    .status {
-      margin: 12px 20px 0;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 0.8rem;
-      display: flex; align-items: center; gap: 8px;
-      background: var(--surface); border: 1px solid var(--border);
-      min-height: 42px; transition: all .25s;
-    }
-    .status .dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-      background: var(--muted);
-    }
-    .status.scanning .dot  { background: var(--accent); animation: pulse 1.2s infinite; }
-    .status.success  .dot  { background: var(--success); }
-    .status.error    .dot  { background: var(--error); }
-    @keyframes pulse {
-      0%,100% { opacity:1; } 50% { opacity:.35; }
-    }
- 
-    /* ── controls ────────────────────────────────────────────────────────── */
-    .controls { padding: 16px 20px 0; display: flex; gap: 10px; }
- 
-    .btn {
-      flex: 1; padding: 14px;
-      border: none; border-radius: 12px;
-      font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; transition: transform .12s, opacity .12s;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
-    }
-    .btn:active { transform: scale(.97); opacity: .85; }
- 
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-ghost   {
-      background: var(--surface); color: var(--text);
-      border: 1.5px solid var(--border);
-    }
- 
-    /* ── result card ─────────────────────────────────────────────────────── */
-    .result-card {
-      margin: 16px 20px 20px;
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      display: none;
-      animation: slideUp .3s ease;
-    }
-    .result-card.visible { display: block; }
-    @keyframes slideUp {
-      from { opacity:0; transform: translateY(12px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
- 
-    .result-header {
-      padding: 14px 16px;
-      background: var(--accent-dim);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 10px;
-    }
-    .result-header .badge {
-      background: var(--accent); color: #fff;
-      font-size: 0.65rem; font-weight: 700; letter-spacing: .06em;
-      padding: 3px 8px; border-radius: 20px; text-transform: uppercase;
-    }
-    .result-header .file-id {
-      font-family: var(--font); font-size: 0.85rem; color: var(--accent);
-    }
- 
-    .result-body { padding: 4px 0; }
- 
-    .field {
-      display: flex; align-items: baseline;
-      padding: 11px 16px;
-      border-bottom: 1px solid var(--border);
-      gap: 12px;
-    }
-    .field:last-child { border-bottom: none; }
-    .field-label {
-      font-size: 0.7rem; color: var(--muted); letter-spacing: .05em;
-      text-transform: uppercase; min-width: 80px; flex-shrink: 0;
-    }
-    .field-value { font-size: 0.9rem; font-weight: 500; }
- 
-    /* not-found card */
-    .not-found {
-      margin: 16px 20px 20px;
-      padding: 20px 16px;
-      background: var(--surface);
-      border: 1.5px solid var(--error);
-      border-radius: var(--radius);
-      display: none; text-align: center;
-      animation: slideUp .3s ease;
-    }
-    .not-found.visible { display: block; }
-    .not-found svg { width: 36px; opacity: .6; margin-bottom: 8px; color: var(--error); }
-    .not-found h3 { font-size: 0.95rem; margin-bottom: 4px; }
-    .not-found p  { font-size: 0.8rem; color: var(--muted); font-family: var(--font); }
- 
-    /* ── manual input fallback ───────────────────────────────────────────── */
-    .manual-wrap {
-      margin: 0 20px 20px;
-      display: flex; gap: 8px;
-    }
-    .manual-input {
-      flex: 1; padding: 12px 14px;
-      background: var(--surface); border: 1.5px solid var(--border);
-      border-radius: 10px; color: var(--text);
-      font-family: var(--font); font-size: 0.9rem;
-      outline: none; transition: border-color .2s;
-    }
-    .manual-input:focus { border-color: var(--accent); }
-    .manual-input::placeholder { color: var(--muted); }
-    .btn-manual { flex: 0; padding: 12px 18px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; color: var(--accent); font-weight: 700; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
-    .btn-manual:active { opacity: .7; }
- 
-    .divider {
-      display: flex; align-items: center; gap: 10px;
-      padding: 4px 20px 12px; color: var(--muted); font-size: 0.75rem;
-    }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-  </style>
-</head>
-<body>
-<div class="app">
- 
-  <!-- Header -->
-  <header>
-    <div class="logo">
-      <svg viewBox="0 0 24 24"><path d="M2 4h4v4H2V4zm0 8h4v4H2v-4zm0 8h4v4H2v-4zM8 4h2v4H8V4zm0 8h2v4H8v-4zm0 8h2v4H8v-4zm4-16h2v4h-2V4zm0 8h2v4h-2v-4zm0 8h2v4h-2v-4zm4-16h4v4h-4V4zm0 8h4v4h-4v-4zm0 8h4v4h-4v-4z"/></svg>
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="scanner-container">
+    <div class="data-header">
+        <div>
+            <h1 style="font-size: 28px; display: flex; align-items: center; gap: 12px;">
+                <i class="material-icons" style="color: var(--primary-color);">qr_code_scanner</i>
+                File Scanner
+            </h1>
+            <p style="color: var(--text-secondary); margin-top: 4px;">Scan file barcodes to quickly view records or process loans.</p>
+        </div>
     </div>
-    <div>
-      <h1>File Scanner</h1>
-      <p>Point camera at a barcode label</p>
+
+    <div class="viewfinder" id="viewfinder">
+        <video id="preview"></video>
+        <div class="scan-overlay"></div>
+        <div class="scan-line" id="scanLine" style="display: none;"></div>
+        <div id="placeholder" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 20px;">
+            <i class="material-icons" style="font-size: 64px; margin-bottom: 16px; opacity: 0.5;">videocam_off</i>
+            <p>Camera is currently inactive</p>
+            <button id="startBtn" class="btn btn-primary" style="margin-top: 16px;">
+                <i class="material-icons">videocam</i> Enable Camera
+            </button>
+        </div>
     </div>
-  </header>
- 
-  <!-- Viewfinder -->
-  <div class="viewfinder-wrap" id="viewfinder">
-    <video id="preview" playsinline muted></video>
-    <div class="scan-line"></div>
-    <div class="corners"><span></span></div>
-    <div class="cam-placeholder" id="placeholder">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4zm0 1.8a5 5 0 1 1 0-10 5 5 0 0 1 0 10zM9 2L7.17 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3.17L15 2H9z"/></svg>
-      <span>Camera will appear here</span>
+
+    <div class="scanner-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText" style="font-weight: 600; font-size: 14px; color: var(--text-secondary);">Ready to scan</span>
     </div>
-  </div>
- 
-  <!-- Status -->
-  <div class="status" id="status">
-    <div class="dot"></div>
-    <span id="status-text">Press Start to activate camera</span>
-  </div>
- 
-  <!-- Controls -->
-  <div class="controls">
-    <button class="btn btn-primary" id="btn-start" onclick="startScanner()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4zm0 1.8a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/><path d="M9 2L7.17 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3.17L15 2H9z"/></svg>
-      Start Camera
-    </button>
-    <button class="btn btn-ghost" id="btn-stop" onclick="stopScanner()" style="display:none">
-      Stop
-    </button>
-  </div>
- 
-  <!-- Result card (found) -->
-  <div class="result-card" id="result-card">
-    <div class="result-header">
-      <span class="badge">Found</span>
-      <span class="file-id" id="res-id"></span>
+
+    <div class="card" id="resultCard" style="display: none;">
+        <h3 style="font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <i class="material-icons" style="color: var(--success-color);">check_circle</i>
+            Scan Successful
+        </h3>
+        <div id="resultContent" style="padding: 16px; background: #f8f8f8; border-radius: 8px; font-family: monospace; margin-bottom: 16px; border: 1px solid var(--border-color);">
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <a id="viewFileBtn" href="#" class="btn btn-primary" style="flex: 1;">View Record</a>
+            <button id="resetBtn" class="btn" style="flex: 1; background: #eee;">Scan Again</button>
+        </div>
     </div>
-    <div class="result-body">
-      <div class="field">
-        <span class="field-label">Name</span>
-        <span class="field-value" id="res-name"></span>
-      </div>
-      <div class="field">
-        <span class="field-label">Location</span>
-        <span class="field-value" id="res-location"></span>
-      </div>
-      <div class="field" id="res-category-row">
-        <span class="field-label">Category</span>
-        <span class="field-value" id="res-category"></span>
-      </div>
-      <div class="field">
-        <span class="field-label">Created</span>
-        <span class="field-value" id="res-created"></span>
-      </div>
+
+    <div class="card" style="border-left: 4px solid var(--accent-color);">
+        <h4 style="font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            <i class="material-icons" style="color: var(--accent-color);">info</i>
+            Scanner Tips
+        </h4>
+        <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+            <li>Ensure the barcode is well-lit and centered in the viewfinder.</li>
+            <li>Hold the device steady for 1-2 seconds.</li>
+            <li>If it's not scanning, try moving the camera slightly closer or further away.</li>
+        </ul>
     </div>
-  </div>
- 
-  <!-- Not found card -->
-  <div class="not-found" id="not-found">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-    <h3>Record Not Found</h3>
-    <p id="not-found-id"></p>
-  </div>
- 
-  <!-- Divider -->
-  <div class="divider">or enter ID manually</div>
- 
-  <!-- Manual fallback -->
-  <div class="manual-wrap">
-    <input class="manual-input" id="manual-id" type="text"
-           placeholder="e.g. FILE-0042"
-           onkeydown="if(event.key==='Enter') lookupManual()" />
-    <button class="btn-manual" onclick="lookupManual()">Look up</button>
-  </div>
- 
 </div>
- 
+{% endblock %}
+
+{% block scripts %}
 <script>
-  // ── config ─────────────────────────────────────────────────────────────────
-  // Change this to your server's base URL in production
-  const API_BASE = window.location.origin;
- 
-  // ── state ──────────────────────────────────────────────────────────────────
-  let codeReader = null;
-  let scanning   = false;
-  let lastScanned = null;
-  const DEBOUNCE_MS = 3000; // don't re-scan same ID within 3 s
- 
-  // ── UI helpers ─────────────────────────────────────────────────────────────
-  const $ = id => document.getElementById(id);
- 
-  function setStatus(msg, type = '') {
-    const el = $('status');
-    el.className = 'status ' + type;
-    $('status-text').textContent = msg;
-  }
- 
-  function showResult(data) {
-    $('not-found').classList.remove('visible');
-    if (data.found) {
-      const r = data.record;
-      $('res-id').textContent       = r.id;
-      $('res-name').textContent     = r.name;
-      $('res-location').textContent = r.location;
-      $('res-created').textContent  = r.created_at ?? '—';
- 
-      if (r.category) {
-        $('res-category').textContent = r.category;
-        $('res-category-row').style.display = '';
-      } else {
-        $('res-category-row').style.display = 'none';
-      }
- 
-      $('result-card').classList.add('visible');
-    } else {
-      $('result-card').classList.remove('visible');
-      $('not-found-id').textContent = data.message;
-      $('not-found').classList.add('visible');
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    let selectedDeviceId;
+
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const scanLine = document.getElementById('scanLine');
+    const placeholder = document.getElementById('placeholder');
+    const resultCard = document.getElementById('resultCard');
+    const resultContent = document.getElementById('resultContent');
+    const viewFileBtn = document.getElementById('viewFileBtn');
+
+    async function initScanner() {
+        try {
+            const videoInputDevices = await codeReader.listVideoInputDevices();
+            selectedDeviceId = videoInputDevices[0].deviceId;
+            
+            placeholder.style.display = 'none';
+            scanLine.style.display = 'block';
+            statusDot.classList.add('active');
+            statusText.textContent = 'Scanning for barcodes...';
+            statusText.style.color = 'var(--primary-color)';
+
+            codeReader.decodeFromVideoDevice(selectedDeviceId, 'preview', (result, err) => {
+                if (result) {
+                    console.log(result.text);
+                    handleScanSuccess(result.text);
+                }
+                if (err && !(err instanceof ZXing.NotFoundException)) {
+                    console.error(err);
+                }
+            });
+        } catch (err) {
+            console.error(err);
+            statusText.textContent = 'Error: Could not access camera';
+            statusText.style.color = 'var(--error-color)';
+        }
     }
-  }
- 
-  function clearResult() {
-    $('result-card').classList.remove('visible');
-    $('not-found').classList.remove('visible');
-  }
- 
-  // ── API call ───────────────────────────────────────────────────────────────
-  async function lookupId(recordId) {
-    setStatus(`Looking up ${recordId}…`, 'scanning');
-    try {
-      const res  = await fetch(`${API_BASE}/api/barcode/lookup/${encodeURIComponent(recordId)}`);
-      const data = await res.json();
-      showResult(data);
-      setStatus(data.found ? `✓ Record found` : `No match for "${recordId}"`,
-                data.found ? 'success' : 'error');
-    } catch (err) {
-      setStatus('Connection error — check your network', 'error');
-      console.error(err);
+
+    function handleScanSuccess(text) {
+        codeReader.reset();
+        scanLine.style.display = 'none';
+        statusDot.classList.remove('active');
+        statusText.textContent = 'Scan complete';
+        statusText.style.color = 'var(--success-color)';
+        
+        resultCard.style.display = 'block';
+        resultContent.textContent = `Scanned ID: ${text}`;
+        
+        // Assuming the scanned text is the FileID
+        viewFileBtn.href = `/files/${text}`;
+        
+        // Play success sound or vibrate
+        if (navigator.vibrate) navigator.vibrate(200);
     }
-  }
- 
-  function lookupManual() {
-    const val = $('manual-id').value.trim();
-    if (!val) return;
-    lookupId(val);
-  }
- 
-  // ── scanner ────────────────────────────────────────────────────────────────
-  async function startScanner() {
-    if (scanning) return;
- 
-    clearResult();
-    $('placeholder').style.display = 'none';
- 
-    try {
-      codeReader = new ZXing.BrowserMultiFormatReader();
- 
-      // prefer back camera
-      const devices = await ZXing.BrowserCodeReader.listVideoInputDevices();
-      const backCam = devices.find(d => /back|rear|environment/i.test(d.label)) ?? devices[0];
-      const deviceId = backCam?.deviceId;
- 
-      const hints = new Map();
-      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128]);
- 
-      codeReader = new ZXing.BrowserMultiFormatReader(hints);
- 
-      await codeReader.decodeFromVideoDevice(deviceId, 'preview', (result, err) => {
-        if (!result) return;
- 
-        const text = result.getText();
-        const now  = Date.now();
- 
-        // debounce — avoid flooding API with the same scan
-        if (text === lastScanned?.id && now - lastScanned.ts < DEBOUNCE_MS) return;
-        lastScanned = { id: text, ts: now };
- 
-        // haptic feedback on mobile
-        if (navigator.vibrate) navigator.vibrate(60);
- 
-        lookupId(text);
-      });
- 
-      scanning = true;
-      $('viewfinder').classList.add('scanning');
-      $('btn-start').style.display = 'none';
-      $('btn-stop').style.display  = '';
-      setStatus('Scanning… point camera at a barcode', 'scanning');
- 
-    } catch (err) {
-      $('placeholder').style.display = '';
-      setStatus('Camera access denied or unavailable', 'error');
-      console.error(err);
-    }
-  }
- 
-  function stopScanner() {
-    if (codeReader) { codeReader.reset(); codeReader = null; }
-    scanning = false;
-    lastScanned = null;
-    $('viewfinder').classList.remove('scanning');
-    $('btn-start').style.display = '';
-    $('btn-stop').style.display  = 'none';
-    $('placeholder').style.display = '';
-    setStatus('Press Start to activate camera');
-  }
+
+    startBtn.addEventListener('click', initScanner);
+    resetBtn.addEventListener('click', () => {
+        resultCard.style.display = 'none';
+        initScanner();
+    });
+
+    // Clean up on leave
+    window.addEventListener('beforeunload', () => {
+        codeReader.reset();
+    });
 </script>
-</body>
-</html>
- 
+{% endblock %}

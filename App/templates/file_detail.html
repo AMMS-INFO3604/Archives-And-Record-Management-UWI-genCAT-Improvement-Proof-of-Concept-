@@ -2,726 +2,154 @@
 {% block title %}File #{{ file.fileID }}{% endblock %}
 
 {% block content %}
-<style>
-    body { background-color: #f3e5f5 !important; }
+<div style="margin-bottom: 24px;">
+    <a href="/files" style="display: flex; align-items: center; gap: 4px; color: var(--text-secondary); font-weight: 600; font-size: 14px;">
+        <i class="material-icons" style="font-size: 18px;">arrow_back</i> Back to Files
+    </a>
+</div>
 
-    /* ── wrapper ── */
-    .detail-wrapper { max-width: 860px; margin: 32px auto; padding: 0 16px 64px; }
-
-    /* ── card shared ── */
-    .detail-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(106,27,154,.10);
-        margin-bottom: 20px;
-        overflow: hidden;
-    }
-
-    /* ── card header ── */
-    .card-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 24px 28px;
-        border-bottom: 1.5px solid #f3e5f5;
-        flex-wrap: wrap;
-    }
-    .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
-    .header-icon {
-        width: 52px; height: 52px; border-radius: 50%; background: #f3e5f5;
-        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    .header-icon i { font-size: 26px; color: #6a1b9a; }
-    .header-text { min-width: 0; }
-    .header-title {
-        font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin: 0 0 4px;
-    }
-    .header-title span { color: #6a1b9a; }
-    .header-sub {
-        font-size: 0.87rem; color: #666; margin: 0;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 460px;
-    }
-    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-    /* ── buttons ── */
-    .btn-back {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 7px 14px; border: 1.5px solid #ce93d8; border-radius: 8px;
-        color: #6a1b9a; font-size: 0.83rem; font-weight: 600;
-        text-decoration: none; transition: background .15s;
-    }
-    .btn-back i { font-size: 16px; }
-    .btn-back:hover { background: #f3e5f5; color: #6a1b9a; }
-
-    .btn-issue {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 8px 16px; background: #6a1b9a; color: #fff;
-        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
-        cursor: pointer; transition: background .15s; text-decoration: none;
-    }
-    .btn-issue i { font-size: 18px; }
-    .btn-issue:hover { background: #4a148c; }
-
-    .btn-checkin {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 8px 16px; background: #2e7d32; color: #fff;
-        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
-        cursor: pointer; transition: background .15s;
-    }
-    .btn-checkin i { font-size: 18px; }
-    .btn-checkin:hover { background: #1b5e20; }
-
-     .btn-edit {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 8px 16px; background: transparent; color: #6a1b9a;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
-        font-size: 0.87rem; font-weight: 600; cursor: pointer;
-        transition: background .15s; text-decoration: none;
-    }
-    .btn-edit i { font-size: 18px; }
-    .btn-edit:hover { background: #f3e5f5; color: #6a1b9a; }
- 
-    .btn-delete {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 8px 16px; background: transparent; color: #c62828;
-        border: 1.5px solid #ef9a9a; border-radius: 8px;
-        font-size: 0.87rem; font-weight: 600; cursor: pointer;
-        transition: background .15s;
-    }
-    .btn-delete i { font-size: 18px; }
-    .btn-delete:hover { background: #fce4ec; }
- 
-    
-    .delete-warn-box {
-        display: flex; align-items: flex-start; gap: 10px;
-        background: #fce4ec; border: 1px solid #ef9a9a; border-radius: 8px;
-        padding: 12px 16px; font-size: 0.87rem; color: #c62828; margin-bottom: 16px;
-    }
-    .delete-warn-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-    .btn-modal-delete {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 8px 18px; background: #c62828; color: #fff;
-        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
-        cursor: pointer; transition: background .15s;
-    }
-    .btn-modal-delete:hover { background: #b71c1c; }
- 
-    .due-date-result {
-        display: none; align-items: center; gap: 8px;
-        background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px;
-        padding: 10px 14px; font-size: 0.87rem; color: #2e7d32; margin-top: 10px;
-    }
-    .due-date-result.show { display: flex; }
-    .due-date-result i { font-size: 18px; flex-shrink: 0; }
- 
-    .damage-box {
-        display: flex; align-items: flex-start; gap: 10px;
-        background: #fff8e1; border: 1.5px solid #ffe082; border-radius: 8px;
-        padding: 12px 16px; margin-bottom: 0;
-    }
-    .damage-box i { font-size: 18px; color: #f57f17; flex-shrink: 0; margin-top: 1px; }
-    .damage-box-content { flex: 1; }
-    .damage-box-label {
-        font-size: 0.70rem; font-weight: 800; letter-spacing: 0.8px;
-        text-transform: uppercase; color: #f57f17; margin-bottom: 4px;
-    }
-    .damage-box-text { font-size: 0.87rem; color: #5d4037; margin: 0; white-space: pre-wrap; }
-
-    /* ── card body ── */
-    .card-body { padding: 24px 28px; }
-
-    /* ── section ── */
-    .detail-section { margin-bottom: 26px; }
-    .detail-section:last-child { margin-bottom: 0; }
-    .section-title {
-        display: flex; align-items: center; gap: 6px;
-        font-size: 0.70rem; font-weight: 800; letter-spacing: 1.1px;
-        text-transform: uppercase; color: #6a1b9a;
-        padding-bottom: 6px; margin: 0 0 14px;
-        border-bottom: 1.5px solid #f3e5f5;
-    }
-    .section-title i { font-size: 15px; }
-
-    /* ── field grid ── */
-    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
-    .field-item { display: flex; flex-direction: column; gap: 3px; }
-    .field-label {
-        font-size: 0.70rem; font-weight: 700; letter-spacing: 0.5px;
-        text-transform: uppercase; color: #aaa;
-    }
-    .field-value { font-size: 0.9rem; color: #2e2e2e; word-break: break-word; }
-    .field-value.mono { font-family: monospace; font-size: 0.85rem; color: #555; }
-    .full-width { grid-column: 1 / -1; }
-
-    /* ── type chip ── */
-    .type-chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
-    .chip-student { background: #f3e5f5; color: #6a1b9a; }
-    .chip-staff   { background: #e8eaf6; color: #283593; }
-    .chip-other   { background: #f5f5f5; color: #616161; }
-
-    /* ── status badge ── */
-    .status-badge {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 4px 12px; border-radius: 20px; font-size: 0.77rem; font-weight: 700;
-    }
-    .status-badge .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .badge-available { background: #e8f5e9; color: #2e7d32; }
-    .badge-available .dot { background: #2e7d32; }
-    .badge-on-loan   { background: #ffebee; color: #c62828; }
-    .badge-on-loan .dot   { background: #c62828; }
-    .badge-other     { background: #f5f5f5; color: #757575; }
-    .badge-other .dot     { background: #9e9e9e; }
-
-    /* ── info / notice boxes ── */
-    .info-box {
-        display: flex; align-items: flex-start; gap: 10px;
-        background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px;
-        padding: 12px 16px; font-size: 0.87rem; color: #2e7d32;
-    }
-    .warn-box {
-        display: flex; align-items: flex-start; gap: 10px;
-        background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px;
-        padding: 12px 16px; font-size: 0.87rem; color: #c62828;
-    }
-    .notice-box {
-        display: flex; align-items: flex-start; gap: 10px;
-        background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
-        padding: 12px 16px; font-size: 0.87rem; color: #795548;
-    }
-    .info-box i, .warn-box i, .notice-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-
-    /* ── loan history table ── */
-    .loan-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-    .loan-table thead tr { background: #f3e5f5; border-bottom: 2px solid #ce93d8; }
-    .loan-table thead th {
-        padding: 9px 14px; font-size: 0.70rem; font-weight: 700;
-        letter-spacing: 0.8px; text-transform: uppercase;
-        color: #6a1b9a; text-align: left; white-space: nowrap;
-    }
-    .loan-table tbody tr { border-bottom: 1px solid #f3e5f5; transition: background .12s; }
-    .loan-table tbody tr:last-child { border-bottom: none; }
-    .loan-table tbody tr:hover { background: #fdf6ff; }
-    .loan-table td { padding: 10px 14px; color: #333; vertical-align: middle; }
-    .loan-table td.col-id { font-weight: 700; color: #6a1b9a; white-space: nowrap; }
-    .loan-table td.col-date { white-space: nowrap; font-size: 0.82rem; color: #666; }
-
-    .loan-status-badge {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 3px 9px; border-radius: 20px; font-size: 0.73rem; font-weight: 700;
-    }
-    .lbadge-active   { background: #ffebee; color: #c62828; }
-    .lbadge-returned { background: #e8f5e9; color: #2e7d32; }
-
-    .btn-view-loan {
-        display: inline-flex; align-items: center; gap: 3px;
-        padding: 4px 10px; background: #6a1b9a; color: #fff;
-        border-radius: 6px; font-size: 0.78rem; font-weight: 600;
-        text-decoration: none; transition: background .15s;
-    }
-    .btn-view-loan i { font-size: 14px; }
-    .btn-view-loan:hover { background: #4a148c; color: #fff; }
-
-    /* ── modal ── */
-    .modal { border-radius: 12px !important; }
-    .modal .modal-content { padding: 28px 28px 8px; }
-    .modal .modal-footer { padding: 12px 28px 20px; border-top: 1px solid #f3e5f5; background: #fdf6ff; }
-    .modal-title {
-        display: flex; align-items: center; gap: 10px;
-        font-size: 1.1rem; font-weight: 700; color: #1a1a1a; margin: 0 0 20px;
-    }
-    .modal-title i { color: #6a1b9a; font-size: 24px; }
-
-    /* modal form fields */
-    .form-group { margin-bottom: 18px; }
-    .form-label {
-        display: block; font-size: 0.72rem; font-weight: 700;
-        letter-spacing: 0.5px; text-transform: uppercase; color: #6a1b9a; margin-bottom: 6px;
-    }
-    .form-select {
-        width: 100%; height: 42px; padding: 0 12px;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
-        font-size: 0.9rem; color: #333; background: #fdf6ff;
-        cursor: pointer; outline: none;
-    }
-    .form-select:focus { border-color: #6a1b9a; box-shadow: 0 0 0 3px rgba(106,27,154,.10); }
-    .form-input {
-        width: 100%; height: 42px; padding: 0 12px;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
-        font-size: 0.9rem; color: #333; background: #fdf6ff;
-        box-sizing: border-box; outline: none;
-        border-bottom: 1.5px solid #ce93d8 !important;
-        box-shadow: none !important; margin: 0 !important;
-    }
-    .form-input:focus { border-color: #6a1b9a !important; box-shadow: 0 0 0 3px rgba(106,27,154,.10) !important; }
-    .form-hint { font-size: 0.78rem; color: #aaa; margin-top: 4px; }
-
-    .btn-modal-cancel {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 8px 16px; background: transparent; color: #6a1b9a;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
-        font-size: 0.87rem; font-weight: 600; cursor: pointer;
-        transition: background .15s; margin-right: 8px;
-    }
-    .btn-modal-cancel:hover { background: #f3e5f5; }
-    .btn-modal-submit {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 8px 18px; background: #6a1b9a; color: #fff;
-        border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600; cursor: pointer;
-        transition: background .15s;
-    }
-    .btn-modal-submit i { font-size: 18px; }
-    .btn-modal-submit:hover { background: #4a148c; }
-
-    /* ── responsive ── */
-    @media (max-width: 600px) {
-        .detail-wrapper { margin: 16px auto; }
-        .card-body { padding: 18px 16px; }
-        .card-header { padding: 18px 16px; }
-        .field-grid { grid-template-columns: 1fr; }
-        .header-sub { max-width: 100%; }
-    }
-</style>
-
-<div class="detail-wrapper">
-
-    <!-- ══ Header card ══════════════════════════════════════════════════════ -->
-    <div class="detail-card">
-        <div class="card-header">
-            <div class="header-left">
-                <div class="header-icon"><i class="material-icons">folder_open</i></div>
-                <div class="header-text">
-                    <p class="header-title">File <span>#{{ file.fileID }}</span></p>
-                    <p class="header-sub">{{ file.description or 'No description provided' }}</p>
-                </div>
+<div class="card" style="padding: 0; overflow: hidden; border-top: 4px solid {{ 'var(--success-color)' if file.status == 'Available' else 'var(--error-color)' }};">
+    <div style="padding: 32px; background: #fafafa; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 24px;">
+        <div>
+            <span class="badge {{ 'badge-secondary' if file.fileType == 'Staff' else 'badge-primary' }}" style="margin-bottom: 12px;">{{ file.fileType }} File</span>
+            <h1 style="font-size: 32px; margin-bottom: 8px;">{{ file.description }}</h1>
+            <div style="display: flex; align-items: center; gap: 16px; color: var(--text-secondary);">
+                <span style="display: flex; align-items: center; gap: 4px;">
+                    <i class="material-icons" style="font-size: 18px;">fingerprint</i> ID: {{ file.fileID }}
+                </span>
+                <span style="display: flex; align-items: center; gap: 4px;">
+                    <i class="material-icons" style="font-size: 18px;">inventory_2</i> Box: <a href="{{ url_for('box_views.get_box_details_page', box_id=file.boxID) }}" style="font-weight: 600;">{{ file.boxID }}</a>
+                </span>
+            </div>
+        </div>
+        
+        <div style="text-align: right;">
+            <div style="margin-bottom: 16px;">
+                <span class="badge {{ 'badge-success' if file.status == 'Available' else 'badge-error' }}" style="font-size: 14px; padding: 8px 16px;">
+                    {{ file.status }}
+                </span>
             </div>
             <div class="header-actions">
-                <!-- Back button -->
-                <a href="/files" class="btn-back">
-                    <i class="material-icons">arrow_back</i>All Files
-                </a>
-
                 {% if file.status == 'Available' %}
-                <a href="/files/{{ file.fileID }}/edit" class="btn-edit">
-                    <i class="material-icons">edit</i>Edit
-                </a>
+                    <button class="btn btn-primary modal-trigger" data-target="issueLoanModal">
+                        <i class="material-icons">swap_horiz</i> Issue Loan
+                    </button>
+                {% else %}
+                    <form action="{{ url_for('loan_views.return_loan_action', loan_id=active_loan.loanID if active_loan else '') }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn" style="background: var(--success-color); color: white;">
+                            <i class="material-icons">check_circle</i> Mark as Returned
+                        </button>
+                    </form>
                 {% endif %}
-
-                <!-- Check In (only when on loan) -->
-                {% if file.status == 'On Loan' and file.loanID %}
-                <button class="btn-checkin modal-trigger" data-target="checkin-modal">
-                    <i class="material-icons">assignment_return</i>Check In
+                <button class="btn modal-trigger" data-target="editFileModal" style="background: #eee;">
+                    <i class="material-icons">edit</i> Edit
                 </button>
-                
-               
-                {% endif %}
-
-                <!-- Issue File (only when available) -->
-                {% if file.status == 'Available' %}
-                <button class="btn-issue modal-trigger" data-target="issue-modal">
-                    <i class="material-icons">assignment_ind</i>Issue File
-                </button>
-                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- ══ File details ═════════════════════════════════════════════════════ -->
-    <div class="detail-card">
-        <div class="card-body">
-            <div class="detail-section">
-                <div class="section-title"><i class="material-icons">info</i>File Details</div>
-                <div class="field-grid">
-                    <div class="field-item">
-                        <span class="field-label">File Type</span>
-                        <span class="field-value">
-                            {% if file.fileType == 'Student' %}
-                                <span class="type-chip chip-student">Student</span>
-                            {% elif file.fileType == 'Staff' %}
-                                <span class="type-chip chip-staff">Staff</span>
-                            {% else %}
-                                <span class="type-chip chip-other">{{ file.fileType }}</span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Status</span>
-                        <span class="field-value">
-                            {% if file.status == 'Available' %}
-                                <span class="status-badge badge-available">
-                                    <span class="dot"></span>Available
-                                </span>
-                            {% elif file.status == 'On Loan' %}
-                                <span class="status-badge badge-on-loan">
-                                    <span class="dot"></span>On Loan
-                                </span>
-                            {% else %}
-                                <span class="status-badge badge-other">
-                                    <span class="dot"></span>{{ file.status }}
-                                </span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Previous Designation</span>
-                        <span class="field-value mono">{{ file.previousDesignation or '&mdash;' }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Date Created</span>
-                        <span class="field-value">
-                            {% if file.dateCreated %}{{ file.dateCreated.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
-                        </span>
-                    </div>
-                    <div class="field-item full-width">
-                        <span class="field-label">Description</span>
-                        <span class="field-value">{{ file.description or '&mdash;' }}</span>
-                    </div>
-                </div>
-            </div>
+    <div style="padding: 32px;">
+        <h2 style="font-size: 20px; display: flex; align-items: center; gap: 8px; margin-bottom: 24px;">
+            <i class="material-icons" style="color: var(--primary-color);">history</i>
+            Loan History
+        </h2>
 
-            <!-- Student record -->
-            {% if file.fileType == 'Student' %}
-            <div class="detail-section">
-                <div class="section-title"><i class="material-icons">school</i>Student Record</div>
-                {% if file.student_record %}
-                <div class="field-grid">
-                    <div class="field-item">
-                        <span class="field-label">Student ID / Code</span>
-                        <span class="field-value mono">{{ file.student_record.code or '&mdash;' }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Certificate / Diploma</span>
-                        <span class="field-value">{{ file.student_record.certificateDiploma or '&mdash;' }}</span>
-                    </div>
-                </div>
-                {% else %}
-                <div class="notice-box">
-                    <i class="material-icons">info</i>No student record linked to this file.
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Staff record -->
-            {% elif file.fileType == 'Staff' %}
-            <div class="detail-section">
-                <div class="section-title"><i class="material-icons">badge</i>Staff Record</div>
-                {% if file.staff_record %}
-                <div class="field-grid">
-                    <div class="field-item">
-                        <span class="field-label">File Number</span>
-                        <span class="field-value mono">{{ file.staff_record.fileNumber or '&mdash;' }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">File Title</span>
-                        <span class="field-value">{{ file.staff_record.fileTitle or '&mdash;' }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Post</span>
-                        <span class="field-value">{{ file.staff_record.post or '&mdash;' }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Organisation Unit</span>
-                        <span class="field-value">{{ file.staff_record.organisationUnit or '&mdash;' }}</span>
-                    </div>
-                    {% if file.staff_record.notes %}
-                    <div class="field-item full-width">
-                        <span class="field-label">Notes</span>
-                        <span class="field-value">{{ file.staff_record.notes }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-                {% else %}
-                <div class="notice-box">
-                    <i class="material-icons">info</i>No staff record linked to this file.
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-
-            <!-- Storage -->
-            <div class="detail-section">
-                <div class="section-title"><i class="material-icons">inventory_2</i>Storage</div>
-                {% if file.box %}
-                <div class="field-grid">
-                    <div class="field-item">
-                        <span class="field-label">Box ID</span>
-                        <span class="field-value mono">#{{ file.box.boxID }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Barcode</span>
-                        <span class="field-value mono">{{ file.box.barcode or '&mdash;' }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Bay / Row / Column</span>
-                        <span class="field-value">{{ file.box.bayNo }} / {{ file.box.rowNo }} / {{ file.box.columnNo }}</span>
-                    </div>
-                    <div class="field-item">
-                        <span class="field-label">Location</span>
-                        <span class="field-value">
-                            {% if file.box.location %}{{ file.box.location.geoLocation }}{% else %}&mdash;{% endif %}
-                        </span>
-                    </div>
-                </div>
-                {% else %}
-                <div class="notice-box">
-                    <i class="material-icons">info</i>No box assigned to this file.
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ Loan history ═════════════════════════════════════════════════════ -->
-    <div class="detail-card">
-        <div class="card-body">
-            <div class="detail-section" style="margin-bottom:0;">
-                <div class="section-title"><i class="material-icons">history</i>Loan History</div>
-
-                {% if file.loan %}
-                <!-- Active loan banner -->
-                <div class="warn-box" style="margin-bottom:16px;">
-                    <i class="material-icons">swap_horiz</i>
-                    <div>
-                        This file is currently on <strong>Loan #{{ file.loan.loanID }}</strong> (Patron #{{ file.loan.patronID }})
-                        {% if file.loan.patron and file.loan.patron.user %}
-                            issued to <strong>{{ file.loan.patron.user.username }}</strong>
-                        {% endif %}
-                        {% if file.loan.loanDate %}
-                            on {{ file.loan.loanDate.strftime('%d %b %Y') }}
-                        {% endif %}.
-                    </div>
-                </div>
-
-                  {% if file.loan.damageNotes %}
-                <div class="damage-box" style="margin-bottom:16px;">
-                    <i class="material-icons">report_problem</i>
-                    <div class="damage-box-content">
-                        <div class="damage-box-label">Condition Notes on Return</div>
-                        <p class="damage-box-text">{{ file.loan.damageNotes }}</p>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Loan detail table -->
-                <div style="overflow-x:auto;">
-                    <table class="loan-table">
-                        <thead>
-                            <tr>
-                                <th>Loan ID</th>
-                                <th>Status</th>
-                                <th>Patron</th>
-                                <th>Loan Date</th>
-                                <th>Return Date</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="col-id">#{{ file.loan.loanID }}</td>
-                                <td>
-                                    {% if file.loan.returnDate is none %}
-                                        <span class="loan-status-badge lbadge-active">Active</span>
-                                    {% else %}
-                                        <span class="loan-status-badge lbadge-returned">Returned</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if file.loan.patron and file.loan.patron.user %}
-                                        {{ file.loan.patron.user.username }}
-                                        <span style="color:#bbb;font-size:.8rem;">(#{{ file.loan.patronID }})</span>
-                                    {% else %}
-                                        #{{ file.loan.patronID }}
-                                    {% endif %}
-                                </td>
-                                <td class="col-date">
-                                    {% if file.loan.loanDate %}{{ file.loan.loanDate.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
-                                </td>
-                                <td class="col-date">
-                                    {% if file.loan.returnDate %}{{ file.loan.returnDate.strftime('%d %b %Y') }}
-                                    {% else %}<span style="color:#c62828;font-weight:600;">Pending</span>{% endif %}
-                                </td>
-                                <td>
-                                    <a href="/loans/{{ file.loan.loanID }}/detail" class="btn-view-loan">
-                                        <i class="material-icons">open_in_new</i>View
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                {% else %}
-                <!-- No active loan -->
-                <div class="info-box">
-                    <i class="material-icons">check_circle</i>
-                    This file is not currently on loan.
-                </div>
-                {% endif %}
-
-            </div>
-        </div>
-    </div>
-
-</div><!-- /.detail-wrapper -->
-
-{% if file.status == 'Available' %}
-<div style="max-width:860px;margin:0 auto 40px;padding:0 16px;display:flex;justify-content:flex-end;">
-    <button class="btn-delete modal-trigger" data-target="delete-modal">
-        <i class="material-icons">delete</i>Delete File
-    </button>
-</div>
-{% endif %}
-
-<!-- ══ Issue File Modal ═════════════════════════════════════════════════════ -->
-{% if file.status == 'Available' %}
-<div id="issue-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-title">
-            <i class="material-icons">assignment_ind</i>
-            Loan File #{{ file.fileID }}
-        </div>
-        <form method="POST" action="/loans" id="issue-form">
-            <input type="hidden" name="fileIDs" value="{{ file.fileID }}">
-            <div class="form-group">
-                <label class="form-label">Date</label>
-                <input type="text" class="form-input" id="loan-date-display"
-                       readonly style="background:#f5f5f5;color:#555;cursor:default;">
-                <input type="hidden" name="loanDate" id="loan-date-value">
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="patronID">Loaned To *</label>
-                <select name="patronID" id="patronID" class="form-select" required>
-                    <option value="">— Select a patron —</option>
-                    {% for patron in patrons %}
-                    <option value="{{ patron.patronID }}">
-                        {% if patron.user %}
-                            {{ patron.user.username }} (Patron #{{ patron.patronID }})
-                        {% else %}
-                            Patron #{{ patron.patronID }}
-                        {% endif %}
-                    </option>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Loan ID</th>
+                        <th>Patron</th>
+                        <th>Loan Date</th>
+                        <th>Due Date</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in (file.loans or []) | reverse %}
+                    <tr>
+                        <td style="font-family: monospace;">{{ loan.loanID }}</td>
+                        <td>
+                            <div style="font-weight: 600;">{{ loan.patron.username }}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">ID: {{ loan.patronID }}</div>
+                        </td>
+                        <td>{{ loan.loanDate.strftime('%Y-%m-%d') if loan.loanDate else '-' }}</td>
+                        <td>{{ loan.dueDate.strftime('%Y-%m-%d') if loan.dueDate else '-' }}</td>
+                        <td>{{ loan.returnDate.strftime('%Y-%m-%d') if loan.returnDate else '-' }}</td>
+                        <td>
+                            <span class="badge {{ 'badge-success' if loan.status == 'Returned' else 'badge-error' }}">
+                                {{ loan.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-secondary);">
+                            <p>No loan history found for this file.</p>
+                        </td>
+                    </tr>
                     {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Issue Loan Modal -->
+<div id="issueLoanModal" class="modal">
+    <div class="modal-content">
+        <h4>Issue File Loan</h4>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Assign this file to a patron or staff member.</p>
+        <form action="{{ url_for('loan_views.create_loan_action') }}" method="POST">
+            <input type="hidden" name="fileID" value="{{ file.fileID }}">
+            <div class="form-group">
+                <label class="form-label">Patron ID</label>
+                <input type="text" name="patronID" class="form-control" required placeholder="Enter Patron ID">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Due Date</label>
+                <input type="date" name="dueDate" class="form-control" required>
+            </div>
+            <div class="modal-footer" style="padding: 0; margin-top: 20px;">
+                <button type="button" class="btn modal-close" style="background: none; color: var(--text-secondary);">Cancel</button>
+                <button type="submit" class="btn btn-primary">Confirm Loan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit File Modal -->
+<div id="editFileModal" class="modal">
+    <div class="modal-content">
+        <h4>Edit File Record</h4>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Update file information or move to another box.</p>
+        <form action="{{ url_for('file_views.edit_file_action', file_id=file.fileID) }}" method="POST">
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" name="description" class="form-control" value="{{ file.description }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">File Type</label>
+                <select name="fileType" class="browser-default form-control" required>
+                    <option value="Student" {{ 'selected' if file.fileType == 'Student' else '' }}>Student</option>
+                    <option value="Staff" {{ 'selected' if file.fileType == 'Staff' else '' }}>Staff</option>
+                    <option value="General" {{ 'selected' if file.fileType == 'General' else '' }}>General</option>
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label" for="loan-days">Loan Period (days)</label>
-                <input type="number" id="loan-days" class="form-input"
-                       placeholder="e.g. 14" min="1" max="365" value="14">
+                <label class="form-label">Storage Box</label>
+                <select name="boxID" class="browser-default form-control" required>
+                    {% for box in boxes %}
+                        <option value="{{ box.boxID }}" {{ 'selected' if file.boxID == box.boxID else '' }}>{{ box.boxID }} ({{ box.location }})</option>
+                    {% endfor %}
+                </select>
             </div>
-            <div class="form-group">
-                <button type="button" class="btn-modal-cancel"
-                        onclick="calcDueDate()"
-                        style="border-color:#90caf9;color:#1565c0;">
-                    <i class="material-icons" style="font-size:16px;">event</i>
-                    Calculate Due Date
-                </button>
-                <div class="due-date-result" id="due-date-result">
-                    <i class="material-icons">event_available</i>
-                    <span>Due: <strong id="due-date-text"></strong></span>
-                </div>
+            <div class="modal-footer" style="padding: 0; margin-top: 20px;">
+                <button type="button" class="btn modal-close" style="background: none; color: var(--text-secondary);">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
         </form>
     </div>
-    <div class="modal-footer">
-        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
-        <button type="submit" form="issue-form" class="btn-modal-submit">
-            <i class="material-icons">assignment_ind</i>Loan
-        </button>
-    </div>
 </div>
-{% endif %}
-
-<!-- Check In modal  -->
-{% if file.status == 'On Loan' and file.loanID %}
-<div id="checkin-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-title">
-            <i class="material-icons">assignment_return</i>
-            Check In File #{{ file.fileID }}
-        </div>
-        <form method="POST" action="/loans/{{ file.loanID }}/checkin" id="checkin-form">
-            <div class="info-box" style="margin-bottom:18px;">
-                <i class="material-icons">info</i>
-                <div>Checking in <strong>Loan #{{ file.loanID }}</strong> will mark this file as <strong>Available</strong>.</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="damage_notes">
-                    Condition / Damage Notes
-                    <span style="color:#aaa;font-weight:500;text-transform:none;">(optional)</span>
-                </label>
-                <textarea name="damage_notes" id="damage_notes" class="form-input"
-                          placeholder="Note any damage — leave blank if undamaged…"
-                          maxlength="1000"
-                          style="height:100px;padding-top:10px;resize:vertical;"></textarea>
-                <p class="form-hint">Saved against the loan record.</p>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
-        <button type="submit" form="checkin-form" class="btn-modal-submit"
-                style="background:#2e7d32;">
-            <i class="material-icons">assignment_return</i>Confirm Check In
-        </button>
-    </div>
-</div>
-{% endif %}
-
-<!--  Delete modal  -->
-{% if file.status == 'Available' %}
-<div id="delete-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-title">
-            <i class="material-icons" style="color:#c62828;">delete</i>
-            Delete File #{{ file.fileID }}
-        </div>
-        <div class="delete-warn-box">
-            <i class="material-icons">warning</i>
-            <div>
-                This will <strong>permanently delete</strong> File #{{ file.fileID }}
-                {% if file.description %}— "{{ file.description }}"{% endif %}.
-                This cannot be undone.
-            </div>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
-        <form method="POST" action="/files/{{ file.fileID }}/delete" style="margin:0;">
-            <button type="submit" class="btn-modal-delete">
-                <i class="material-icons">delete</i>Yes, Delete
-            </button>
-        </form>
-    </div>
-</div>
-{% endif %}
-
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
- 
-        var today = new Date();
-        var dd   = String(today.getDate()).padStart(2, '0');
-        var mm   = String(today.getMonth() + 1).padStart(2, '0');
-        var yyyy = today.getFullYear();
-        var el  = document.getElementById('loan-date-display');
-        var val = document.getElementById('loan-date-value');
-        if (el)  el.value  = dd + '/' + mm + '/' + yyyy;
-        if (val) val.value = yyyy + '-' + mm + '-' + dd;
-    });
- 
-    function calcDueDate() {
-        var days = parseInt(document.getElementById('loan-days').value, 10);
-        if (!days || days < 1) { alert('Enter a valid number of days first.'); return; }
-        var due = new Date();
-        due.setDate(due.getDate() + days);
-        var dd   = String(due.getDate()).padStart(2, '0');
-        var mm   = String(due.getMonth() + 1).padStart(2, '0');
-        var yyyy = due.getFullYear();
-        document.getElementById('due-date-text').textContent = dd + '/' + mm + '/' + yyyy;
-        document.getElementById('due-date-result').classList.add('show');
-    }
-</script>
 {% endblock %}
