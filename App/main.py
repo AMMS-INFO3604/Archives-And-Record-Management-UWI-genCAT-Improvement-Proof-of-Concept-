@@ -5,7 +5,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import  FileStorage
 
-from App.database import init_db
+from App.database import init_db, db
 from App.config import load_config
 from flask_migrate import upgrade
 
@@ -33,7 +33,7 @@ def create_app(overrides={}):
     init_db(app)
 
     with app.app_context():       
-        upgrade() 
+        db.create_all() 
          
     jwt = setup_jwt(app)
     setup_admin(app)
