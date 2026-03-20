@@ -29,6 +29,7 @@ from .index import index_views
 file_views = Blueprint("file_views", __name__, template_folder="templates")
 
 
+
 @file_views.route("/files", methods=["POST"])
 @jwt_required()
 def add_file():
@@ -73,6 +74,16 @@ def update_file(fileID):
     if not file:
         return jsonify({"error": "File not found"}), 404
     return jsonify({"message": "File updated successfully", "fileID": file.fileID}), 200
+
+@file_views.route("/files/<int:fileID>/delete", methods=["POST"])
+@jwt_required()
+def delete_file_page(fileID):
+    result = deleteFile(fileID)
+    if not result:
+        flash(f"File {fileID} could not be deleted.", "error")
+        return redirect(url_for("file_views.file_detail_page", fileID=fileID))
+    flash(f"File #{fileID} was deleted successfully.", "success")
+    return redirect(url_for("file_views.get_files_page"))
 
 
 @file_views.route("/files/<int:fileID>", methods=["DELETE"])
