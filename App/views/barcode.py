@@ -1,6 +1,12 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, send_file
 from datetime import datetime, timezone
 from typing import Optional
+
+import barcode
+from barcode.writer import ImageWriter
+import io
+import base64
+
  
 barcode_views = Blueprint('barcode', __name__, template_folder='../templates')
  
@@ -36,6 +42,40 @@ def log_scan_event(record_id: str, found: bool) -> None:
     status = "FOUND" if found else "NOT FOUND"
     print(f"[SCAN] {datetime.now(timezone.utc).isoformat()}  {status}  {record_id}")
  
+def generate_barcode_b64(value: str) -> str:
+    """
+    Generate a Code128 barcode for *value* and return it as a
+    base64-encoded PNG string (used by the /api/barcode/generate route).
+    """
+    code = barcode.get('code128', value, writer=ImageWriter())
+    buf  = io.BytesIO()
+    code.write(buf, options={
+        'write_text':    True,
+        'module_height': 12.0,
+        'font_size':     8,
+        'text_distance': 3,
+        'quiet_zone':    4,
+    })
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode('utf-8')
+ 
+ 
+def generate_barcode_png_bytes(value: str) -> bytes:
+    """
+    Return raw PNG bytes for a Code128 barcode
+    (used by the /api/barcode/download route).
+    """
+    code = barcode.get('code128', value, writer=ImageWriter())
+    buf  = io.BytesIO()
+    code.write(buf, options={
+        'write_text':    True,
+        'module_height': 12.0,
+        'font_size':     8,
+        'text_distance': 3,
+        'quiet_zone':    6,
+    })
+    buf.seek(0)
+    return buf.read()
  
 # ── Scanner page ──────────────────────────────────────────────────────────────
 @barcode_views.route('/scanner', methods=['GET'])
@@ -71,3 +111,49 @@ def lookup_barcode(record_id: str):
         "scanned_at": scanned_at,
         "message":    f"No record found for ID '{record_id}'.",
     }), 404
+    
+@barcode_views.route('/api/barcode/generate', methods=['POST'])
+def api_generate_barcode():
+    """
+    POST /api/barcode/generate
+    Body: { "value": "BOX-A-001" }
+    Returns: { "barcode_b64": "<base64 PNG string>" }
+ 
+    Called by the Generate button in the Add Box / Add File modals.
+    The modal displays the returned image as:
+        <img src="data:image/png;base64,<barcode_b64>" />
+    """
+    data  = request.get_json(silent=True) or {}
+    value = (data.get('value') or '').strip()
+ 
+    if not value:
+        return jsonify({"error": "value is required"}), 400
+ 
+    try:
+        b64 = generate_barcode_b64(value)
+        return jsonify({"barcode_b64": b64, "value": value})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+ 
+ 
+@barcode_views.route('/api/barcode/download/<path:value>', methods=['GET'])
+def api_download_barcode(value: str):
+    """
+    GET /api/barcode/download/BOX-A-001
+    Returns the barcode as a downloadable PNG file.
+ 
+    Called by the "Download PNG" button in the modal barcode preview.
+    """
+    try:
+        png  = generate_barcode_png_bytes(value)
+        buf  = io.BytesIO(png)
+        buf.seek(0)
+        safe = value.replace('/', '-').replace('\\', '-')
+        return send_file(
+            buf,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=f"barcode-{safe}.png",
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

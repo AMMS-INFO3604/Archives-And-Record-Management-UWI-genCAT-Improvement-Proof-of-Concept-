@@ -24,11 +24,50 @@ from App.controllers.patron import get_all_patrons
 from App.database import db
 from App.models import File
 
+from App.controllers.box import getAllBoxes
+
 from .index import index_views
 
 file_views = Blueprint("file_views", __name__, template_folder="templates")
 
-
+@file_views.route("/files/create", methods=["POST"])
+@jwt_required()
+def add_file_page():
+    """Handle the Add File form submitted from the files page modal."""
+    box_id       = request.form.get("boxID", "").strip()
+    file_type    = request.form.get("fileType", "").strip()
+    description  = request.form.get("description", "").strip() or None
+    prev_desig   = request.form.get("previousDesignation", "").strip() or None
+    date_created = request.form.get("dateCreated", "").strip() or None
+    barcode      = request.form.get("barcode", "").strip() or None
+ 
+    if not box_id or not file_type:
+        flash("Box and file type are required.", "error")
+        return redirect(url_for("file_views.get_files_page"))
+ 
+    try:
+        box_id = int(box_id)
+    except ValueError:
+        flash("Invalid box ID.", "error")
+        return redirect(url_for("file_views.get_files_page"))
+ 
+    file = addFile(
+        boxID=box_id,
+        fileType=file_type,
+        description=description,
+        previousDesignation=prev_desig,
+        dateCreated=date_created,
+        barcode=barcode,
+        createdByStaffUserID=getattr(jwt_current_user, "id", None),
+    )
+ 
+    if file:
+        flash(f"File #{file.fileID} created successfully.", "success")
+    else:
+        flash("Failed to create file. Please check your inputs.", "error")
+ 
+    return redirect(url_for("file_views.get_files_page"))
+ 
 
 @file_views.route("/files", methods=["POST"])
 @jwt_required()
@@ -155,9 +194,13 @@ def get_files_page():
 
     total_pages = max(1, (total + per_page - 1) // per_page)
 
+    
+    boxes = getAllBoxes()
+    
     return render_template(
         "files.html",
         files= paginated_files,
+        boxes=boxes,
         keyword=keyword or "",
         fileType=fileType or "",
         status=status or "",
