@@ -239,6 +239,71 @@
     }
     .warn-box i { font-size: 18px; color: #f57c00; flex-shrink: 0; margin-top: 1px; }
 
+    /* ── Barcode section in modal ────────────────────────────────────────── */
+    .bc-section {
+        border: 1.5px solid #90caf9;
+        border-radius: 10px;
+        padding: 14px 16px;
+        background: #f0f7ff;
+        margin-bottom: 16px;
+    }
+    .bc-section-title {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 0.78rem; font-weight: 700; color: #1565c0;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        margin-bottom: 10px;
+    }
+    .bc-section-title i { font-size: 16px; }
+    .bc-input-row { display: flex; gap: 8px; align-items: center; }
+    .bc-input-row input {
+        flex: 1; height: 40px;
+        border: 1.5px solid #90caf9 !important;
+        border-bottom: 1.5px solid #90caf9 !important;
+        border-radius: 8px !important; padding: 0 12px !important;
+        font-size: 0.9rem; color: #333; background: #fff;
+        box-shadow: none !important; margin: 0 !important;
+        box-sizing: border-box; font-family: monospace;
+    }
+    .bc-input-row input:focus {
+        border-color: #1565c0 !important;
+        box-shadow: 0 0 0 3px rgba(21,101,192,.10) !important;
+    }
+    .btn-gen-barcode {
+        height: 40px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 14px; background: #1565c0; color: #fff; border: none;
+        border-radius: 8px; font-size: 0.83rem; font-weight: 600;
+        cursor: pointer; white-space: nowrap; flex-shrink: 0;
+        transition: background .15s;
+    }
+    .btn-gen-barcode:hover { background: #0d47a1; }
+    .btn-gen-barcode i { font-size: 16px; }
+
+    .bc-preview-box {
+        display: none;
+        margin-top: 12px;
+        background: #fff;
+        border: 1.5px solid #90caf9;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+    .bc-preview-box img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .bc-preview-actions {
+        display: flex; gap: 8px; justify-content: center;
+        margin-top: 10px; flex-wrap: wrap;
+    }
+    .btn-bc-action {
+        height: 32px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+        cursor: pointer; text-decoration: none; transition: background .12s;
+    }
+    .btn-bc-dl { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+    .btn-bc-dl:hover { background: #bbdefb; color: #1565c0; }
+    .btn-bc-clear { background: transparent; color: #c62828; border: 1px solid #ef9a9a; }
+    .btn-bc-clear:hover { background: #ffebee; }
+    .bc-status { font-size: 0.75rem; color: #888; margin-top: 4px; }
+    .bc-loading { color: #1565c0; font-size: 0.82rem; margin-top: 8px; display: none; }
+    
     /* ── Responsive ─────────────────────────────────────────────────────── */
     @media (max-width: 640px) {
         .boxes-wrapper { margin: 16px auto; }
@@ -355,7 +420,12 @@
                 <tbody>
                     {% for box in boxes %}
                     <tr>
-                        <td class="col-id">#{{ box.boxID }}</td>
+                        <td class="col-id">
+                            <a href="/boxes/{{ box.boxID }}/detail"
+                               style="color:#1565c0;text-decoration:none;font-weight:700;">
+                                #{{ box.boxID }}
+                            </a>
+                        </td>
                         <td>
                             <span class="coords-badge">
                                 <i class="material-icons" style="font-size:14px;color:#90caf9;">grid_on</i>
@@ -421,7 +491,7 @@
         </div>
         <form method="POST" action="/boxes" id="add-box-form">
             <!-- Coordinates row -->
-            <div class="m-grid-2">
+         <div class="m-grid-2">
                 <div class="m-form-group">
                     <label class="m-form-label" for="ab-bay">Bay No <span style="color:#c62828;">*</span></label>
                     <input type="number" name="bayNo" id="ab-bay" class="m-form-input"
@@ -440,21 +510,51 @@
                            placeholder="e.g. 1" min="1" required />
                 </div>
                 <div class="m-form-group">
-                    <label class="m-form-label" for="ab-barcode">Barcode <span style="color:#aaa;font-weight:500;text-transform:none;">(optional)</span></label>
-                    <input type="text" name="barcode" id="ab-barcode" class="m-form-input"
-                           placeholder="e.g. BOX-A-001" />
+                    <label class="m-form-label" for="ab-location">Location <span style="color:#c62828;">*</span></label>
+                    <select name="locationID" id="ab-location" class="m-form-select" required>
+                        <option value="" disabled selected>Select a location…</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc.locationID }}">{{ loc.geoLocation }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
+            <!-- +++ END +++ -->
 
-            <!-- Location -->
-            <div class="m-form-group">
-                <label class="m-form-label" for="ab-location">Location <span style="color:#c62828;">*</span></label>
-                <select name="locationID" id="ab-location" class="m-form-select" required>
-                    <option value="" disabled selected>Select a location&hellip;</option>
-                    {% for loc in locations %}
-                    <option value="{{ loc.locationID }}">{{ loc.geoLocation }}</option>
-                    {% endfor %}
-                </select>
+            <!-- +++ NEW / CHANGED PART +++ -->
+            <!-- Hidden barcode value submitted with form -->
+            <input type="hidden" name="barcode" id="ab-barcode-value" />
+
+            <!-- ── Barcode generation UI ── -->
+            <div class="bc-section">
+                <div class="bc-section-title">
+                    <i class="material-icons">qr_code</i>Barcode
+                </div>
+                <div class="bc-input-row">
+                    <input type="text" id="ab-barcode-input"
+                           placeholder="e.g. BOX-A-001  (leave blank to skip)"
+                           autocomplete="off" />
+                    <button type="button" class="btn-gen-barcode" onclick="generateBoxBarcode()">
+                        <i class="material-icons">qr_code_scanner</i>Generate
+                    </button>
+                </div>
+                <div class="bc-loading" id="ab-bc-loading">
+                    <i class="material-icons" style="font-size:14px;vertical-align:middle;">hourglass_top</i>
+                    Generating barcode…
+                </div>
+                <div class="bc-preview-box" id="ab-bc-preview">
+                    <img id="ab-bc-img" src="" alt="barcode" />
+                    <div class="bc-status" id="ab-bc-label"></div>
+                    <div class="bc-preview-actions">
+                        <a id="ab-bc-download" href="#" class="btn-bc-action btn-bc-dl" download>
+                            <i class="material-icons" style="font-size:14px;">download</i>Download PNG
+                        </a>
+                        <button type="button" class="btn-bc-action btn-bc-clear"
+                                onclick="clearBoxBarcode()">
+                            <i class="material-icons" style="font-size:14px;">close</i>Clear
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -525,6 +625,55 @@
             );
         }
         return confirm('Delete Box #' + boxID + '? This action cannot be undone.');
+    }
+
+    async function generateBoxBarcode() {
+        const inputEl  = document.getElementById('ab-barcode-input');
+        const value    = inputEl.value.trim();
+        if (!value) {
+            inputEl.focus();
+            inputEl.style.borderColor = '#c62828';
+            setTimeout(() => { inputEl.style.borderColor = ''; }, 1500);
+            return;
+        }
+
+        const loading  = document.getElementById('ab-bc-loading');
+        const preview  = document.getElementById('ab-bc-preview');
+        const img      = document.getElementById('ab-bc-img');
+        const label    = document.getElementById('ab-bc-label');
+        const dlLink   = document.getElementById('ab-bc-download');
+        const hidden   = document.getElementById('ab-barcode-value');
+
+        loading.style.display  = 'block';
+        preview.style.display  = 'none';
+
+        try {
+            const res  = await fetch('/api/barcode/generate', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ value: value }),
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+
+            img.src           = 'data:image/png;base64,' + data.barcode_b64;
+            label.textContent = value;
+            hidden.value      = value;
+            dlLink.href       = '/api/barcode/download/' + encodeURIComponent(value);
+            dlLink.download   = 'barcode-' + value + '.png';
+            preview.style.display = 'block';
+        } catch (err) {
+            alert('Barcode generation failed: ' + err.message);
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    function clearBoxBarcode() {
+        document.getElementById('ab-barcode-input').value  = '';
+        document.getElementById('ab-barcode-value').value  = '';
+        document.getElementById('ab-bc-preview').style.display = 'none';
+        document.getElementById('ab-bc-loading').style.display = 'none';
     }
 </script>
 {% endblock %}
