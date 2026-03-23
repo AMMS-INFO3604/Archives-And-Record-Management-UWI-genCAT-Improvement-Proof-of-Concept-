@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 {% block title %}Select Location{% endblock %}
- 
+
 {% block content %}
 <style>
-    body { background-color: #f3e5f5 !important; }
- 
+    body { background-color: #f5f5f5 !important; }
+
     .location-wrapper {
         display: flex;
         flex-direction: column;
@@ -13,21 +13,21 @@
         min-height: calc(100vh - 56px - 40px);
         padding: 48px 16px;
     }
- 
+
     .location-heading {
         text-align: center;
         margin-bottom: 40px;
     }
- 
+
     .location-heading .system-label {
         font-size: .72rem;
         font-weight: 800;
         letter-spacing: 2.5px;
         text-transform: uppercase;
-        color: #9c27b0;
+        color: #9e9e9e;
         margin-bottom: 10px;
     }
- 
+
     .location-heading h1 {
         font-size: 1.9rem;
         font-weight: 800;
@@ -35,17 +35,17 @@
         margin: 0 0 6px;
         line-height: 1.2;
     }
- 
+
     .location-heading h1 .staff-name {
-        color: #4a148c;
+        color: #616161;
     }
- 
+
     .location-heading .instruction {
         font-size: .95rem;
         color: #757575;
         margin: 0;
     }
- 
+
     /* Cards row */
     .location-cards {
         display: flex;
@@ -55,10 +55,10 @@
         width: 100%;
         max-width: 680px;
     }
- 
+
     .location-card {
         background: #fff;
-        border: 1.5px solid #e1bee7;
+        border: 1.5px solid #e0e0e0;
         border-radius: 14px;
         width: 280px;
         padding: 32px 28px;
@@ -68,34 +68,34 @@
         cursor: pointer;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 4px 16px rgba(74,20,140,.06);
+        box-shadow: 0 4px 16px rgba(0,0,0,.06);
         transition: transform .2s, box-shadow .2s, border-color .2s;
     }
- 
+
     .location-card::before {
         content: '';
         position: absolute;
         top: 0; left: 0; right: 0;
         height: 4px;
-        background: #4a148c;
+        background: #212121;
         transform: scaleX(0);
         transition: transform .25s ease;
     }
- 
+
     .location-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 16px 40px rgba(74,20,140,.14);
-        border-color: rgba(74,20,140,.3);
+        box-shadow: 0 16px 40px rgba(0,0,0,.10);
+        border-color: #bdbdbd;
     }
- 
+
     .location-card:hover::before {
         transform: scaleX(1);
     }
- 
+
     .location-card .card-icon {
         width: 56px;
         height: 56px;
-        background: #f3e5f5;
+        background: #f5f5f5;
         border-radius: 14px;
         display: flex;
         align-items: center;
@@ -103,16 +103,16 @@
         margin: 0 auto 18px;
         transition: background .2s;
     }
- 
+
     .location-card:hover .card-icon {
-        background: #ede7f6;
+        background: #eeeeee;
     }
- 
+
     .location-card .card-icon i {
         font-size: 28px;
-        color: #4a148c;
+        color: #424242;
     }
- 
+
     .location-card .card-name {
         font-size: 1.05rem;
         font-weight: 700;
@@ -120,42 +120,43 @@
         margin: 0 0 6px;
         line-height: 1.3;
     }
- 
+
     .location-card .card-meta {
         font-size: .8rem;
         color: #9e9e9e;
         margin: 0 0 14px;
     }
- 
+
     .location-card .card-badge {
         display: inline-block;
-        background: #ede7f6;
-        color: #4a148c;
+        background: #f5f5f5;
+        color: #424242;
         font-size: .7rem;
         font-weight: 700;
         letter-spacing: 1px;
         text-transform: uppercase;
         padding: 3px 10px;
         border-radius: 20px;
+        border: 1px solid #e0e0e0;
     }
- 
+
     @media (max-width: 640px) {
         .location-cards { flex-direction: column; align-items: center; }
         .location-card  { width: 100%; max-width: 340px; }
         .location-heading h1 { font-size: 1.5rem; }
     }
 </style>
- 
+
 <div class="location-wrapper">
- 
+
     <div class="location-heading">
         <p class="system-label">GEN2 Records Management System</p>
         <h1>Welcome, <span class="staff-name">{{ current_user.username }}</span></h1>
         <p class="instruction">Select your location to continue</p>
     </div>
- 
+
     <div class="location-cards">
- 
+
         <a href="{{ url_for('location_views.get_locations_page') }}?loc=lloyd-brathwaite-sta"
            class="location-card">
             <div class="card-icon">
@@ -165,7 +166,7 @@
             <p class="card-meta">St. Augustine Campus</p>
             <span class="card-badge">Registry</span>
         </a>
- 
+
         <a href="{{ url_for('location_views.get_locations_page') }}?loc=south-campus"
            class="location-card">
             <div class="card-icon">
@@ -175,8 +176,8 @@
             <p class="card-meta">Debe, Trinidad</p>
             <span class="card-badge">Records Center</span>
         </a>
- 
+
     </div>
- 
+
 </div>
 {% endblock %}
