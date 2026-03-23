@@ -49,50 +49,52 @@ def create_loan(patronID, processedByStaffUserID=None, loanDate=None):
 
 
 def checkout_files(patronID, file_ids, processedByStaffUserID=None):
-    """Create a loan and attach the given files to it.
+    print(f"[checkout_files] START - patron={patronID}, files={file_ids}, staff={processedByStaffUserID}")
 
-    Files must have status 'Available'.  On success each file's status is
-    updated to 'On Loan' and its loanID is set.
+    if not file_ids:
+        print("[checkout_files] ERROR: No file_ids provided")
+        return None
 
-    Args:
-        patronID: ID of the Patron checking out files.
-        file_ids: Iterable of fileID values to attach to the loan.
-        processedByStaffUserID: Optional StaffUser processing the checkout.
-
-    Returns:
-        The Loan instance, or None on failure.
-    """
     loan = create_loan(patronID, processedByStaffUserID=processedByStaffUserID)
     if not loan:
+        print("[checkout_files] ERROR: Failed to create loan")
         return None
 
     errors = []
+    updated_files = []
+
     for file_id in file_ids:
-        file = db.session.get(File, file_id)
+        # Fresh query + lock to avoid stale data
+        file = db.session.query(File).filter(File.fileID == file_id).with_for_update().first()
+
         if not file:
-            errors.append(f"File {file_id} not found.")
+            errors.append(f"File {file_id} not found")
             continue
+
+        print(f"[checkout_files] File {file_id}: status='{file.status}', loanID={file.loanID}")
+
         if file.status != "Available":
-            errors.append(f"File {file_id} is not available (status: {file.status}).")
+            errors.append(f"File {file_id} not available (status: {file.status})")
             continue
+
+        # Attach
         file.loanID = loan.loanID
         file.status = "On Loan"
+        updated_files.append(file.fileID)
 
     if errors:
-        # Roll back the whole transaction so we don't leave partial state.
+        print(f"[checkout_files] ERRORS: {errors}")
         db.session.rollback()
-        for msg in errors:
-            print(msg)
         return None
 
     try:
         db.session.commit()
+        print(f"[checkout_files] SUCCESS - Loan {loan.loanID} created, files updated: {updated_files}")
         return loan
     except Exception as e:
         db.session.rollback()
-        print(f"Error attaching files to loan {loan.loanID}: {e}")
+        print(f"[checkout_files] COMMIT FAILED: {str(e)}")
         return None
-
 
 # ---------------------------------------------------------------------------
 # Read – single record
