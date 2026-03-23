@@ -582,7 +582,7 @@
                 <nav>
                     <ul>
                         <li
-                            class="{{ 'active-location' if request.path.startswith('/location') else '' }}"
+                            class="{{ 'active-location' if request.path == '/location' else '' }}"
                         >
                             <a href="/location">
                                 <i class="material-icons">location_on</i>Location
@@ -614,7 +614,7 @@
                         <li
                             class="{{ 'active-scanner' if request.path.startswith('/scanner') else '' }}"
                         >
-                            <a href="/scanner">
+                            <a href="/scanner" target="_blank">
                                 <i class="material-icons">qr_code_scanner</i>Scanner
                             </a>
                         </li>
