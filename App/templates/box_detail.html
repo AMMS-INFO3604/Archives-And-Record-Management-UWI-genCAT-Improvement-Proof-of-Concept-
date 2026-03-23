@@ -3,200 +3,149 @@
 
 {% block content %}
 <style>
-  /* ── Breadcrumb ── */
-  .breadcrumb-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 20px;
-    font-size: 0.84rem;
-    color: #aaa;
-  }
-  .breadcrumb-row a { color: #7b1fa2; text-decoration: none; }
-  .breadcrumb-row a:hover { text-decoration: underline; }
-  .breadcrumb-row i { font-size: 16px; color: #ccc; vertical-align: middle; }
+    /* ── Breadcrumb ─────────────────────────────────────────────────────── */
+    .breadcrumb-row {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 20px; font-size: 0.84rem; color: #888;
+    }
+    .breadcrumb-row a { color: #000; text-decoration: none; font-weight: 600; }
+    .breadcrumb-row a:hover { text-decoration: underline; }
+    .breadcrumb-row i { font-size: 16px; color: #bbb; vertical-align: middle; }
 
-  /* ── Info card ── */
-  .info-card {
-    background: #fff;
-    border: 1.5px solid #e1bee7;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 4px 18px rgba(74,20,140,.07);
-    margin-bottom: 24px;
-  }
+    /* ── Info card ──────────────────────────────────────────────────────── */
+    .info-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 24px;
+        border-top: 4px solid #000;
+    }
 
-  /* Purple header band */
-  .info-header {
-    background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%);
-    padding: 26px 26px 22px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .info-header .id-badge {
-    display: inline-block;
-    background: rgba(255,255,255,.18);
-    color: rgba(255,255,255,.8);
-    border-radius: 6px;
-    padding: 3px 10px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .info-header h4 {
-    color: #fff;
-    margin: 0 0 6px;
-    font-size: 1.5rem;
-    font-weight: 800;
-    line-height: 1.2;
-  }
-  .info-header .loc-line {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: rgba(255,255,255,.7);
-    font-size: 0.875rem;
-  }
-  .info-header .loc-line i { font-size: 15px; }
+    /* Header band */
+    .info-header {
+        background: #fafafa;
+        border-bottom: 1px solid var(--border-color);
+        padding: 28px 28px 22px;
+        display: flex; align-items: flex-start;
+        justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .info-header .id-badge {
+        display: inline-block; background: #eeeeee; color: #000;
+        border-radius: 4px; padding: 3px 10px; font-size: 0.72rem;
+        font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    .info-header h4 {
+        color: #000; margin: 0 0 6px; font-size: 1.5rem;
+        font-weight: 800; line-height: 1.2;
+    }
+    .info-header .loc-line {
+        display: flex; align-items: center; gap: 5px;
+        color: #555; font-size: 0.875rem;
+    }
+    .info-header .loc-line i { font-size: 15px; color: #999; }
 
-  /* Barcode panel in header */
-  .barcode-panel {
-    background: rgba(255,255,255,.12);
-    border: 1.5px solid rgba(255,255,255,.2);
-    border-radius: 10px;
-    padding: 12px 18px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .barcode-panel .bc-val {
-    font-size: 1rem;
-    font-weight: 800;
-    font-family: monospace;
-    color: #fff;
-    letter-spacing: 2px;
-  }
-  .barcode-panel .bc-lbl {
-    font-size: 0.67rem;
-    color: rgba(255,255,255,.55);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 5px;
-  }
+    /* Barcode panel */
+    .barcode-panel {
+        background: #f5f5f5;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px; padding: 12px 18px;
+        text-align: center; flex-shrink: 0;
+    }
+    .barcode-panel .bc-val {
+        font-size: 1rem; font-weight: 800; font-family: monospace;
+        color: #000; letter-spacing: 2px;
+    }
+    .barcode-panel .bc-lbl {
+        font-size: 0.67rem; color: #999; text-transform: uppercase;
+        letter-spacing: 1px; margin-top: 5px;
+    }
 
-  /* Stat strip */
-  .stat-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    border-top: 1.5px solid #f0e6fa;
-  }
-  .stat-cell {
-    padding: 15px 18px;
-    border-right: 1px solid #f0e6fa;
-    text-align: center;
-  }
-  .stat-cell:last-child { border-right: none; }
-  .stat-cell .sv { font-size: 1.5rem; font-weight: 800; color: #4a148c; line-height: 1; }
-  .stat-cell .sl { font-size: 0.69rem; text-transform: uppercase; letter-spacing: 0.8px; color: #aaa; margin-top: 4px; }
+    /* Stat strip */
+    .stat-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        border-top: 1px solid var(--border-color);
+    }
+    .stat-cell {
+        padding: 14px 16px; border-right: 1px solid var(--border-color);
+        text-align: center;
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-cell .sv { font-size: 1.4rem; font-weight: 800; color: #000; line-height: 1; }
+    .stat-cell .sl { font-size: 0.69rem; text-transform: uppercase; letter-spacing: 0.8px; color: #aaa; margin-top: 4px; }
 
-  /* ── Section header ── */
-  .section-hdr {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .section-hdr i { font-size: 22px; color: #7b1fa2; }
-  .section-hdr h5 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #1a1a1a; }
+    /* ── Section header ─────────────────────────────────────────────────── */
+    .section-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .section-hdr i { font-size: 22px; color: #000; }
+    .section-hdr h5 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #000; }
 
-  /* ── Files card ── */
-  .data-card {
-    background: #fff;
-    border: 1.5px solid #e1bee7;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 4px 18px rgba(74,20,140,.07);
-  }
+    /* ── Files card ─────────────────────────────────────────────────────── */
+    .data-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
 
-  /* ── Table ── */
-  .files-table { width: 100%; border-collapse: collapse; }
-  .files-table thead tr { background: #f3e5f5; }
-  .files-table thead th {
-    padding: 11px 16px;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: #6a1b9a;
-    border-bottom: 1.5px solid #e1bee7;
-    white-space: nowrap;
-  }
-  .files-table tbody tr { border-bottom: 1px solid #f5eeff; transition: background .1s; }
-  .files-table tbody tr:last-child { border-bottom: none; }
-  .files-table tbody tr:hover { background: #fdf4ff; }
-  .files-table tbody td { padding: 11px 16px; font-size: 0.875rem; color: #333; vertical-align: middle; }
+    /* ── Table ──────────────────────────────────────────────────────────── */
+    .files-table { width: 100%; border-collapse: collapse; }
+    .files-table thead tr { background: #f8f8f8; }
+    .files-table thead th {
+        padding: 11px 16px; font-size: 0.72rem; font-weight: 800;
+        letter-spacing: 1px; text-transform: uppercase; color: #000;
+        border-bottom: 1.5px solid var(--border-color); white-space: nowrap;
+        text-align: left;
+    }
+    .files-table tbody tr { border-bottom: 1px solid var(--border-color); transition: background .1s; }
+    .files-table tbody tr:last-child { border-bottom: none; }
+    .files-table tbody tr:hover { background: #f8f8f8; }
+    .files-table tbody td { padding: 11px 16px; font-size: 0.875rem; color: #333; vertical-align: middle; }
 
-  /* Status badges */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .badge.available { background: #e8f5e9; color: #2e7d32; }
-  .badge.on-loan   { background: #fce4ec; color: #c62828; }
-  .badge i { font-size: 12px; }
+    /* Status badges — monochrome, matching PR's badge-success / badge-error (both #000) */
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        border-radius: 4px; padding: 4px 10px;
+        font-size: 0.72rem; font-weight: 700; white-space: nowrap;
+        color: #fff; background: #000;
+        text-transform: uppercase;
+    }
+    .status-badge i { font-size: 12px; }
 
-  /* Type chip */
-  .type-chip {
-    display: inline-block;
-    background: #ede7f6;
-    color: #4a148c;
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-size: 0.72rem;
-    font-weight: 600;
-  }
+    /* Type chip */
+    .type-chip {
+        display: inline-block; background: #eeeeee; color: #000;
+        border-radius: 4px; padding: 2px 8px;
+        font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    }
 
-  /* ── Empty state ── */
-  .empty-state { text-align: center; padding: 48px 20px; }
-  .empty-state i { font-size: 46px; color: #d1c4e9; display: block; margin-bottom: 10px; }
-  .empty-state p { color: #aaa; font-size: 0.9rem; margin: 0; }
+    /* ── Empty state ────────────────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 48px 20px; }
+    .empty-state i { font-size: 46px; color: #ddd; display: block; margin-bottom: 10px; }
+    .empty-state p { color: #aaa; font-size: 0.9rem; margin: 0; }
 
-  /* ── Flash messages ── */
-  .flash-msg {
-    padding: 10px 16px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 0.875rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .flash-msg.error { background: #fce4ec; color: #b71c1c; border: 1px solid #f8bbd0; }
-  .flash-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+    /* ── Flash messages ─────────────────────────────────────────────────── */
+    .flash-msg {
+        padding: 10px 16px; border-radius: 4px; margin-bottom: 16px;
+        font-size: 0.875rem; display: flex; align-items: center; gap: 8px;
+        background: #000; color: #fff; font-weight: 700; text-transform: uppercase;
+    }
 
-  @media (max-width: 600px) {
-    .info-header { padding: 20px 18px; }
-    .stat-strip { grid-template-columns: repeat(2, 1fr); }
-    /* hide Designation column on small screens */
-    .files-table thead th:nth-child(4),
-    .files-table tbody td:nth-child(4) { display: none; }
-  }
+    @media (max-width: 600px) {
+        .info-header { padding: 20px 16px; }
+        .stat-strip  { grid-template-columns: repeat(2, 1fr); }
+        .files-table thead th:nth-child(4),
+        .files-table tbody td:nth-child(4) { display: none; }
+    }
 </style>
 
 <!-- Flash messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for category, message in messages %}
-  <div class="flash-msg {{ category }}">
+  <div class="flash-msg">
     <i class="material-icons" style="font-size:17px;">
       {{ 'error' if category == 'error' else 'check_circle' }}
     </i>
@@ -207,19 +156,17 @@
 
 <!-- Breadcrumb -->
 <div class="breadcrumb-row">
-  <a href="/location">
-    <i class="material-icons" style="font-size:14px;">location_on</i> Locations
-  </a>
+  <a href="/location"><i class="material-icons" style="font-size:14px;">location_on</i> Locations</a>
   <i class="material-icons">chevron_right</i>
   <a href="/boxes">Boxes</a>
   <i class="material-icons">chevron_right</i>
-  <span style="color:#4a148c; font-weight:600;">Box #{{ box.boxID }}</span>
+  <span style="color:#000; font-weight:600;">Box #{{ box.boxID }}</span>
 </div>
 
 <!-- Info card -->
 <div class="info-card">
 
-  <!-- Purple header -->
+  <!-- Header -->
   <div class="info-header">
     <div>
       <div class="id-badge">Box #{{ box.boxID }}</div>
@@ -270,7 +217,6 @@
 
 </div><!-- /.info-card -->
 
-
 <!-- Files section -->
 <div class="section-hdr">
   <i class="material-icons">folder_open</i>
@@ -294,7 +240,7 @@
       <tbody>
         {% for file in box.files %}
         <tr>
-          <td style="color:#bbb; font-size:.77rem;">#{{ file.fileID }}</td>
+          <td style="color:#aaa; font-size:.77rem;">#{{ file.fileID }}</td>
           <td><span class="type-chip">{{ file.fileType }}</span></td>
           <td style="max-width:240px;">
             <span style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
@@ -307,18 +253,21 @@
           </td>
           <td>
             {% if file.status == 'Available' %}
-              <span class="badge available"><i class="material-icons">check_circle</i>Available</span>
+              <span class="status-badge">
+                <i class="material-icons">check_circle</i>Available
+              </span>
             {% elif file.status == 'On Loan' %}
-              <span class="badge on-loan"><i class="material-icons">swap_horiz</i>On Loan</span>
+              <span class="status-badge">
+                <i class="material-icons">swap_horiz</i>On Loan
+              </span>
             {% else %}
-              <span class="badge" style="background:#f5f5f5; color:#757575;">{{ file.status }}</span>
+              <span class="status-badge" style="background:#888;">{{ file.status }}</span>
             {% endif %}
           </td>
           <td style="text-align:right; padding-right:14px;">
-            <a href="/files/{{ file.fileID }}/detail"
-               class="btn-small waves-effect waves-light purple"
-               style="height:28px; line-height:28px; padding:0 10px; font-size:.75rem;">
-              <i class="material-icons left" style="font-size:13px; line-height:28px;">visibility</i>View
+            <a href="/files/{{ file.fileID }}/detail" class="btn btn-primary"
+               style="height:32px; padding:0 14px; font-size:0.78rem;">
+              <i class="material-icons" style="font-size:14px;">visibility</i>View
             </a>
           </td>
         </tr>
@@ -337,8 +286,8 @@
 
 <!-- Back link -->
 <div style="margin-top:20px;">
-  <a href="/boxes" class="btn-flat waves-effect purple-text">
-    <i class="material-icons left">arrow_back</i>Back to Boxes
+  <a href="/boxes" class="btn" style="background:#eee; color:#000; display:inline-flex; align-items:center; gap:4px;">
+    <i class="material-icons" style="font-size:18px;">arrow_back</i>Back to Boxes
   </a>
 </div>
 
