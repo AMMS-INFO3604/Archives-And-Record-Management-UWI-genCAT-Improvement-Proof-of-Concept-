@@ -3,7 +3,7 @@
 
 {% block content %}
 <style>
-    body { background-color: #f3e5f5 !important; }
+    body { background-color: #f5f5f5 !important; }
 
     /* ── wrapper ── */
     .detail-wrapper { max-width: 860px; margin: 32px auto; padding: 0 16px 64px; }
@@ -12,7 +12,7 @@
     .detail-card {
         background: #fff;
         border-radius: 12px;
-        box-shadow: 0 2px 12px rgba(106,27,154,.10);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         margin-bottom: 20px;
         overflow: hidden;
     }
@@ -24,20 +24,20 @@
         justify-content: space-between;
         gap: 16px;
         padding: 24px 28px;
-        border-bottom: 1.5px solid #f3e5f5;
+        border-bottom: 1.5px solid #eeeeee;
         flex-wrap: wrap;
     }
     .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
     .header-icon {
-        width: 52px; height: 52px; border-radius: 50%; background: #f3e5f5;
+        width: 52px; height: 52px; border-radius: 50%; background: #f0f0f0;
         display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .header-icon i { font-size: 26px; color: #6a1b9a; }
+    .header-icon i { font-size: 26px; color: #111111; }
     .header-text { min-width: 0; }
     .header-title {
         font-size: 1.3rem; font-weight: 800; color: #1a1a1a; margin: 0 0 4px;
     }
-    .header-title span { color: #6a1b9a; }
+    .header-title span { color: #111111; }
     .header-sub {
         font-size: 0.87rem; color: #666; margin: 0;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 460px;
@@ -47,21 +47,21 @@
     /* ── buttons ── */
     .btn-back {
         display: inline-flex; align-items: center; gap: 4px;
-        padding: 7px 14px; border: 1.5px solid #ce93d8; border-radius: 8px;
-        color: #6a1b9a; font-size: 0.83rem; font-weight: 600;
+        padding: 7px 14px; border: 1.5px solid #cccccc; border-radius: 8px;
+        color: #111111; font-size: 0.83rem; font-weight: 600;
         text-decoration: none; transition: background .15s;
     }
     .btn-back i { font-size: 16px; }
-    .btn-back:hover { background: #f3e5f5; color: #6a1b9a; }
+    .btn-back:hover { background: #f0f0f0; color: #111111; }
 
     .btn-issue {
         display: inline-flex; align-items: center; gap: 5px;
-        padding: 8px 16px; background: #6a1b9a; color: #fff;
+        padding: 8px 16px; background: #111111; color: #fff;
         border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600;
         cursor: pointer; transition: background .15s; text-decoration: none;
     }
     .btn-issue i { font-size: 18px; }
-    .btn-issue:hover { background: #4a148c; }
+    .btn-issue:hover { background: #333333; }
 
     .btn-checkin {
         display: inline-flex; align-items: center; gap: 5px;
@@ -74,13 +74,13 @@
 
      .btn-edit {
         display: inline-flex; align-items: center; gap: 5px;
-        padding: 8px 16px; background: transparent; color: #6a1b9a;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
+        padding: 8px 16px; background: transparent; color: #111111;
+        border: 1.5px solid #cccccc; border-radius: 8px;
         font-size: 0.87rem; font-weight: 600; cursor: pointer;
         transition: background .15s; text-decoration: none;
     }
     .btn-edit i { font-size: 18px; }
-    .btn-edit:hover { background: #f3e5f5; color: #6a1b9a; }
+    .btn-edit:hover { background: #f0f0f0; color: #111111; }
  
     .btn-delete {
         display: inline-flex; align-items: center; gap: 5px;
@@ -95,7 +95,7 @@
     
     .delete-warn-box {
         display: flex; align-items: flex-start; gap: 10px;
-        background: #fce4ec; border: 1px solid #ef9a9a; border-radius: 8px;
+        background: #fce4ec; border: 1px solid #cccccc; border-radius: 8px;
         padding: 12px 16px; font-size: 0.87rem; color: #c62828; margin-bottom: 16px;
     }
     .delete-warn-box i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
@@ -137,9 +137,9 @@
     .section-title {
         display: flex; align-items: center; gap: 6px;
         font-size: 0.70rem; font-weight: 800; letter-spacing: 1.1px;
-        text-transform: uppercase; color: #6a1b9a;
+        text-transform: uppercase; color: #111111;
         padding-bottom: 6px; margin: 0 0 14px;
-        border-bottom: 1.5px solid #f3e5f5;
+        border-bottom: 1.5px solid #eeeeee;
     }
     .section-title i { font-size: 15px; }
 
@@ -156,8 +156,8 @@
 
     /* ── type chip ── */
     .type-chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
-    .chip-student { background: #f3e5f5; color: #6a1b9a; }
-    .chip-staff   { background: #e8eaf6; color: #283593; }
+    .chip-student { background: #f0f0f0; color: #111111; }
+    .chip-staff   { background: #e0e0e0; color: #333333; }
     .chip-other   { background: #f5f5f5; color: #616161; }
 
     /* ── status badge ── */
@@ -181,7 +181,7 @@
     }
     .warn-box {
         display: flex; align-items: flex-start; gap: 10px;
-        background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px;
+        background: #ffebee; border: 1px solid #cccccc; border-radius: 8px;
         padding: 12px 16px; font-size: 0.87rem; color: #c62828;
     }
     .notice-box {
@@ -193,17 +193,17 @@
 
     /* ── loan history table ── */
     .loan-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-    .loan-table thead tr { background: #f3e5f5; border-bottom: 2px solid #ce93d8; }
+    .loan-table thead tr { background: #f0f0f0; border-bottom: 2px solid #cccccc; }
     .loan-table thead th {
         padding: 9px 14px; font-size: 0.70rem; font-weight: 700;
         letter-spacing: 0.8px; text-transform: uppercase;
-        color: #6a1b9a; text-align: left; white-space: nowrap;
+        color: #111111; text-align: left; white-space: nowrap;
     }
-    .loan-table tbody tr { border-bottom: 1px solid #f3e5f5; transition: background .12s; }
+    .loan-table tbody tr { border-bottom: 1px solid #eeeeee; transition: background .12s; }
     .loan-table tbody tr:last-child { border-bottom: none; }
-    .loan-table tbody tr:hover { background: #fdf6ff; }
+    .loan-table tbody tr:hover { background: #fafafa; }
     .loan-table td { padding: 10px 14px; color: #333; vertical-align: middle; }
-    .loan-table td.col-id { font-weight: 700; color: #6a1b9a; white-space: nowrap; }
+    .loan-table td.col-id { font-weight: 700; color: #111111; white-space: nowrap; }
     .loan-table td.col-date { white-space: nowrap; font-size: 0.82rem; color: #666; }
 
     .loan-status-badge {
@@ -215,63 +215,63 @@
 
     .btn-view-loan {
         display: inline-flex; align-items: center; gap: 3px;
-        padding: 4px 10px; background: #6a1b9a; color: #fff;
+        padding: 4px 10px; background: #111111; color: #fff;
         border-radius: 6px; font-size: 0.78rem; font-weight: 600;
         text-decoration: none; transition: background .15s;
     }
     .btn-view-loan i { font-size: 14px; }
-    .btn-view-loan:hover { background: #4a148c; color: #fff; }
+    .btn-view-loan:hover { background: #333333; color: #fff; }
 
     /* ── modal ── */
     .modal { border-radius: 12px !important; }
     .modal .modal-content { padding: 28px 28px 8px; }
-    .modal .modal-footer { padding: 12px 28px 20px; border-top: 1px solid #f3e5f5; background: #fdf6ff; }
+    .modal .modal-footer { padding: 12px 28px 20px; border-top: 1px solid #eeeeee; background: #fafafa; }
     .modal-title {
         display: flex; align-items: center; gap: 10px;
         font-size: 1.1rem; font-weight: 700; color: #1a1a1a; margin: 0 0 20px;
     }
-    .modal-title i { color: #6a1b9a; font-size: 24px; }
+    .modal-title i { color: #111111; font-size: 24px; }
 
     /* modal form fields */
     .form-group { margin-bottom: 18px; }
     .form-label {
         display: block; font-size: 0.72rem; font-weight: 700;
-        letter-spacing: 0.5px; text-transform: uppercase; color: #6a1b9a; margin-bottom: 6px;
+        letter-spacing: 0.5px; text-transform: uppercase; color: #111111; margin-bottom: 6px;
     }
     .form-select {
         width: 100%; height: 42px; padding: 0 12px;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
-        font-size: 0.9rem; color: #333; background: #fdf6ff;
+        border: 1.5px solid #cccccc; border-radius: 8px;
+        font-size: 0.9rem; color: #333; background: #fafafa;
         cursor: pointer; outline: none;
     }
-    .form-select:focus { border-color: #6a1b9a; box-shadow: 0 0 0 3px rgba(106,27,154,.10); }
+    .form-select:focus { border-color: #111111; box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
     .form-input {
         width: 100%; height: 42px; padding: 0 12px;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
-        font-size: 0.9rem; color: #333; background: #fdf6ff;
+        border: 1.5px solid #cccccc; border-radius: 8px;
+        font-size: 0.9rem; color: #333; background: #fafafa;
         box-sizing: border-box; outline: none;
-        border-bottom: 1.5px solid #ce93d8 !important;
+        border-bottom: 1.5px solid #cccccc !important;
         box-shadow: none !important; margin: 0 !important;
     }
-    .form-input:focus { border-color: #6a1b9a !important; box-shadow: 0 0 0 3px rgba(106,27,154,.10) !important; }
+    .form-input:focus { border-color: #111111 !important; box-shadow: 0 0 0 3px rgba(0,0,0,0.08) !important; }
     .form-hint { font-size: 0.78rem; color: #aaa; margin-top: 4px; }
 
     .btn-modal-cancel {
         display: inline-flex; align-items: center; gap: 4px;
-        padding: 8px 16px; background: transparent; color: #6a1b9a;
-        border: 1.5px solid #ce93d8; border-radius: 8px;
+        padding: 8px 16px; background: transparent; color: #111111;
+        border: 1.5px solid #cccccc; border-radius: 8px;
         font-size: 0.87rem; font-weight: 600; cursor: pointer;
         transition: background .15s; margin-right: 8px;
     }
-    .btn-modal-cancel:hover { background: #f3e5f5; }
+    .btn-modal-cancel:hover { background: #f0f0f0; }
     .btn-modal-submit {
         display: inline-flex; align-items: center; gap: 4px;
-        padding: 8px 18px; background: #6a1b9a; color: #fff;
+        padding: 8px 18px; background: #111111; color: #fff;
         border: none; border-radius: 8px; font-size: 0.87rem; font-weight: 600; cursor: pointer;
         transition: background .15s;
     }
     .btn-modal-submit i { font-size: 18px; }
-    .btn-modal-submit:hover { background: #4a148c; }
+    .btn-modal-submit:hover { background: #333333; }
 
     /* ── responsive ── */
     @media (max-width: 600px) {
