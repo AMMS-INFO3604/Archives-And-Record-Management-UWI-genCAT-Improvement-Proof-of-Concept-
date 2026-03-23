@@ -128,6 +128,7 @@ def file_detail_page(fileID):
         flash(f"File {fileID} not found.", "error")
         return redirect(url_for("file_views.get_files_page"))
     patrons = get_all_patrons()
+    print("Patrons found:", len(patrons))
     return render_template("file_detail.html", file=file, patrons=patrons)
 
 
@@ -137,15 +138,34 @@ def get_files_page():
     keyword = request.args.get("keyword", "").strip() or None
     fileType = request.args.get("fileType", "").strip() or None
     status = request.args.get("status", "").strip() or None
+    date_from = request.args.get("date_from", "").strip()
+    date_to = request.args.get("date_to",   "").strip() or None
+    page      = request.args.get("page", 1, type=int)
+    files = searchFile(
+        keyword=keyword,
+        fileType=fileType,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,)
+    
+    per_page = 10                           
+    total = len(files)
+    start = (page - 1) * per_page
+    paginated_files = files[start:start + per_page]
 
-    files = searchFile(keyword=keyword, fileType=fileType, status=status)
+    total_pages = max(1, (total + per_page - 1) // per_page)
 
     return render_template(
         "files.html",
-        files=files,
+        files= paginated_files,
         keyword=keyword or "",
         fileType=fileType or "",
         status=status or "",
+        date_from     = date_from or "",
+        date_to       = date_to or "",
+        page          = page,
+        total_pages   = total_pages,
+        total_results = total,
     )
 
 

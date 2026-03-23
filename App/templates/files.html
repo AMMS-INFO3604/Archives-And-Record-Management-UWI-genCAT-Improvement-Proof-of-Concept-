@@ -7,167 +7,202 @@
 {% set sel_avail   = 'selected' if status   == 'Available' else '' %}
 {% set sel_loan    = 'selected' if status   == 'On Loan'   else '' %}
 <style>
-    /* ── Page background ───────────────────────────────────────────────── */
     body { background-color: #f3e5f5 !important; }
 
-    /* ── Outer wrapper ─────────────────────────────────────────────────── */
     .files-wrapper {
         max-width: 1080px;
         margin: 32px auto;
         padding: 0 16px 64px;
     }
 
-    /* ── Page title ─────────────────────────────────────────────────────── */
+    /* ── Page title ── */
     .page-title {
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 24px;
     }
-    .page-title i {
-        font-size: 32px;
-        color: #6a1b9a;
-    }
+    .page-title i { font-size: 32px; color: #6a1b9a; }
     .page-title h4 {
         margin: 0;
         font-size: 1.5rem;
         font-weight: 700;
         color: #1a1a1a;
-        letter-spacing: 0.5px;
     }
 
-    /* ── Search / filter card ───────────────────────────────────────────── */
-    .filter-card {
+    /* ── Search bar row ── */
+    .search-bar-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
         background: #fff;
         border-radius: 12px;
         box-shadow: 0 2px 12px rgba(106,27,154,.10);
-        padding: 20px 24px;
-        margin-bottom: 20px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
     }
-    .filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: flex-end;
-        gap: 12px;
-    }
-
-    /* search box */
     .search-group {
         position: relative;
-        flex: 1 1 240px;
-        min-width: 180px;
+        flex: 1;
     }
-    .search-group input[type="text"] {
+    .search-group input {
         width: 100%;
         height: 42px;
         padding: 0 12px 0 42px;
         border: 1.5px solid #ce93d8;
-        border-bottom: 1.5px solid #ce93d8 !important;
-        border-radius: 8px !important;
+        border-radius: 8px;
         font-size: 0.9rem;
         color: #333;
         background: #fdf6ff;
-        box-shadow: none !important;
-        margin: 0 !important;
         box-sizing: border-box;
         outline: none;
-        transition: border-color .15s, box-shadow .15s;
+        border-bottom: 1.5px solid #ce93d8 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        transition: border-color .15s;
     }
-    .search-group input[type="text"]:focus {
+    .search-group input:focus {
         border-color: #6a1b9a !important;
         box-shadow: 0 0 0 3px rgba(106,27,154,.10) !important;
     }
-    .search-group .search-icon {
+    .search-group .s-icon {
         position: absolute;
-        left: 11px;
-        top: 50%;
+        left: 11px; top: 50%;
         transform: translateY(-50%);
-        color: #ba68c8;
-        font-size: 20px;
+        color: #ba68c8; font-size: 20px;
         pointer-events: none;
     }
 
-    /* selects */
-    .filter-select {
-        height: 42px;
-        padding: 0 12px;
-        border: 1.5px solid #ce93d8;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        color: #333;
-        background: #fdf6ff;
-        cursor: pointer;
-        outline: none;
-        flex-shrink: 0;
-        transition: border-color .15s;
+    /* ── Buttons shared ── */
+    .btn-purple {
+        display: inline-flex; align-items: center; gap: 6px;
+        height: 42px; padding: 0 18px;
+        background: #6a1b9a; color: #fff !important;
+        border: none; border-radius: 8px;
+        font-size: 0.88rem; font-weight: 600;
+        cursor: pointer; text-decoration: none;
+        white-space: nowrap; flex-shrink: 0;
+        transition: background .15s;
     }
-    .filter-select:focus {
-        border-color: #6a1b9a;
-        box-shadow: 0 0 0 3px rgba(106,27,154,.10);
-    }
+    .btn-purple:hover { background: #4a148c; }
+    .btn-purple i { font-size: 18px; }
 
-    /* buttons */
-    .btn-search {
-        height: 42px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 0 18px;
+    .btn-outline {
+        display: inline-flex; align-items: center; gap: 6px;
+        height: 42px; padding: 0 16px;
+        background: transparent; color: #6a1b9a;
+        border: 1.5px solid #ce93d8; border-radius: 8px;
+        font-size: 0.88rem; font-weight: 600;
+        cursor: pointer; text-decoration: none;
+        white-space: nowrap; flex-shrink: 0;
+        transition: background .15s;
+        position: relative;
+    }
+    .btn-outline:hover { background: #f3e5f5; }
+    .btn-outline i { font-size: 18px; }
+
+    /* orange dot on filter button when filters are active */
+    .filter-active-dot {
+        display: inline-block;
+        width: 8px; height: 8px;
         background: #6a1b9a;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background .15s;
-        flex-shrink: 0;
+        border-radius: 50%;
+        margin-left: 2px;
+        vertical-align: middle;
     }
-    .btn-search:hover { background: #4a148c; }
-    .btn-search i { font-size: 18px; }
 
-    .btn-clear {
-        height: 42px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 0 14px;
-        background: transparent;
-        color: #6a1b9a;
-        border: 1.5px solid #ce93d8;
-        border-radius: 8px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        transition: background .15s;
-        flex-shrink: 0;
+    /* ── Filter popup overlay (closes popup on outside click) ── */
+    .filter-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 998;
     }
-    .btn-clear:hover { background: #f3e5f5; color: #6a1b9a; }
-    .btn-clear i { font-size: 18px; }
+    .filter-overlay.open { display: block; }
 
-    /* ── Active filter pills ────────────────────────────────────────────── */
+    /* ── Filter popup panel ── */
+    .filter-btn-wrap { position: relative; }
+    .filter-popup {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 300px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(106,27,154,.18);
+        z-index: 999;
+        padding: 20px;
+        border: 1px solid #e1bee7;
+    }
+    .filter-popup.open { display: block; }
+
+    .filter-popup-title {
+        font-size: 0.78rem; font-weight: 800;
+        letter-spacing: 0.8px; text-transform: uppercase;
+        color: #6a1b9a; margin: 0 0 16px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .filter-popup-title i { font-size: 16px; }
+
+    .fp-group { margin-bottom: 14px; }
+    .fp-label {
+        display: block;
+        font-size: 0.72rem; font-weight: 700;
+        letter-spacing: 0.4px; text-transform: uppercase;
+        color: #aaa; margin-bottom: 6px;
+    }
+
+    /* Selects and date inputs inside the popup */
+    .filter-popup select,
+    .filter-popup input[type="date"] {
+        width: 100% !important;
+        height: 40px !important;
+        padding: 0 10px !important;
+        border: 1.5px solid #ce93d8 !important;
+        border-bottom: 1.5px solid #ce93d8 !important;
+        border-radius: 8px !important;
+        font-size: 0.88rem !important;
+        color: #333 !important;
+        background: #fdf6ff !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        outline: none;
+        cursor: pointer;
+        display: block !important;
+    }
+    .filter-popup select:focus,
+    .filter-popup input[type="date"]:focus {
+        border-color: #6a1b9a !important;
+        box-shadow: 0 0 0 3px rgba(106,27,154,.10) !important;
+    }
+
+    .fp-date-row { display: flex; gap: 8px; }
+    .fp-date-row .fp-group { flex: 1; margin-bottom: 0; }
+
+    .fp-actions {
+        display: flex; gap: 8px; margin-top: 18px;
+        padding-top: 16px; border-top: 1px solid #f3e5f5;
+    }
+    .fp-actions .btn-purple { flex: 1; justify-content: center; height: 38px; }
+    .fp-actions .btn-outline { flex: 1; justify-content: center; height: 38px; }
+
+    /* ── Active filter pills ── */
     .active-filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 12px;
+        display: flex; flex-wrap: wrap; gap: 6px;
+        margin-bottom: 12px;
     }
     .filter-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        background: #f3e5f5;
-        border: 1px solid #ce93d8;
-        border-radius: 20px;
-        padding: 3px 10px;
-        font-size: 0.78rem;
-        color: #6a1b9a;
-        font-weight: 600;
+        display: inline-flex; align-items: center; gap: 4px;
+        background: #f3e5f5; border: 1px solid #ce93d8;
+        border-radius: 20px; padding: 3px 10px;
+        font-size: 0.78rem; color: #6a1b9a; font-weight: 600;
+        text-decoration: none;
     }
     .filter-pill i { font-size: 13px; }
 
-    /* ── Results card ───────────────────────────────────────────────────── */
+    /* ── Results card ── */
     .results-card {
         background: #fff;
         border-radius: 12px;
@@ -175,234 +210,206 @@
         overflow: hidden;
     }
     .results-header {
-        display: flex;
-        align-items: center;
+        display: flex; align-items: center;
         justify-content: space-between;
         padding: 14px 20px;
         border-bottom: 1.5px solid #f3e5f5;
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-wrap: wrap; gap: 8px;
     }
-    .results-count {
-        font-size: 0.85rem;
-        color: #888;
-    }
+    .results-count { font-size: 0.85rem; color: #888; }
 
-    /* ── Table ──────────────────────────────────────────────────────────── */
-    .files-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.875rem;
-    }
-    .files-table thead tr {
-        background: #f3e5f5;
-        border-bottom: 2px solid #ce93d8;
-    }
+    /* ── Table ── */
+    .files-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .files-table thead tr { background: #f3e5f5; border-bottom: 2px solid #ce93d8; }
     .files-table thead th {
-        padding: 11px 16px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        color: #6a1b9a;
-        text-align: left;
-        white-space: nowrap;
+        padding: 11px 16px; font-size: 0.72rem; font-weight: 700;
+        letter-spacing: 0.8px; text-transform: uppercase;
+        color: #6a1b9a; text-align: left; white-space: nowrap;
     }
-    .files-table tbody tr {
-        border-bottom: 1px solid #f3e5f5;
-        transition: background .12s;
-    }
+    .files-table tbody tr { border-bottom: 1px solid #f3e5f5; transition: background .12s; }
     .files-table tbody tr:last-child { border-bottom: none; }
     .files-table tbody tr:hover { background: #fdf6ff; }
-    .files-table td {
-        padding: 12px 16px;
-        color: #333;
-        vertical-align: middle;
-    }
-    .files-table td.col-id {
-        font-weight: 700;
-        color: #6a1b9a;
-        white-space: nowrap;
-    }
-    .files-table td.col-desc {
-        max-width: 300px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .files-table td.col-desig {
-        font-family: monospace;
-        font-size: 0.82rem;
-        color: #666;
-        white-space: nowrap;
-    }
-    .files-table td.col-date {
-        white-space: nowrap;
-        color: #888;
-        font-size: 0.82rem;
-    }
+    .files-table td { padding: 12px 16px; color: #333; vertical-align: middle; }
+    .files-table td.col-id { font-weight: 700; color: #6a1b9a; white-space: nowrap; }
+    .files-table td.col-desc { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .files-table td.col-desig { font-family: monospace; font-size: 0.82rem; color: #666; white-space: nowrap; }
+    .files-table td.col-date { white-space: nowrap; color: #888; font-size: 0.82rem; }
 
-    /* ── Type chip ──────────────────────────────────────────────────────── */
-    .type-chip {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
+    .type-chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
     .chip-student { background: #f3e5f5; color: #6a1b9a; }
     .chip-staff   { background: #e8eaf6; color: #283593; }
     .chip-other   { background: #f5f5f5; color: #616161; }
 
-    /* ── Status badges ──────────────────────────────────────────────────── */
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 11px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-    .status-badge .dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-    /* green – Available */
-    .badge-available {
-        background: #e8f5e9;
-        color: #2e7d32;
-    }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+    .status-badge .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .badge-available { background: #e8f5e9; color: #2e7d32; }
     .badge-available .dot { background: #2e7d32; }
-
-    /* red – On Loan */
-    .badge-on-loan {
-        background: #ffebee;
-        color: #c62828;
-    }
+    .badge-on-loan   { background: #ffebee; color: #c62828; }
     .badge-on-loan .dot { background: #c62828; }
-
-    /* grey – anything else */
-    .badge-other {
-        background: #f5f5f5;
-        color: #757575;
-    }
+    .badge-other     { background: #f5f5f5; color: #757575; }
     .badge-other .dot { background: #9e9e9e; }
 
-    /* ── View button ────────────────────────────────────────────────────── */
     .btn-view {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 5px 13px;
-        background: #6a1b9a;
-        color: #fff;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-decoration: none;
-        white-space: nowrap;
-        transition: background .15s;
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 5px 13px; background: #6a1b9a; color: #fff;
+        border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+        text-decoration: none; white-space: nowrap; transition: background .15s;
     }
     .btn-view i { font-size: 15px; }
     .btn-view:hover { background: #4a148c; color: #fff; }
 
-    /* ── Empty state ────────────────────────────────────────────────────── */
-    .empty-state {
-        text-align: center;
-        padding: 56px 20px;
-        color: #bbb;
-    }
+    .empty-state { text-align: center; padding: 56px 20px; color: #bbb; }
     .empty-state i { font-size: 56px; color: #e1bee7; }
     .empty-state p { margin-top: 12px; font-size: 0.95rem; }
 
-    /* ── Responsive ─────────────────────────────────────────────────────── */
+    /* ── Pagination ── */
+    .pagination-wrap { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
+    .page-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 36px; height: 36px; padding: 0 10px;
+        border: 1.5px solid #ce93d8; border-radius: 8px;
+        font-size: 0.88rem; font-weight: 600;
+        color: #6a1b9a; text-decoration: none; background: #fff;
+        transition: background .15s; white-space: nowrap;
+    }
+    .page-btn:hover { background: #f3e5f5; color: #6a1b9a; }
+    .page-btn.active { background: #6a1b9a; color: #fff !important; border-color: #6a1b9a; }
+    .page-btn i { font-size: 16px; }
+
     @media (max-width: 640px) {
-        .files-wrapper  { margin: 16px auto; }
-        .filter-card    { padding: 16px; }
+        .files-wrapper { margin: 16px auto; }
         .files-table td.col-desig { display: none; }
         .files-table td.col-date  { display: none; }
+        .filter-popup { width: calc(100vw - 48px); right: 0; }
     }
 </style>
 
 <div class="files-wrapper">
 
-    <!-- Page title -->
+    <!-- Page title + Create button -->
     <div class="page-title">
         <i class="material-icons">folder_open</i>
         <h4>File Records</h4>
+        <a href="/files/new" class="btn-purple" style="margin-left:auto">
+            <i class="material-icons">add</i>Create New File
+        </a>
     </div>
 
-    <!-- Search & filter card -->
-    <div class="filter-card">
-        <form method="GET" action="/files" class="filter-row">
+    <!-- Active filter pills -->
+    {% if fileType or status or date_from or date_to %}
+    <div class="active-filters">
+        {% if fileType %}
+        <span class="filter-pill"><i class="material-icons">label</i>{{ fileType }}</span>
+        {% endif %}
+        {% if status %}
+        <span class="filter-pill"><i class="material-icons">info</i>{{ status }}</span>
+        {% endif %}
+        {% if date_from %}
+        <span class="filter-pill"><i class="material-icons">event</i>From: {{ date_from }}</span>
+        {% endif %}
+        {% if date_to %}
+        <span class="filter-pill"><i class="material-icons">event</i>To: {{ date_to }}</span>
+        {% endif %}
+        <a href="/files{% if keyword %}?keyword={{ keyword }}{% endif %}" class="filter-pill">
+            <i class="material-icons">close</i>Clear filters
+        </a>
+    </div>
+    {% endif %}
 
-            <!-- Keyword search -->
+    <!-- Search bar + Filter button -->
+    <div class="search-bar-row">
+
+        <!-- Search form (keyword only — filter values come as hidden fields) -->
+        <form method="GET" action="/files" id="search-form" style="display:contents;">
+            <input type="hidden" name="fileType"  value="{{ fileType  or '' }}">
+            <input type="hidden" name="status"    value="{{ status    or '' }}">
+            <input type="hidden" name="date_from" value="{{ date_from or '' }}">
+            <input type="hidden" name="date_to"   value="{{ date_to   or '' }}">
             <div class="search-group">
-                <i class="material-icons search-icon">search</i>
+                <i class="material-icons s-icon">search</i>
                 <input type="text" name="keyword" value="{{ keyword or '' }}"
-                       placeholder="Search by description or designation…">
+                       placeholder="Search by description or designation…"
+                       class="browser-default">
             </div>
-
-            <!-- File type filter -->
-            <select name="fileType" class="filter-select">
-                <option value="">All Types</option>
-                <option value="Student" {{ sel_student }}>Student</option>
-                <option value="Staff"   {{ sel_staff   }}>Staff</option>
-            </select>
-
-            <!-- Status filter -->
-            <select name="status" class="filter-select">
-                <option value="">All Statuses</option>
-                <option value="Available" {{ sel_avail }}>Available</option>
-                <option value="On Loan"   {{ sel_loan  }}>On Loan</option>
-            </select>
-
-            <button type="submit" class="btn-search">
-                <i class="material-icons">filter_list</i>Search
+            <button type="submit" class="btn-purple">
+                <i class="material-icons">search</i>Search
             </button>
-
-            {% if keyword or fileType or status %}
-            <a href="/files" class="btn-clear">
-                <i class="material-icons">close</i>Clear
-            </a>
-            {% endif %}
         </form>
 
-        <!-- Active filter pills -->
-        {% if keyword or fileType or status %}
-        <div class="active-filters">
-            {% if keyword %}
-            <span class="filter-pill">
-                <i class="material-icons">search</i>{{ keyword }}
-            </span>
-            {% endif %}
-            {% if fileType %}
-            <span class="filter-pill">
-                <i class="material-icons">label</i>{{ fileType }}
-            </span>
-            {% endif %}
-            {% if status %}
-            <span class="filter-pill">
-                <i class="material-icons">info</i>{{ status }}
-            </span>
-            {% endif %}
+        <!-- Filter button + popup -->
+        <div class="filter-btn-wrap">
+            <button type="button" class="btn-outline" id="filter-btn" onclick="toggleFilter(event)">
+                <i class="material-icons">tune</i>Filter
+                {% if fileType or status or date_from or date_to %}
+                <span class="filter-active-dot"></span>
+                {% endif %}
+            </button>
+
+            <!-- Filter popup -->
+            <div class="filter-popup" id="filter-popup">
+                <div class="filter-popup-title">
+                    <i class="material-icons">tune</i>Filter Files
+                </div>
+                <form method="GET" action="/files" id="filter-form">
+                    <input type="hidden" name="keyword" value="{{ keyword or '' }}">
+                    <input type="hidden" name="page" value="1">
+
+                    <div class="fp-group">
+                        <label class="fp-label">File Type</label>
+                        <select name="fileType" class="browser-default">
+                            <option value="">All Types</option>
+                            <option value="Student" {{ sel_student }}>Student</option>
+                            <option value="Staff"   {{ sel_staff   }}>Staff</option>
+                        </select>
+                    </div>
+
+                    <div class="fp-group">
+                        <label class="fp-label">Status</label>
+                        <select name="status" class="browser-default">
+                            <option value="">All Statuses</option>
+                            <option value="Available" {{ sel_avail }}>Available</option>
+                            <option value="On Loan"   {{ sel_loan  }}>On Loan</option>
+                        </select>
+                    </div>
+
+                    <label class="fp-label" style="margin-bottom:6px;display:block;">Date Created</label>
+                    <div class="fp-date-row">
+                        <div class="fp-group">
+                            <label class="fp-label">From</label>
+                            <input type="date" name="date_from" value="{{ date_from or '' }}" class="browser-default">
+                        </div>
+                        <div class="fp-group">
+                            <label class="fp-label">To</label>
+                            <input type="date" name="date_to" value="{{ date_to or '' }}" class="browser-default">
+                        </div>
+                    </div>
+
+                    <div class="fp-actions">
+                        <a href="/files{% if keyword %}?keyword={{ keyword }}{% endif %}" class="btn-outline">
+                            Reset All
+                        </a>
+                        <button type="submit" class="btn-purple">
+                            <i class="material-icons">check</i>Apply
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-        {% endif %}
-    </div>
+
+    </div><!-- /.search-bar-row -->
+
+    <!-- Overlay to close popup when clicking outside -->
+    <div class="filter-overlay" id="filter-overlay" onclick="closeFilter()"></div>
 
     <!-- Results card -->
     <div class="results-card">
 
         <div class="results-header">
             <span class="results-count">
-                {{ files | length }}
-                result{{ 's' if files | length != 1 else '' }}
-                {% if keyword or fileType or status %}matching your filters{% endif %}
+                Showing {{ files | length }} of {{ total_results or (files | length) }}
+                result{{ 's' if (total_results or files | length) != 1 else '' }}
+                {% if keyword or fileType or status or date_from or date_to %}matching your filters{% endif %}
+                {% if total_pages and total_pages > 1 %}&mdash; Page {{ page }} of {{ total_pages }}{% endif %}
             </span>
         </div>
 
@@ -424,7 +431,6 @@
                     {% for file in files %}
                     <tr>
                         <td class="col-id">#{{ file.fileID }}</td>
-
                         <td>
                             {% if file.fileType == 'Student' %}
                                 <span class="type-chip chip-student">Student</span>
@@ -434,39 +440,22 @@
                                 <span class="type-chip chip-other">{{ file.fileType }}</span>
                             {% endif %}
                         </td>
-
                         <td class="col-desc" title="{{ file.description or '' }}">
                             {{ file.description or '&mdash;' }}
                         </td>
-
-                        <td class="col-desig">
-                            {{ file.previousDesignation or '&mdash;' }}
-                        </td>
-
+                        <td class="col-desig">{{ file.previousDesignation or '&mdash;' }}</td>
                         <td>
                             {% if file.status == 'Available' %}
-                                <span class="status-badge badge-available">
-                                    <span class="dot"></span>Available
-                                </span>
+                                <span class="status-badge badge-available"><span class="dot"></span>Available</span>
                             {% elif file.status == 'On Loan' %}
-                                <span class="status-badge badge-on-loan">
-                                    <span class="dot"></span>On Loan
-                                </span>
+                                <span class="status-badge badge-on-loan"><span class="dot"></span>On Loan</span>
                             {% else %}
-                                <span class="status-badge badge-other">
-                                    <span class="dot"></span>{{ file.status }}
-                                </span>
+                                <span class="status-badge badge-other"><span class="dot"></span>{{ file.status }}</span>
                             {% endif %}
                         </td>
-
                         <td class="col-date">
-                            {% if file.dateCreated %}
-                                {{ file.dateCreated.strftime('%d %b %Y') }}
-                            {% else %}
-                                &mdash;
-                            {% endif %}
+                            {% if file.dateCreated %}{{ file.dateCreated.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
                         </td>
-
                         <td>
                             <a href="/files/{{ file.fileID }}/detail" class="btn-view">
                                 <i class="material-icons">visibility</i>View
@@ -486,5 +475,53 @@
 
     </div><!-- /.results-card -->
 
+    <!-- Pagination -->
+    {% if total_pages and total_pages > 1 %}
+    <div class="pagination-wrap">
+        {% if page > 1 %}
+        <a class="page-btn" href="/files?page={{ page - 1 }}&keyword={{ keyword or '' }}&fileType={{ fileType or '' }}&status={{ status or '' }}&date_from={{ date_from or '' }}&date_to={{ date_to or '' }}">
+            <i class="material-icons">chevron_left</i>Prev
+        </a>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+        <a class="page-btn {% if p == page %}active{% endif %}"
+           href="/files?page={{ p }}&keyword={{ keyword or '' }}&fileType={{ fileType or '' }}&status={{ status or '' }}&date_from={{ date_from or '' }}&date_to={{ date_to or '' }}">
+            {{ p }}
+        </a>
+        {% endfor %}
+
+        {% if page < total_pages %}
+        <a class="page-btn" href="/files?page={{ page + 1 }}&keyword={{ keyword or '' }}&fileType={{ fileType or '' }}&status={{ status or '' }}&date_from={{ date_from or '' }}&date_to={{ date_to or '' }}">
+            Next<i class="material-icons">chevron_right</i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
 </div><!-- /.files-wrapper -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleFilter(e) {
+        e.stopPropagation();
+        var popup   = document.getElementById('filter-popup');
+        var overlay = document.getElementById('filter-overlay');
+        if (popup.classList.contains('open')) {
+            popup.classList.remove('open');
+            overlay.classList.remove('open');
+        } else {
+            popup.classList.add('open');
+            overlay.classList.add('open');
+        }
+    }
+    function closeFilter() {
+        document.getElementById('filter-popup').classList.remove('open');
+        document.getElementById('filter-overlay').classList.remove('open');
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeFilter();
+    });
+</script>
 {% endblock %}

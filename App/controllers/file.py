@@ -1,7 +1,7 @@
 # will edit for staffUser usage for certain controllers as well as for patron(Hence only staff can add,delete,update while patron could only search and view files)
 from App.database import db
 from App.models import Box, File, Location, User
-
+from datetime import datetime
 
 def addFile(
     boxID,
@@ -79,7 +79,7 @@ def updateFile(
 
 
 def searchFile(
-    fileID=None, fileType=None, locationID=None, loanID=None, status=None, keyword=None
+    fileID=None, fileType=None, locationID=None, loanID=None, status=None, keyword=None, date_from=None,date_to=None
 ):
     stmt = db.select(File)
 
@@ -101,6 +101,19 @@ def searchFile(
                 File.previousDesignation.ilike(pattern),
             )
         )
+        
+        if date_from:
+         try:
+            df = datetime.strptime(date_from, "%Y-%m-%d").date()
+            stmt = stmt.where(File.dateCreated >= df)
+         except:
+            pass
+    if date_to:
+        try:
+            dt = datetime.strptime(date_to, "%Y-%m-%d").date()
+            stmt = stmt.where(File.dateCreated <= dt)
+        except:
+            pass
 
     return db.session.scalars(stmt).all()
 

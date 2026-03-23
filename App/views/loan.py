@@ -43,7 +43,10 @@ from App.controllers.staffUser import get_staff_user_by_user
 from App.controllers.patron import get_all_patrons
 
 from datetime import date, datetime
+from App.database import db
 
+from App.models.file import File
+from App.models.loan import Loan
 
 # ── Blueprint ─────────────────────────────────────────────────────────────────
 # A Blueprint groups related routes together. This one owns everything under
@@ -186,38 +189,73 @@ def loans_page():
 @loan_views.route('/loans', methods=['POST'])
 @jwt_required()
 def create_loan_view():
+    # ── Read form values ─────────────────────────────────────────────────────
+    fileID_raw   = request.form.get('fileID')
+    patronID_raw = request.form.get('patronID')
 
-    # Read fileID and patronID from the submitted form.
-    # type=int automatically converts the string value to an integer,
-    # and returns None if it's missing or not a valid number.
-    fileID   = request.form.get('fileID', type=int)
-    patronID = request.form.get('patronID', type=int)
+    print(f"[POST /loans] Raw form values → fileID={fileID_raw!r}, patronID={patronID_raw!r}")
 
-    # Both fields are required — bail out early if either is missing.
+    # Convert to int safely
+    try:
+        fileID   = int(fileID_raw) if fileID_raw else None
+        patronID = int(patronID_raw) if patronID_raw else None
+    except (ValueError, TypeError):
+        fileID   = None
+        patronID = None
+
+    print(f"[POST /loans] Parsed → fileID={fileID}, patronID={patronID}")
+
     if not fileID or not patronID:
         flash('File ID and Patron ID are required.', 'error')
-        return redirect(url_for('loan_views.loans_page'))
+        return redirect(url_for('file_views.file_detail_page', fileID=fileID or 0))
 
-    # Look up the StaffUser profile for whoever is logged in.
-    # jwt_current_user is the User object from the JWT token.
-    # We need their StaffUser record to record who processed the loan.
+    # ── Get current staff ────────────────────────────────────────────────────
     staff_user = get_staff_user_by_user(jwt_current_user.userID)
     if not staff_user:
         flash('No staff profile found for current user.', 'error')
-        return redirect(url_for('loan_views.loans_page'))
+        return redirect(url_for('file_views.file_detail_page', fileID=fileID))
 
-    # checkout_files() creates the Loan record and marks the file as 'On Loan'.
-    # It expects a list of file IDs so we wrap fileID in a list.
-    result = checkout_files([fileID], patronID, staff_user.staffUserID)
+    print(f"[POST /loans] Processing as staffUserID={staff_user.staffUserID}")
+
+    # ── Attempt checkout ─────────────────────────────────────────────────────
+    result = checkout_files(
+        patronID=patronID,
+        file_ids=[fileID],                    # list of one file
+        processedByStaffUserID=staff_user.staffUserID
+    )
 
     if result:
+        # Force-refresh file object so detail page sees "On Loan"
+        file = db.session.get(File, fileID)
+        if file:
+            db.session.refresh(file)
+            print(f"[POST /loans] File {fileID} refreshed → status now: {file.status}")
+
         flash(f'File #{fileID} successfully loaned to Patron #{patronID}.', 'success')
+        return redirect(url_for('file_views.file_detail_page', fileID=fileID))
     else:
-        flash(f'Failed to checkout File #{fileID}. It may already be on loan.', 'error')
+        # Try to give more specific feedback
+        file = db.session.get(File, fileID)
+        if file:
+            active_loan = Loan.query.filter(
+                Loan.patronID == patronID,
+                Loan.returnDate.is_(None)
+            ).first()  # or adjust query to check this file specifically
 
-    # Send the user back to the file's detail page so they can see the updated status.
-    return redirect(url_for('file_views.file_detail', fileID=fileID))
+            reason = []
+            if file.status != 'Available':
+                reason.append(f"File status is '{file.status}'")
+            if file.loanID is not None:
+                reason.append(f"File still linked to loanID {file.loanID}")
+            if active_loan:
+                reason.append(f"Patron has active loan #{active_loan.loanID}")
 
+            detail = f" ({', '.join(reason)})" if reason else ""
+        else:
+            detail = " (file not found)"
+
+        flash(f'Failed to checkout File #{fileID}{detail}. It may already be on loan or data is invalid.', 'error')
+        return redirect(url_for('file_views.file_detail_page', fileID=fileID))
 
 # ── GET /loans/<loanID> ────────────────────────────────────────────────────────
 # JSON-only endpoint used by the loan detail modal on the loans page.
