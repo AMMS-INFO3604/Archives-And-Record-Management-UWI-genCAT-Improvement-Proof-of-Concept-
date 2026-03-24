@@ -607,9 +607,12 @@
         box-shadow: 0 12px 48px rgba(106,27,154,.22);
         width: 100%;
         max-width: 420px;
+        max-height: 90vh;
         padding: 0;
         position: relative;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
         animation: crSlideIn .18s ease;
     }
     @keyframes crSlideIn {
@@ -621,6 +624,7 @@
         display: flex; align-items: center; justify-content: space-between;
         padding: 20px 24px 16px;
         border-bottom: 1.5px solid #eeeeee;
+        flex-shrink: 0;
     }
     .cr-title {
         display: flex; align-items: center; gap: 9px;
@@ -637,7 +641,11 @@
     }
     .cr-esc-btn:hover { background: #dddddd; }
 
-    .cr-body { padding: 22px 24px 20px; }
+    .cr-body {
+        padding: 22px 24px 20px;
+        overflow-y: auto;
+        flex: 1 1 auto;
+    }
 
     .cr-form-group { margin-bottom: 16px; }
     .cr-form-label {
@@ -667,6 +675,7 @@
         display: flex; align-items: center; justify-content: flex-end; gap: 10px;
         padding: 14px 24px 20px;
         border-top: 1.5px solid #eeeeee;
+        flex-shrink: 0;
     }
 </style>
 
@@ -717,40 +726,41 @@
                 </select>
             </div>
 
-        </div>
 
-        <!-- Hidden barcode value -->
-        <input type="hidden" id="af-barcode-value" />
+            <!-- Hidden barcode value -->
+            <input type="hidden" id="af-barcode-value" />
 
-        <!-- ── Barcode section ── -->
-        <div class="bc-section" style="margin: 0 0 4px;">
-            <div class="bc-section-title">
-                <i class="material-icons">qr_code</i>Barcode
-            </div>
-            <div class="bc-input-row">
-                <input type="text" id="af-barcode-input"
-                       placeholder="e.g. FILE-STU-001  (leave blank to skip)"
-                       autocomplete="off" class="browser-default" />
-                <button type="button" class="btn-gen-barcode" onclick="generateFileBarcode()">
-                    <i class="material-icons">qr_code_scanner</i>Generate
-                </button>
-            </div>
-            <div class="bc-loading" id="af-bc-loading">
-                <i class="material-icons" style="font-size:14px;vertical-align:middle;">hourglass_top</i>
-                Generating barcode…
-            </div>
-            <div class="bc-preview-box" id="af-bc-preview">
-                <img id="af-bc-img" src="" alt="barcode" />
-                <div class="bc-status" id="af-bc-label"></div>
-                <div class="bc-preview-actions">
-                    <a id="af-bc-download" href="#" class="btn-bc-action btn-bc-dl" download>
-                        <i class="material-icons" style="font-size:14px;">download</i>Download PNG
-                    </a>
-                    <button type="button" class="btn-bc-action btn-bc-clear" onclick="clearFileBarcode()">
-                        <i class="material-icons" style="font-size:14px;">close</i>Clear
+            <!-- ── Barcode section ── -->
+            <div class="bc-section" style="margin: 16px 0 4px;">
+                <div class="bc-section-title">
+                    <i class="material-icons">qr_code</i>Barcode
+                </div>
+                <div class="bc-input-row">
+                    <input type="text" id="af-barcode-input"
+                           placeholder="e.g. FILE-STU-001  (leave blank to skip)"
+                           autocomplete="off" class="browser-default" />
+                    <button type="button" class="btn-gen-barcode" onclick="generateFileBarcode()">
+                        <i class="material-icons">qr_code_scanner</i>Generate
                     </button>
                 </div>
+                <div class="bc-loading" id="af-bc-loading">
+                    <i class="material-icons" style="font-size:14px;vertical-align:middle;">hourglass_top</i>
+                    Generating barcode…
+                </div>
+                <div class="bc-preview-box" id="af-bc-preview">
+                    <img id="af-bc-img" src="" alt="barcode" />
+                    <div class="bc-status" id="af-bc-label"></div>
+                    <div class="bc-preview-actions">
+                        <a id="af-bc-download" href="#" class="btn-bc-action btn-bc-dl" download>
+                            <i class="material-icons" style="font-size:14px;">download</i>Download PNG
+                        </a>
+                        <button type="button" class="btn-bc-action btn-bc-clear" onclick="clearFileBarcode()">
+                            <i class="material-icons" style="font-size:14px;">close</i>Clear
+                        </button>
+                    </div>
+                </div>
             </div>
+
         </div>
 
         <div class="cr-footer">
