@@ -13,8 +13,10 @@ class Loan(db.Model):
     )
     patronID = db.Column(db.Integer, db.ForeignKey('patron.patronID'), nullable=False)
     damageNotes = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='Active')
+    # status values: 'Pending' (awaiting scan), 'Active' (confirmed/on loan), 'Returned'
 
     files = db.relationship('File', backref='loan', lazy=True)
 
     def __repr__(self):
-        return f'<Loan {self.loanID}>'
+        return f'<Loan {self.loanID} [{self.status}]>'

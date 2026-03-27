@@ -1,6 +1,4 @@
 # ── Imports ──────────────────────────────────────────────────────────────────
-# Flask utilities for building routes, showing messages, redirecting, and
-# rendering HTML templates.
 from flask import (
     Blueprint,
     flash,
@@ -11,12 +9,9 @@ from flask import (
     url_for,
 )
 
-# jwt_current_user gives us the logged-in user object inside a protected route.
-# jwt_required() is a decorator that blocks the route if the user isn't logged in.
 from flask_jwt_extended import current_user as jwt_current_user
 from flask_jwt_extended import jwt_required
 
-# Loan controller functions — all database logic lives here, not in the views.
 from App.controllers.loan import (
     get_all_loans,
     get_all_loans_json,
@@ -38,7 +33,6 @@ from App.controllers.loan import (
     update_loan,
 )
 
-# Used to look up the StaffUser profile for whoever is currently logged in.
 from App.controllers.staffUser import get_staff_user_by_user
 from App.controllers.patron import get_all_patrons
 
@@ -49,61 +43,64 @@ from App.models.file import File
 from App.models.loan import Loan
 
 # ── Blueprint ─────────────────────────────────────────────────────────────────
-# A Blueprint groups related routes together. This one owns everything under
-# /loans. It's registered in App/views/__init__.py so Flask knows about it.
 loan_views = Blueprint('loan_views', __name__, template_folder='../templates')
 
 
+
+
+# ── POST /loans/<loanID>/cancel ───────────────────────────────────────────────
+@loan_views.route('/loans/<int:loanID>/cancel', methods=['POST'])
+@jwt_required()
+def cancel_pending_loan(loanID):
+    """Cancel a Pending loan that was never confirmed by scan.
+    Detaches the file and deletes the loan record."""
+    loan = get_loan(loanID)
+    if not loan:
+        return jsonify({'error': 'Loan not found'}), 404
+
+    if getattr(loan, 'status', None) != 'Pending':
+        return jsonify({'error': 'Only Pending loans can be cancelled this way'}), 409
+
+    # Detach files and delete the loan
+    for f in loan.files:
+        f.loanID = None
+        f.status = 'Available'
+    db.session.delete(loan)
+    db.session.commit()
+    print(f"[cancel_pending_loan] Loan #{loanID} cancelled and deleted.")
+    return jsonify({'message': f'Loan #{loanID} cancelled.'}), 200
+
 # ── GET /loans ────────────────────────────────────────────────────────────────
-# Main loans listing page. Reads filter/search/pagination params from the URL
-# query string, applies them in memory, and renders loans.html.
 @loan_views.route('/loans', methods=['GET'])
 @jwt_required()
 def loans_page():
 
-    # ── Read query-string parameters ──────────────────────────────────────────
-    # .strip() removes accidental leading/trailing spaces.
-    # .lower() makes all searches case-insensitive.
     search        = request.args.get('search', '').strip().lower()
     type_filter   = request.args.get('type', '')
     date_from     = request.args.get('date_from', '')
     date_to       = request.args.get('date_to', '')
     days_filter   = request.args.get('days', '')
-    status_filter = request.args.get('status', 'active')  # active | returned | all
+    status_filter = request.args.get('status', 'active')
     page          = request.args.get('page', 1, type=int)
-    per_page      = 6  # how many loans to show per page
+    per_page      = 6
 
-    # ── Base queryset ──────────────────────────────────────────────────────────
-    # Start with the right set of loans depending on which status tab is active.
     if status_filter == 'returned':
         loans = get_returned_loans()
     elif status_filter == 'all':
         loans = get_all_loans()
     else:
-        # Default tab is 'active' — loans with no returnDate yet.
         loans = get_active_loans()
 
-    # ── Search filter ──────────────────────────────────────────────────────────
-    # Only runs if the user typed something in the search box.
-    # loan_matches() checks every useful field on the loan and its related
-    # records — returning True as soon as any field matches so we stop early.
     if search:
         def loan_matches(l):
-            # Match against the loan's own IDs
             if search in str(l.loanID):
                 return True
             if search in str(l.patronID):
                 return True
-
-            # Match against the patron's username (walks Loan → Patron → User)
             if l.patron and l.patron.user and search in l.patron.user.username.lower():
                 return True
-
-            # Match against the staff member's username (walks Loan → StaffUser → User)
             if l.staff_user and l.staff_user.user and search in l.staff_user.user.username.lower():
                 return True
-
-            # Match against any file attached to this loan
             for f in l.files:
                 if f.fileType and search in f.fileType.lower():
                     return True
@@ -113,16 +110,10 @@ def loans_page():
                     return True
                 if search in str(f.fileID):
                     return True
-
-            # Nothing matched
             return False
 
         loans = [l for l in loans if loan_matches(l)]
 
-    # ── Date range filter ──────────────────────────────────────────────────────
-    # Keep only loans whose loanDate falls within the selected range.
-    # fromisoformat() converts the 'YYYY-MM-DD' string from the date picker
-    # into a Python date object we can compare against.
     if date_from:
         df = date.fromisoformat(date_from)
         loans = [l for l in loans if l.loanDate.date() >= df]
@@ -130,16 +121,11 @@ def loans_page():
         dt = date.fromisoformat(date_to)
         loans = [l for l in loans if l.loanDate.date() <= dt]
 
-    # ── Outstanding days filter ────────────────────────────────────────────────
-    # Filters active loans by how many days they've been outstanding.
-    # '100' is a special case meaning "100 or more days" (the overdue chip).
-    # All other values mean "less than N days".
     if days_filter:
         today = date.today()
         days_filter_int = int(days_filter) if days_filter != '100' else None
         filtered = []
         for l in loans:
-            # Skip already-returned loans — they have no outstanding days.
             if l.returnDate:
                 continue
             diff = (today - l.loanDate.date()).days
@@ -149,22 +135,16 @@ def loans_page():
                 filtered.append(l)
         loans = filtered
 
-    # ── Pagination ─────────────────────────────────────────────────────────────
-    # Work out total pages, clamp the current page to a valid range, then
-    # slice out just the loans for the current page.
     total       = len(loans)
-    total_pages = max(1, -(-total // per_page))  # ceiling division
-    page        = max(1, min(page, total_pages))  # clamp between 1 and last page
+    total_pages = max(1, -(-total // per_page))
+    page        = max(1, min(page, total_pages))
     start       = (page - 1) * per_page
     paginated   = loans[start:start + per_page]
 
-    # ── Render ─────────────────────────────────────────────────────────────────
-    # Count active/returned across ALL loans for the stats chips
     all_loans      = get_all_loans()
     active_count   = sum(1 for l in all_loans if not l.returnDate)
     returned_count = sum(1 for l in all_loans if l.returnDate)
 
-    # Pass everything the template needs
     return render_template('loans.html',
         loans          = paginated,
         total          = total,
@@ -185,19 +165,29 @@ def loans_page():
 
 # ── POST /loans ────────────────────────────────────────────────────────────────
 # Checkout route — creates a new loan for a single file.
-# Called when a staff member submits the checkout form on the file detail page.
+# Now detects AJAX / fetch calls and returns JSON instead of redirecting,
+# so file_detail.html can read the new loanID and display the QR code.
 @loan_views.route('/loans', methods=['POST'])
 @jwt_required()
 def create_loan_view():
-    # ── Read form values ─────────────────────────────────────────────────────
+
+    # ── Detect whether caller wants JSON ──────────────────────────────────────
+    # fetch() from file_detail.html sends X-Requested-With so we can
+    # tell it apart from a plain form submit.
+    wants_json = (
+        request.is_json
+        or request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        or 'application/json' in request.headers.get('Accept', '')
+    )
+
+    # ── Read form values ──────────────────────────────────────────────────────
     fileID_raw   = request.form.get('fileID')
     patronID_raw = request.form.get('patronID')
 
     print(f"[POST /loans] Raw form values → fileID={fileID_raw!r}, patronID={patronID_raw!r}")
 
-    # Convert to int safely
     try:
-        fileID   = int(fileID_raw) if fileID_raw else None
+        fileID   = int(fileID_raw)   if fileID_raw   else None
         patronID = int(patronID_raw) if patronID_raw else None
     except (ValueError, TypeError):
         fileID   = None
@@ -206,71 +196,89 @@ def create_loan_view():
     print(f"[POST /loans] Parsed → fileID={fileID}, patronID={patronID}")
 
     if not fileID or not patronID:
+        if wants_json:
+            return jsonify({'error': 'File ID and Patron ID are required.'}), 400
         flash('File ID and Patron ID are required.', 'error')
         return redirect(url_for('file_views.file_detail_page', fileID=fileID or 0))
 
-    # ── Get current staff ────────────────────────────────────────────────────
+    # ── Get current staff ─────────────────────────────────────────────────────
     staff_user = get_staff_user_by_user(jwt_current_user.userID)
     if not staff_user:
+        if wants_json:
+            return jsonify({'error': 'No staff profile found for current user.'}), 403
         flash('No staff profile found for current user.', 'error')
         return redirect(url_for('file_views.file_detail_page', fileID=fileID))
 
     print(f"[POST /loans] Processing as staffUserID={staff_user.staffUserID}")
 
-    # ── Attempt checkout ─────────────────────────────────────────────────────
-    result = checkout_files(
+    # ── Validate file is available ───────────────────────────────────────────
+    file = db.session.get(File, fileID)
+    if not file:
+        msg = f'File #{fileID} not found.'
+        if wants_json: return jsonify({'error': msg}), 404
+        flash(msg, 'error')
+        return redirect(url_for('file_views.file_detail_page', fileID=fileID))
+
+    if file.status != 'Available':
+        msg = f'File #{fileID} is not available (status: {file.status}).'
+        if wants_json: return jsonify({'error': msg}), 400
+        flash(msg, 'error')
+        return redirect(url_for('file_views.file_detail_page', fileID=fileID))
+
+    # ── Create a PENDING loan — file stays Available until scan confirms ──────
+    loan = create_loan(
         patronID=patronID,
-        file_ids=[fileID],                    # list of one file
-        processedByStaffUserID=staff_user.staffUserID
+        processedByStaffUserID=staff_user.staffUserID,
     )
-
-    if result:
-        # Force-refresh file object so detail page sees "On Loan"
-        file = db.session.get(File, fileID)
-        if file:
-            db.session.refresh(file)
-            print(f"[POST /loans] File {fileID} refreshed → status now: {file.status}")
-
-        flash(f'File #{fileID} successfully loaned to Patron #{patronID}.', 'success')
+    if not loan:
+        msg = 'Failed to create loan record.'
+        if wants_json: return jsonify({'error': msg}), 400
+        flash(msg, 'error')
         return redirect(url_for('file_views.file_detail_page', fileID=fileID))
-    else:
-        # Try to give more specific feedback
-        file = db.session.get(File, fileID)
-        if file:
-            active_loan = Loan.query.filter(
-                Loan.patronID == patronID,
-                Loan.returnDate.is_(None)
-            ).first()  # or adjust query to check this file specifically
 
-            reason = []
-            if file.status != 'Available':
-                reason.append(f"File status is '{file.status}'")
-            if file.loanID is not None:
-                reason.append(f"File still linked to loanID {file.loanID}")
-            if active_loan:
-                reason.append(f"Patron has active loan #{active_loan.loanID}")
+    # Mark loan as Pending and link the file (but don't change file status yet)
+    loan.status = 'Pending'
+    file.loanID = loan.loanID
+    db.session.commit()
 
-            detail = f" ({', '.join(reason)})" if reason else ""
-        else:
-            detail = " (file not found)"
+    print(f"[POST /loans] Pending loan #{loan.loanID} created for File #{fileID}")
 
-        flash(f'Failed to checkout File #{fileID}{detail}. It may already be on loan or data is invalid.', 'error')
-        return redirect(url_for('file_views.file_detail_page', fileID=fileID))
+    if wants_json:
+        return jsonify({
+            'loanID':  loan.loanID,
+            'fileID':  fileID,
+            'status':  'Pending',
+            'message': f'Pending loan #{loan.loanID} created. Scan barcode to confirm.',
+        }), 201
+
+    # Non-AJAX: go straight to QR page (no scan required path)
+    flash(f'Loan #{loan.loanID} created. Scan the barcode to confirm issue.', 'success')
+    return redirect(url_for('file_views.file_detail_page', fileID=fileID))
+
 
 # ── GET /loans/<loanID> ────────────────────────────────────────────────────────
-# JSON-only endpoint used by the loan detail modal on the loans page.
-# When the user clicks "View" on a loan row, the frontend fetches this URL via
-# JavaScript and uses the response to populate the modal — no page reload needed.
 @loan_views.route('/loans/<int:loanID>', methods=['GET'])
 @jwt_required()
 def loan_detail_json(loanID):
-
     loan = get_loan_json(loanID)
     if not loan:
         return jsonify({'error': 'Loan not found'}), 404
 
-    # Attach the list of files to the loan dict before returning.
     loan['files'] = get_loan_files_json(loanID) or []
+
+    # Include live loan status for the QR poller — derive from the ORM object
+    # so we always get the freshest value from DB
+    loan_obj = get_loan(loanID)
+    raw_status  = getattr(loan_obj, 'status', None)
+    return_date = getattr(loan_obj, 'returnDate', None)
+
+    # If returnDate is set the loan is effectively Returned regardless of status col
+    if return_date:
+        loan['loanStatus']  = 'Returned'
+        loan['returnDate']  = str(return_date)
+    else:
+        loan['loanStatus']  = raw_status or 'Active'
+        loan['returnDate']  = None
 
     response = jsonify(loan)
     response.headers['Content-Type'] = 'application/json'
@@ -278,8 +286,6 @@ def loan_detail_json(loanID):
 
 
 # ── POST /loans/<loanID>/return ────────────────────────────────────────────────
-# Return route — marks a loan as returned and frees all its files back to
-# 'Available'. Also saves any damage/condition notes submitted with the form.
 @loan_views.route('/loans/<int:loanID>/return', methods=['POST'])
 @jwt_required()
 def return_loan_route(loanID):
@@ -289,19 +295,12 @@ def return_loan_route(loanID):
         flash('Loan not found.', 'error')
         return redirect(url_for('loan_views.loans_page'))
 
-    # Guard against double-returning — the controller is also idempotent but
-    # this gives the user a clear message instead of a silent no-op.
     if loan.returnDate:
         flash(f'Loan #{loanID} has already been returned.', 'warning')
         return redirect(url_for('loan_views.loans_page'))
 
-    # ── Read condition notes from the form ─────────────────────────────────────
-    # damage_notes is the overall loan-level summary textarea.
     damage_notes = request.form.get('damage_notes', '').strip()
 
-    # Per-file notes are submitted as individual fields named
-    # file_condition_<fileID> — one per file attached to the loan.
-    # We build a dict {fileID: note} and pass it to the controller.
     file_conditions = {}
     for key, value in request.form.items():
         if key.startswith('file_condition_') and value.strip():
@@ -309,27 +308,17 @@ def return_loan_route(loanID):
                 file_id = int(key.replace('file_condition_', ''))
                 file_conditions[file_id] = value.strip()
             except ValueError:
-                # Ignore any malformed field names
                 pass
 
-    # ── Call the controller ─────────────────────────────────────────────────────
-    # return_loan() sets the returnDate, saves the notes, and marks all
-    # attached files back to 'Available'.
     result = return_loan(
         loanID,
         damage_notes=damage_notes if damage_notes else None,
         file_conditions=file_conditions if file_conditions else None,
     )
 
-    # ── Flash result message ────────────────────────────────────────────────────
-    # Use 'warning' (amber) when notes were recorded so staff notice they were saved.
-    # Use 'success' (green) for a clean return with no damage noted.
     if result:
         if damage_notes or file_conditions:
-            flash(
-                f'Loan #{loanID} returned with condition notes recorded.',
-                'warning'
-            )
+            flash(f'Loan #{loanID} returned with condition notes recorded.', 'warning')
         else:
             flash(f'Loan #{loanID} has been returned successfully. Files marked as Available.', 'success')
     else:
@@ -337,10 +326,8 @@ def return_loan_route(loanID):
 
     return redirect(url_for('loan_views.loans_page'))
 
+
 # ── POST /loans/<loanID>/checkin ───────────────────────────────────────────────
-# Check-in route — called from the Check In modal on the file detail page.
-# Does the same job as /return but redirects back to the file detail page
-# instead of the loans listing, since the user started from there.
 @loan_views.route('/loans/<int:loanID>/checkin', methods=['POST'])
 @jwt_required()
 def checkin_loan_route(loanID):
@@ -354,8 +341,6 @@ def checkin_loan_route(loanID):
         flash(f'Loan #{loanID} has already been returned.', 'warning')
         return redirect(url_for('loan_views.loans_page'))
 
-    # Read the single damage_notes field from the check-in modal textarea.
-    # Unlike /return there are no per-file fields here — just one overall note.
     damage_notes = request.form.get('damage_notes', '').strip()
 
     result = return_loan(
@@ -363,8 +348,6 @@ def checkin_loan_route(loanID):
         damage_notes=damage_notes if damage_notes else None,
     )
 
-    # Work out which file to redirect back to — grab it from the loan's files
-    # before return_loan() detaches them, or fall back to the loans page.
     file_id = loan.files[0].fileID if loan.files else None
 
     if result:
@@ -375,15 +358,12 @@ def checkin_loan_route(loanID):
     else:
         flash(f'Failed to check in Loan #{loanID}. Please try again.', 'error')
 
-    # Redirect back to the file detail page the user came from, or the loans
-    # listing if we couldn't determine the file ID.
     if file_id:
-        return redirect(url_for('file_views.file_detail', fileID=file_id))
+        return redirect(url_for('file_views.file_detail_page', fileID=file_id))
     return redirect(url_for('loan_views.loans_page'))
 
+
 # ── GET /loans/<loanID>/detail ─────────────────────────────────────────────────
-# Renders loans.html so tests that hit this URL directly still get a 200.
-# The actual detail content is shown via the modal on loans.html.
 @loan_views.route('/loans/<int:loanID>/detail', methods=['GET'])
 @jwt_required()
 def loan_detail_page(loanID):
@@ -391,7 +371,6 @@ def loan_detail_page(loanID):
     if not loan:
         flash(f'Loan {loanID} not found.', 'error')
         return redirect(url_for('loan_views.loans_page'))
-    # Reuse the loans listing page — the modal handles inline detail display
     all_loans      = get_all_loans()
     active_count   = sum(1 for l in all_loans if not l.returnDate)
     returned_count = sum(1 for l in all_loans if l.returnDate)
@@ -406,7 +385,6 @@ def loan_detail_page(loanID):
 
 
 # ── GET /loaned ────────────────────────────────────────────────────────────────
-# Renders loans.html so tests that hit /loaned still get a 200.
 @loan_views.route('/loaned', methods=['GET'])
 @jwt_required()
 def get_loaned_page():
@@ -516,7 +494,7 @@ def api_checkout_files():
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     patron_id = data.get('patronID')
-    file_ids = data.get('fileIDs')
+    file_ids  = data.get('fileIDs')
     if not patron_id:
         return jsonify({'error': 'patronID is required'}), 400
     if not file_ids or not isinstance(file_ids, list):
@@ -528,7 +506,11 @@ def api_checkout_files():
     )
     if not loan:
         return jsonify({'error': 'Checkout failed – verify patronID and that all files are Available'}), 400
-    return jsonify({'message': 'Files checked out successfully', 'loanID': loan.loanID, 'fileCount': len(loan.files)}), 201
+    return jsonify({
+        'message':   'Files checked out successfully',
+        'loanID':    loan.loanID,
+        'fileCount': len(loan.files),
+    }), 201
 
 
 @loan_views.route('/api/loans/<int:loanID>/return', methods=['PUT'])
@@ -538,7 +520,11 @@ def api_return_loan(loanID):
     loan = return_loan(loanID, returnDate=data.get('returnDate'))
     if not loan:
         return jsonify({'error': 'Loan not found or could not be returned'}), 404
-    return jsonify({'message': f'Loan {loanID} returned successfully', 'loanID': loan.loanID, 'returnDate': str(loan.returnDate)}), 200
+    return jsonify({
+        'message':    f'Loan {loanID} returned successfully',
+        'loanID':     loan.loanID,
+        'returnDate': str(loan.returnDate),
+    }), 200
 
 
 @loan_views.route('/api/loans/<int:loanID>', methods=['PUT'])

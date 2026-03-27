@@ -44,6 +44,7 @@ def updateFile(
     createdByStaffUserID=None,
     dateCreated=None,
     status=None,
+    barcode=None,
 ):  # Update file info due to fileID, only the provided fields will be updated.
     file = db.session.get(File, fileID)
 
@@ -68,6 +69,8 @@ def updateFile(
         file.dateCreated = dateCreated
     if status is not None:
         file.status = status
+    if barcode is not None:
+        file.barcode = barcode
 
     try:
         db.session.commit()

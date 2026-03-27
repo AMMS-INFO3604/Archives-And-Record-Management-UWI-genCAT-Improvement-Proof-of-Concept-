@@ -99,7 +99,7 @@ def update_file(fileID):
         return jsonify({"error": "No data provided"}), 400
 
     file = updateFile(
-        fileID=data.get("fileID"),
+        fileID=data.get("fileID") or fileID,
         boxID=data.get("boxID"),
         locationID=data.get("locationID"),
         loanID=data.get("loanID"),
@@ -109,6 +109,7 @@ def update_file(fileID):
         createdByStaffUserID=data.get("createdByStaffUserID"),
         dateCreated=data.get("dateCreated"),
         status=data.get("status"),
+        barcode=data.get("barcode"),
     )
     if not file:
         return jsonify({"error": "File not found"}), 404
@@ -155,6 +156,7 @@ def view_file(fileID):
             "createdByStaffUserID": file.createdByStaffUserID,
             "dateCreated": str(file.dateCreated),
             "status": file.status,
+            "barcode": file.barcode,
         }
     ), 200
 
@@ -194,7 +196,6 @@ def get_files_page():
 
     total_pages = max(1, (total + per_page - 1) // per_page)
 
-    
     boxes = getAllBoxes()
     
     return render_template(

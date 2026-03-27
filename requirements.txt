@@ -16,3 +16,4 @@ rich==13.4.2
 setuptools==67.6.0
 python-barcode
 python-barcode[images]
+qrcode[pil]

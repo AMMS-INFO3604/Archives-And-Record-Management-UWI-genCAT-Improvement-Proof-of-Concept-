@@ -22,6 +22,7 @@ class File(db.Model):
     staff_record = db.relationship('StaffRecord', backref='file', uselist=False)
     
     conditionNotes = db.Column(db.Text, nullable=True)
+    barcode = db.Column(db.String(100), unique=True, nullable=True)
 
     def __repr__(self):
         return f'<File {self.fileID} - {self.fileType}>'
