@@ -121,6 +121,32 @@
 
     .btn-login:hover { background: #424242 !important; }
 
+    .btn-quick-login {
+        width: 100%;
+        background: #fff !important;
+        color: #616161 !important;
+        font-weight: 600 !important;
+        letter-spacing: .5px;
+        border-radius: 8px !important;
+        height: 40px !important;
+        line-height: 40px !important;
+        font-size: .82rem !important;
+        margin-top: 10px;
+        border: 1.5px dashed #bdbdbd !important;
+        box-shadow: none !important;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: border-color .2s, color .2s;
+    }
+
+    .btn-quick-login:hover {
+        border-color: #757575 !important;
+        color: #212121 !important;
+    }
+
     .login-footer {
         border-top: 1px solid #f5f5f5;
         padding: 14px 32px;
@@ -162,6 +188,12 @@
                 </button>
             </form>
 
+            <!-- Quick Login Button -->
+            <button class="btn-quick-login" onclick="quickLogin()">
+                <i class="material-icons" style="font-size: 16px;">bolt</i>
+                Quick Login (Demo)
+            </button>
+
             <div style="margin-top: 20px; border-top: 1px solid #f5f5f5; padding-top: 20px; text-align: center; font-size: .84rem; color: #757575;">
                 Not a Staff member? <a href="{{ url_for('auth_views.patron_login_page') }}" style="color: #212121; font-weight: 700; text-decoration: none;">Login as a Patron</a>
             </div>
@@ -173,4 +205,17 @@
 
     </div>
 </div>
+
+<script>
+    function quickLogin() {
+        document.getElementById('username').value = 'bob';
+        document.getElementById('password').value = 'bobpass';
+        // Trigger Materialize label float
+        document.getElementById('username').classList.add('active');
+        document.getElementById('password').classList.add('active');
+        // Auto submit
+        document.querySelector('form').submit();
+    }
+</script>
+
 {% endblock %}
