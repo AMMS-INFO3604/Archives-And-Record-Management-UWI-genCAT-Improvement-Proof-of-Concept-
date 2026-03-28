@@ -61,7 +61,7 @@
         cursor: pointer; transition: background .15s; text-decoration: none;
     }
     .btn-issue i { font-size: 18px; }
-    .btn-issue:hover { background: #333333; }
+    .btn-issue:hover { background: #333333; color: #fff; }
 
     .btn-checkin {
         display: inline-flex; align-items: center; gap: 5px;
@@ -72,7 +72,7 @@
     .btn-checkin i { font-size: 18px; }
     .btn-checkin:hover { background: #1b5e20; }
 
-     .btn-edit {
+    .btn-edit {
         display: inline-flex; align-items: center; gap: 5px;
         padding: 8px 16px; background: transparent; color: #111111;
         border: 1.5px solid #cccccc; border-radius: 8px;
@@ -81,7 +81,7 @@
     }
     .btn-edit i { font-size: 18px; }
     .btn-edit:hover { background: #f0f0f0; color: #111111; }
- 
+
     .btn-delete {
         display: inline-flex; align-items: center; gap: 5px;
         padding: 8px 16px; background: transparent; color: #c62828;
@@ -91,8 +91,7 @@
     }
     .btn-delete i { font-size: 18px; }
     .btn-delete:hover { background: #fce4ec; }
- 
-    
+
     .delete-warn-box {
         display: flex; align-items: flex-start; gap: 10px;
         background: #fce4ec; border: 1px solid #cccccc; border-radius: 8px;
@@ -106,7 +105,7 @@
         cursor: pointer; transition: background .15s;
     }
     .btn-modal-delete:hover { background: #b71c1c; }
- 
+
     .due-date-result {
         display: none; align-items: center; gap: 8px;
         background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px;
@@ -114,7 +113,7 @@
     }
     .due-date-result.show { display: flex; }
     .due-date-result i { font-size: 18px; flex-shrink: 0; }
- 
+
     .damage-box {
         display: flex; align-items: flex-start; gap: 10px;
         background: #fff8e1; border: 1.5px solid #ffe082; border-radius: 8px;
@@ -262,8 +261,9 @@
         border: 1.5px solid #cccccc; border-radius: 8px;
         font-size: 0.87rem; font-weight: 600; cursor: pointer;
         transition: background .15s; margin-right: 8px;
+        text-decoration: none;
     }
-    .btn-modal-cancel:hover { background: #f0f0f0; }
+    .btn-modal-cancel:hover { background: #f0f0f0; color: #111111; }
     .btn-modal-submit {
         display: inline-flex; align-items: center; gap: 4px;
         padding: 8px 18px; background: #111111; color: #fff;
@@ -272,6 +272,50 @@
     }
     .btn-modal-submit i { font-size: 18px; }
     .btn-modal-submit:hover { background: #333333; }
+
+    /* ── QR modal specific ── */
+    .qr-wrap {
+        text-align: center; padding: 8px 0 16px;
+    }
+    .qr-wrap img {
+        width: 210px; height: 210px;
+        border: 3px solid #eeeeee; border-radius: 12px;
+        display: block; margin: 0 auto 12px;
+    }
+    .qr-hint {
+        font-size: 0.82rem; color: #888; margin-bottom: 4px;
+    }
+    .qr-expire {
+        font-size: 0.75rem; color: #bbb;
+    }
+    .qr-status-row {
+        margin-top: 14px; display: flex; justify-content: center;
+    }
+    .poll-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 20px;
+        font-size: 0.78rem; font-weight: 700;
+    }
+    .poll-badge .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+    }
+    .poll-waiting { background: #fff8e1; color: #f57f17; }
+    .poll-waiting .dot { background: #f57f17; animation: blink 1.2s infinite; }
+    .poll-success { background: #e8f5e9; color: #2e7d32; }
+    .poll-success .dot { background: #2e7d32; }
+    .poll-error   { background: #ffebee; color: #c62828; }
+    .poll-error   .dot { background: #c62828; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── No-barcode warning inline ── */
+    .no-barcode-warn {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 0.82rem; color: #c62828;
+        background: #ffebee; border: 1px solid #ef9a9a;
+        border-radius: 6px; padding: 3px 10px; margin-left: 8px;
+        vertical-align: middle; cursor: pointer;
+    }
+    .no-barcode-warn i { font-size: 15px; }
 
     /* ── responsive ── */
     @media (max-width: 600px) {
@@ -288,7 +332,78 @@
       width: 100% !important;
       height: 100% !important;
       opacity: 0 !important;
-      pointer-events: none !important;  /* still lets clicks go through to Materialize */
+      pointer-events: none !important;
+    }
+
+    /* ── Wide issue modal ── */
+    .issue-modal-wide {
+        width: 88vw !important;
+        max-width: 1100px !important;
+        max-height: 90vh !important;
+        border-radius: 14px !important;
+        overflow: hidden !important;
+        top: 5% !important;
+    }
+    .issue-modal-wide .modal-content {
+        padding: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .issue-modal-body {
+        display: flex;
+        height: calc(90vh - 10px);
+        max-height: 700px;
+        min-height: 520px;
+        overflow: hidden;
+    }
+    .issue-panel-left {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 28px 28px 0;
+        border-right: 1.5px solid #eeeeee;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .issue-panel-right {
+        width: 340px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 28px 24px;
+        background: #fafafa;
+        overflow-y: auto;
+    }
+    .issue-qr-idle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        min-height: 200px;
+    }
+    .issue-qr-active {
+        width: 100%;
+    }
+    .issue-modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 0 20px;
+        border-top: 1px solid #eeeeee;
+        margin-top: auto;
+        flex-shrink: 0;
+        background: #fff;
+        position: sticky;
+        bottom: 0;
+    }
+    @media (max-width: 700px) {
+        .issue-modal-wide { width: 98vw !important; top: 2% !important; }
+        .issue-modal-body { flex-direction: column; height: auto; max-height: 92vh; overflow-y: auto; }
+        .issue-panel-right { width: 100%; border-right: none; border-top: 1.5px solid #eee; }
     }
 </style>
 
@@ -305,7 +420,6 @@
                 </div>
             </div>
             <div class="header-actions">
-                <!-- Back button -->
                 <a href="/files" class="btn-back">
                     <i class="material-icons">arrow_back</i>All Files
                 </a>
@@ -316,20 +430,25 @@
                 </a>
                 {% endif %}
 
-                <!-- Check In (only when on loan) -->
                 {% if file.status == 'On Loan' and file.loanID %}
                 <button class="btn-checkin modal-trigger" data-target="checkin-modal">
                     <i class="material-icons">assignment_return</i>Check In
                 </button>
-                
-               
                 {% endif %}
 
-                <!-- Issue File (only when available) -->
                 {% if file.status == 'Available' %}
-                <button class="btn-issue modal-trigger" data-target="issue-modal">
-                    <i class="material-icons">assignment_ind</i>Issue File
-                </button>
+                    {% if file.barcode %}
+                    <button class="btn-issue modal-trigger" data-target="issue-modal">
+                        <i class="material-icons">assignment_ind</i>Issue File
+                    </button>
+                    {% else %}
+                    <button class="btn-issue" disabled
+                            title="A barcode must be assigned before issuing this file"
+                            style="opacity:0.45;cursor:not-allowed;"
+                            onclick="alert('Please add a barcode to this file before issuing it.')">
+                        <i class="material-icons">assignment_ind</i>Issue File
+                    </button>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -381,6 +500,30 @@
                             {% if file.dateCreated %}{{ file.dateCreated.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
                         </span>
                     </div>
+
+                    <!-- Barcode field — view/download if exists, add if not -->
+                    <div class="field-item">
+                        <span class="field-label">Barcode</span>
+                        <span class="field-value mono">
+                            {% if file.barcode %}
+                                {{ file.barcode }}
+                                <button onclick="openViewBarcodeModal()"
+                                        class="no-barcode-warn"
+                                        style="border-color:#90caf9;color:#1565c0;background:#e3f2fd;"
+                                        title="View or re-download the barcode image">
+                                    <i class="material-icons">qr_code</i>View / Download
+                                </button>
+                            {% else %}
+                                <span style="color:#aaa;font-style:italic;font-family:inherit;">None assigned</span>
+                                <button onclick="openAddBarcodeModal()"
+                                        class="no-barcode-warn"
+                                        title="Add a barcode so this file can be scanned">
+                                    <i class="material-icons">add_circle_outline</i>Add Barcode
+                                </button>
+                            {% endif %}
+                        </span>
+                    </div>
+
                     <div class="field-item full-width">
                         <span class="field-label">Description</span>
                         <span class="field-value">{{ file.description or '&mdash;' }}</span>
@@ -487,7 +630,6 @@
                 <div class="section-title"><i class="material-icons">history</i>Loan History</div>
 
                 {% if file.loan %}
-                <!-- Active loan banner -->
                 <div class="warn-box" style="margin-bottom:16px;">
                     <i class="material-icons">swap_horiz</i>
                     <div>
@@ -501,7 +643,7 @@
                     </div>
                 </div>
 
-                  {% if file.loan.damageNotes %}
+                {% if file.loan.damageNotes %}
                 <div class="damage-box" style="margin-bottom:16px;">
                     <i class="material-icons">report_problem</i>
                     <div class="damage-box-content">
@@ -511,7 +653,6 @@
                 </div>
                 {% endif %}
 
-                <!-- Loan detail table -->
                 <div style="overflow-x:auto;">
                     <table class="loan-table">
                         <thead>
@@ -560,7 +701,6 @@
                 </div>
 
                 {% else %}
-                <!-- No active loan -->
                 <div class="info-box">
                     <i class="material-icons">check_circle</i>
                     This file is not currently on loan.
@@ -581,21 +721,24 @@
 </div>
 {% endif %}
 
-<!-- ══ Issue File Modal ═════════════════════════════════════════════════════ -->
+
+<!-- ══ Issue File Modal (wide split-screen) ════════════════════════════════ -->
 {% if file.status == 'Available' %}
-<div id="issue-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-title">
-            <i class="material-icons">assignment_ind</i>
-            Loan File #{{ file.fileID }}
-        </div>
-        <form method="POST" action="/loans" id="issue-form">
-            <input type="hidden" name="fileID" value="{{ file.fileID }}">
+<div id="issue-modal" class="modal issue-modal-wide">
+    <div class="modal-content issue-modal-body">
+
+        <!-- LEFT — form -->
+        <div class="issue-panel-left">
+            <div class="modal-title">
+                <i class="material-icons">assignment_ind</i>
+                Loan File #{{ file.fileID }}
+            </div>
+
             <div class="form-group">
                 <label class="form-label">Date</label>
                 <input type="text" class="form-input" id="loan-date-display"
                        readonly style="background:#f5f5f5;color:#555;cursor:default;">
-                <input type="hidden" name="loanDate" id="loan-date-value">
+                <input type="hidden" id="loan-date-value">
             </div>
             <div class="form-group">
                 <label class="form-label" for="patronID">Loaned To *</label>
@@ -614,8 +757,8 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="loan-days">Loan Period (days)</label>
-                <input type="number" id="loan-days" name="loanDays" class="form-input"
-                   placeholder="e.g. 14" min="1" max="365" value="14">
+                <input type="number" id="loan-days" class="form-input"
+                       placeholder="e.g. 14" min="1" max="365" value="14">
             </div>
             <div class="form-group">
                 <button type="button" class="btn-modal-cancel"
@@ -629,18 +772,129 @@
                     <span>Due: <strong id="due-date-text"></strong></span>
                 </div>
             </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
-        <button type="submit" form="issue-form" class="btn-modal-submit">
-            <i class="material-icons">assignment_ind</i>Loan
-        </button>
+
+            <div class="issue-modal-footer">
+                <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
+                <button type="button" id="btn-loan-submit" class="btn-modal-submit"
+                        onclick="submitLoanAndShowQR()">
+                    <i class="material-icons">assignment_ind</i>Loan
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT — inline QR panel -->
+        <div class="issue-panel-right" id="issue-qr-panel">
+            <div class="issue-qr-idle" id="issue-qr-idle">
+                <i class="material-icons" style="font-size:64px;color:#e0e0e0;">qr_code_2</i>
+                <p style="color:#bbb;font-size:.85rem;margin-top:12px;text-align:center;">
+                    Fill in the form and click <strong>Loan</strong> to generate the QR code.
+                </p>
+            </div>
+            <div class="issue-qr-active" id="issue-qr-active" style="display:none;">
+                <!-- Pending status badge -->
+                <div style="text-align:center;margin-bottom:14px;">
+                    <span id="loan-pending-badge"
+                          style="display:inline-flex;align-items:center;gap:6px;
+                                 background:#fff8e1;border:1.5px solid #ffe082;border-radius:20px;
+                                 padding:5px 14px;font-size:.78rem;font-weight:700;color:#f57f17;">
+                        <span style="width:8px;height:8px;border-radius:50%;background:#f57f17;
+                                     animation:blink 1.2s infinite;display:inline-block;"></span>
+                        Loan Pending — awaiting scan
+                    </span>
+                </div>
+
+                <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#888;margin-bottom:10px;text-align:center;">
+                    Scan to Confirm Loan
+                </p>
+                <img id="qr-image" src="" alt="QR Code"
+                     style="width:210px;height:210px;border:3px solid #eee;border-radius:12px;display:block;margin:0 auto 12px;">
+                <p class="qr-hint" style="text-align:center;">Or open on your phone:</p>
+                <a id="qr-scanner-link" href="#" target="_blank"
+                   style="font-size:.75rem;color:#1565c0;word-break:break-all;display:block;text-align:center;margin-bottom:8px;">
+                    Open scanner
+                </a>
+                <p class="qr-expire" id="qr-expire-text" style="text-align:center;margin-bottom:14px;font-size:.78rem;color:#bbb;">Expires in 10:00</p>
+                <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                    <span class="poll-badge poll-waiting" id="qr-poll-badge" style="display:none;">
+                        <span class="dot"></span>Waiting for scan…
+                    </span>
+                    <span class="poll-badge poll-success" id="qr-success-badge" style="display:none;">
+                        <span class="dot"></span>✓ Loan confirmed — reloading…
+                    </span>
+                    <span class="poll-badge poll-error" id="qr-error-badge" style="display:none;">
+                        <span class="dot"></span><span id="qr-error-text">Error</span>
+                    </span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;align-items:center;">
+                    <a id="qr-open-link" href="#" target="_blank" class="btn-issue"
+                       style="text-decoration:none;font-size:.82rem;width:100%;justify-content:center;">
+                        <i class="material-icons" style="font-size:16px;">open_in_new</i>Open on Phone
+                    </a>
+                    <button id="btn-cancel-loan" type="button"
+                            onclick="cancelPendingLoan()"
+                            style="display:inline-flex;align-items:center;gap:5px;width:100%;justify-content:center;
+                                   padding:8px 16px;background:transparent;color:#c62828;
+                                   border:1.5px solid #ef9a9a;border-radius:8px;
+                                   font-size:.82rem;font-weight:600;cursor:pointer;">
+                        <i class="material-icons" style="font-size:16px;">cancel</i>Cancel Loan
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endif %}
 
-<!-- Check In modal  -->
+
+
+
+<!-- ══ QR Scan Modal (return) ═══════════════════════════════════════════════ -->
+{% if file.status == 'On Loan' and file.loanID %}
+<div id="qr-return-modal" class="modal" style="max-width:420px;">
+    <div class="modal-content">
+        <div class="modal-title">
+            <i class="material-icons">qr_code_2</i>
+            Scan to Confirm Return
+        </div>
+        <p style="font-size:.87rem;color:#555;margin-bottom:16px;">
+            Scan this QR with your phone, then point the camera at the file's barcode label
+            to complete the check-in.
+        </p>
+        <div class="qr-wrap">
+            <img id="qr-return-image" src="" alt="QR Code">
+            <p class="qr-hint">Or open the link on your phone:</p>
+            <a id="qr-return-scanner-link" href="#" target="_blank"
+               style="font-size:.8rem;color:#1565c0;word-break:break-all;">
+                Open scanner
+            </a>
+            <p class="qr-expire" id="qr-return-expire-text" style="margin-top:8px;">Expires in 10:00</p>
+        </div>
+        <div class="qr-status-row">
+            <span class="poll-badge poll-waiting" id="qr-return-poll-badge" style="display:none;">
+                <span class="dot"></span>Waiting for scan…
+            </span>
+            <span class="poll-badge poll-success" id="qr-return-success-badge" style="display:none;">
+                <span class="dot"></span>✓ Return confirmed — reloading…
+            </span>
+            <span class="poll-badge poll-error" id="qr-return-error-badge" style="display:none;">
+                <span class="dot"></span><span id="qr-return-error-text">Error</span>
+            </span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="btn-modal-cancel modal-close" id="qr-return-close-btn"
+           onclick="stopPolling()">Close</a>
+        <a id="qr-return-open-link" href="#" target="_blank"
+           class="btn-checkin" style="text-decoration:none;">
+            <i class="material-icons">open_in_new</i>Open on Phone
+        </a>
+    </div>
+</div>
+{% endif %}
+
+
+<!-- ══ Check In Modal ═══════════════════════════════════════════════════════ -->
 {% if file.status == 'On Loan' and file.loanID %}
 <div id="checkin-modal" class="modal">
     <div class="modal-content">
@@ -648,35 +902,143 @@
             <i class="material-icons">assignment_return</i>
             Check In File #{{ file.fileID }}
         </div>
-        <form method="POST" action="/loans/{{ file.loanID }}/checkin" id="checkin-form">
-            <div class="info-box" style="margin-bottom:18px;">
-                <i class="material-icons">info</i>
-                <div>Checking in <strong>Loan #{{ file.loanID }}</strong> will mark this file as <strong>Available</strong>.</div>
+
+        {% if not file.barcode %}
+        <div class="warn-box" style="margin-bottom:16px;">
+            <i class="material-icons">warning</i>
+            <div>
+                This file has <strong>no barcode registered</strong>. You can still check it in
+                manually, but the scan-to-return flow won't work without one.
+                <a href="javascript:void(0)" onclick="openAddBarcodeModal()"
+                   style="color:#c62828;font-weight:700;text-decoration:underline;">Add barcode</a>
             </div>
-            <div class="form-group">
-                <label class="form-label" for="damage_notes">
-                    Condition / Damage Notes
-                    <span style="color:#aaa;font-weight:500;text-transform:none;">(optional)</span>
-                </label>
-                <textarea name="damage_notes" id="damage_notes" class="form-input"
-                          placeholder="Note any damage — leave blank if undamaged…"
-                          maxlength="1000"
-                          style="height:100px;padding-top:10px;resize:vertical;"></textarea>
-                <p class="form-hint">Saved against the loan record.</p>
-            </div>
-        </form>
+        </div>
+        {% endif %}
+
+        <div class="info-box" style="margin-bottom:18px;">
+            <i class="material-icons">info</i>
+            <div>Checking in <strong>Loan #{{ file.loanID }}</strong> will mark this file as <strong>Available</strong>.</div>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="damage_notes">
+                Condition / Damage Notes
+                <span style="color:#aaa;font-weight:500;text-transform:none;">(optional)</span>
+            </label>
+            <textarea name="damage_notes" id="damage_notes" class="form-input"
+                      placeholder="Note any damage — leave blank if undamaged…"
+                      maxlength="1000"
+                      style="height:100px;padding-top:10px;resize:vertical;"></textarea>
+            <p class="form-hint">Saved against the loan record.</p>
+        </div>
     </div>
     <div class="modal-footer">
         <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
-        <button type="submit" form="checkin-form" class="btn-modal-submit"
-                style="background:#2e7d32;">
-            <i class="material-icons">assignment_return</i>Confirm Check In
+
+        <!-- Manual check-in (traditional form POST) -->
+        <form method="POST" action="/loans/{{ file.loanID }}/checkin" style="display:inline;margin:0;">
+            <input type="hidden" name="damage_notes" id="damage_notes_hidden">
+            <button type="submit" class="btn-modal-submit"
+                    style="background:#2e7d32;margin-right:6px;"
+                    onclick="syncDamageNotes()">
+                <i class="material-icons">assignment_return</i>Manual Check In
+            </button>
+        </form>
+
+        <!-- Scan-to-return -->
+        <button type="button" class="btn-modal-submit"
+                style="background:#1565c0;"
+                onclick="submitReturnAndShowQR()">
+            <i class="material-icons">qr_code_2</i>Scan to Return
         </button>
     </div>
 </div>
 {% endif %}
 
-<!--  Delete modal  -->
+
+<!-- ══ Add Barcode Modal ════════════════════════════════════════════════════ -->
+<div id="add-barcode-modal" class="modal" style="max-width:420px;">
+    <div class="modal-content">
+        <div class="modal-title">
+            <i class="material-icons">qr_code</i>
+            Add Barcode — File #{{ file.fileID }}
+        </div>
+        <div class="form-group">
+            <label class="form-label">Barcode value</label>
+            <input type="text" id="new-barcode-input" class="form-input"
+                   placeholder="e.g. FILE-0042">
+            <p class="form-hint">Must be unique across all files. Use the Generate button to auto-fill.</p>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button type="button" class="btn-modal-cancel"
+                    onclick="generateBarcodePreview()"
+                    style="border-color:#90caf9;color:#1565c0;">
+                <i class="material-icons" style="font-size:16px;">auto_awesome</i>
+                Generate
+            </button>
+            <button type="button" class="btn-modal-cancel"
+                    id="btn-download-barcode"
+                    style="display:none;"
+                    onclick="downloadBarcode()">
+                <i class="material-icons" style="font-size:16px;">download</i>
+                Download PNG
+            </button>
+        </div>
+        <div id="barcode-preview" style="display:none;text-align:center;margin-bottom:4px;">
+            <img id="barcode-preview-img" src=""
+                 style="max-width:100%;border:1.5px solid #eee;border-radius:8px;padding:8px;">
+        </div>
+        <div id="barcode-save-error" style="display:none;"
+             class="warn-box" style="margin-top:8px;">
+            <i class="material-icons">error</i>
+            <span id="barcode-save-error-text">Failed to save barcode.</span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
+        <button type="button" class="btn-modal-submit" onclick="saveBarcode()">
+            <i class="material-icons">save</i>Save Barcode
+        </button>
+    </div>
+</div>
+
+
+<!-- ══ View / Re-download Barcode Modal ════════════════════════════════════ -->
+{% if file.barcode %}
+<div id="view-barcode-modal" class="modal" style="max-width:440px;">
+    <div class="modal-content">
+        <div class="modal-title">
+            <i class="material-icons">qr_code</i>
+            Barcode — File #{{ file.fileID }}
+        </div>
+        <p style="font-size:.85rem;color:#555;margin-bottom:16px;">
+            Barcode value: <strong style="font-family:monospace;">{{ file.barcode }}</strong>
+        </p>
+        <div id="view-barcode-loading" style="text-align:center;padding:24px 0;color:#bbb;">
+            <i class="material-icons" style="font-size:36px;">hourglass_empty</i>
+            <p style="margin:8px 0 0;font-size:.85rem;">Loading barcode…</p>
+        </div>
+        <div id="view-barcode-preview" style="display:none;text-align:center;margin-bottom:8px;">
+            <img id="view-barcode-img" src=""
+                 style="max-width:100%;border:1.5px solid #eee;border-radius:8px;padding:10px;">
+        </div>
+        <div id="view-barcode-error" style="display:none;" class="warn-box">
+            <i class="material-icons">error</i>
+            <span>Could not load barcode image.</span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="btn-modal-cancel modal-close">Close</a>
+        <button type="button" class="btn-modal-submit"
+                style="background:#1565c0;"
+                onclick="redownloadBarcode()">
+            <i class="material-icons">download</i>Download PNG
+        </button>
+    </div>
+</div>
+{% endif %}
+
+
+<!-- ══ Delete Modal ═════════════════════════════════════════════════════════ -->
 {% if file.status == 'Available' %}
 <div id="delete-modal" class="modal">
     <div class="modal-content">
@@ -708,47 +1070,504 @@
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize modals and selects
-        M.Modal.init(document.querySelectorAll('.modal'), { dismissible: true });
-        M.FormSelect.init(document.querySelectorAll('select'));
+// ── Jinja data passed to JS ───────────────────────────────────────────────────
+const FILE_ID      = {{ file.fileID }};
+const FILE_BARCODE = {{ file.barcode | default(none) | tojson }};   // null or string
+const LOAN_ID      = {{ file.loanID | default(none) | tojson }};    // null or int
 
-        // Set today's date
-        var today = new Date();
-        var dd   = String(today.getDate()).padStart(2, '0');
-        var mm   = String(today.getMonth() + 1).padStart(2, '0');
-        var yyyy = today.getFullYear();
-        var el  = document.getElementById('loan-date-display');
-        var val = document.getElementById('loan-date-value');
-        if (el)  el.value  = dd + '/' + mm + '/' + yyyy;
-        if (val) val.value = yyyy + '-' + mm + '-' + dd;
-    });
-
-    function calcDueDate() {
-        var days = parseInt(document.getElementById('loan-days').value, 10);
-        if (!days || days < 1) {
-            alert('Enter a valid number of days first.');
-            return;
-        }
-        var due = new Date();
-        due.setDate(due.getDate() + days);
-        var dd   = String(due.getDate()).padStart(2, '0');
-        var mm   = String(due.getMonth() + 1).padStart(2, '0');
-        var yyyy = due.getFullYear();
-        document.getElementById('due-date-text').textContent = dd + '/' + mm + '/' + yyyy;
-        document.getElementById('due-date-result').classList.add('show');
-    }
-
-    // Safe patron validation on submit
-    document.getElementById('issue-form')?.addEventListener('submit', function(e) {
-        const patronSelect = document.getElementById('patronID');
-        if (!patronSelect || !patronSelect.value) {
-            e.preventDefault();
-            alert('Please select a patron.');
-            if (patronSelect) {
-                patronSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    M.Modal.init(document.querySelectorAll('.modal'), {
+        dismissible: true,
+        onCloseEnd: function(el) {
+            // If staff closes the issue modal while a loan is pending, cancel it.
+            // _activeLoanID is cleared to null the moment scan confirms,
+            // so this block only runs for genuinely un-scanned loans.
+            if (el.id === 'issue-modal' && window._activeLoanID) {
+                const loanID = window._activeLoanID;
+                window._activeLoanID = null;  // clear immediately to prevent double-fire
+                stopPolling();
+                fetch(`/loans/${loanID}`, { credentials: 'include' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(info => {
+                        if (info && info.loanStatus === 'Pending') {
+                            return fetch(`/loans/${loanID}/cancel`, {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            });
+                        }
+                    })
+                    .catch(() => {});
             }
         }
     });
+    M.FormSelect.init(document.querySelectorAll('select'));
+
+    // Set today's date in the issue form
+    var today = new Date();
+    var dd    = String(today.getDate()).padStart(2, '0');
+    var mm    = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy  = today.getFullYear();
+    var dispEl = document.getElementById('loan-date-display');
+    var valEl  = document.getElementById('loan-date-value');
+    if (dispEl) dispEl.value = `${dd}/${mm}/${yyyy}`;
+    if (valEl)  valEl.value  = `${yyyy}-${mm}-${dd}`;
+});
+
+// ── Due-date helper ───────────────────────────────────────────────────────────
+function calcDueDate() {
+    var days = parseInt(document.getElementById('loan-days').value, 10);
+    if (!days || days < 1) { alert('Enter a valid number of days first.'); return; }
+    var due  = new Date();
+    due.setDate(due.getDate() + days);
+    var dd   = String(due.getDate()).padStart(2, '0');
+    var mm   = String(due.getMonth() + 1).padStart(2, '0');
+    var yyyy = due.getFullYear();
+    document.getElementById('due-date-text').textContent = `${dd}/${mm}/${yyyy}`;
+    document.getElementById('due-date-result').classList.add('show');
+}
+
+// Copy damage_notes textarea value into the hidden form field before submit
+function syncDamageNotes() {
+    var src = document.getElementById('damage_notes');
+    var dst = document.getElementById('damage_notes_hidden');
+    if (src && dst) dst.value = src.value;
+}
+
+// ── Helper: close issue modal, open add-barcode modal ────────────────────────
+function closeIssueOpenBarcode() {
+    M.Modal.getInstance(document.getElementById('issue-modal')).close();
+    setTimeout(openAddBarcodeModal, 250);
+}
+
+// ── Polling state ─────────────────────────────────────────────────────────────
+let _pollInterval  = null;
+let _countdownInt  = null;
+
+function stopPolling() {
+    if (_pollInterval)  { clearInterval(_pollInterval);  _pollInterval  = null; }
+    if (_countdownInt)  { clearInterval(_countdownInt);  _countdownInt  = null; }
+}
+
+// ── Countdown timer shown inside the QR modal ─────────────────────────────────
+function startCountdown(expireEl, ttlSeconds) {
+    let remaining = ttlSeconds;
+    if (_countdownInt) clearInterval(_countdownInt);
+    _countdownInt = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(_countdownInt);
+            if (expireEl) expireEl.textContent = 'Expired — close and try again.';
+            stopPolling();
+            return;
+        }
+        const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+        const s = String(remaining % 60).padStart(2, '0');
+        if (expireEl) expireEl.textContent = `Expires in ${m}:${s}`;
+    }, 1000);
+}
+
+// ── Show QR modal helper ──────────────────────────────────────────────────────
+function populateQRModal(qrData, mode) {
+    const isIssue   = (mode === 'issue');
+    const imgEl     = document.getElementById(isIssue ? 'qr-image'            : 'qr-return-image');
+    const linkEl    = document.getElementById(isIssue ? 'qr-scanner-link'     : 'qr-return-scanner-link');
+    const openEl    = document.getElementById(isIssue ? 'qr-open-link'        : 'qr-return-open-link');
+    const expireEl  = document.getElementById(isIssue ? 'qr-expire-text'      : 'qr-return-expire-text');
+    const pollBadge = document.getElementById(isIssue ? 'qr-poll-badge'       : 'qr-return-poll-badge');
+    const okBadge   = document.getElementById(isIssue ? 'qr-success-badge'    : 'qr-return-success-badge');
+    const errBadge  = document.getElementById(isIssue ? 'qr-error-badge'      : 'qr-return-error-badge');
+    const errText   = document.getElementById(isIssue ? 'qr-error-text'       : 'qr-return-error-text');
+    const modalEl   = document.getElementById(isIssue ? 'qr-modal'            : 'qr-return-modal');
+
+    imgEl.src     = `data:image/png;base64,${qrData.qr_b64}`;
+    linkEl.href   = qrData.scanner_url;
+    linkEl.textContent = qrData.scanner_url;
+    if (openEl) openEl.href = qrData.scanner_url;
+
+    // Reset badges
+    pollBadge.style.display = 'none';
+    okBadge.style.display   = 'none';
+    errBadge.style.display  = 'none';
+    pollBadge.style.display = 'inline-flex';
+
+    startCountdown(expireEl, qrData.expires_in || 600);
+
+    // Open modal
+    M.Modal.getInstance(modalEl).open();
+
+    // Poll /loans/<id> until scan confirms (issue) or returnDate set (return)
+    stopPolling();
+    _pollInterval = setInterval(async () => {
+        try {
+            const res  = await fetch(`/loans/${window._activeLoanID || LOAN_ID}`, {
+                credentials: 'include',
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            const confirmed = isIssue
+                ? (data.loanStatus === 'Active')
+                : (data.loanStatus === 'Returned' || (data.returnDate && data.returnDate !== 'null' && data.returnDate !== ''));
+
+            if (confirmed) {
+                stopPolling();
+                pollBadge.style.display = 'none';
+                okBadge.style.display   = 'inline-flex';
+                setTimeout(() => location.reload(), 1800);
+            }
+        } catch (e) {
+            // silently ignore network hiccups; keep polling
+        }
+    }, 2500);
+
+    // Cancel pending loan if staff closes the QR modal without scanning
+    if (isIssue) {
+        const cancelLoanID = window._activeLoanID || LOAN_ID;
+        modalEl.addEventListener('modal:close', async function onClose() {
+            modalEl.removeEventListener('modal:close', onClose);
+            // Only cancel if still pending (poller hasn't confirmed yet)
+            try {
+                const check = await fetch(`/loans/${cancelLoanID}`);
+                const info  = await check.json();
+                if (info.loanStatus === 'Pending') {
+                    await fetch(`/loans/${cancelLoanID}/cancel`, { method: 'POST' });
+                    console.log(`Pending loan #${cancelLoanID} cancelled.`);
+                }
+            } catch(e) { /* ignore */ }
+        });
+    }
+}
+
+// ── Issue flow ────────────────────────────────────────────────────────────────
+async function submitLoanAndShowQR() {
+    const patronID  = document.getElementById('patronID').value;
+    const loanDays  = document.getElementById('loan-days').value || 14;
+    const loanDate  = document.getElementById('loan-date-value').value;
+
+    if (!patronID) {
+        alert('Please select a patron before continuing.');
+        return;
+    }
+
+    // Disable button to prevent double-submit
+    const btn = document.getElementById('btn-loan-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="material-icons">hourglass_empty</i>Creating…';
+
+    try {
+        // 1. Create loan via fetch
+        const loanRes = await fetch('/loans', {
+            method:  'POST',
+            headers: {
+                'Content-Type':    'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: new URLSearchParams({ fileID: FILE_ID, patronID, loanDate, loanDays }),
+        });
+
+        const loanData = await loanRes.json();
+
+        if (!loanRes.ok) {
+            alert('Failed to create loan: ' + (loanData.error || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerHTML = '<i class="material-icons">assignment_ind</i>Loan';
+            return;
+        }
+
+        const newLoanID = loanData.loanID;
+        window._activeLoanID = newLoanID;
+
+        // 2. Get QR code from backend
+        const qrRes  = await fetch('/api/loans/scan-token', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ loanID: newLoanID, mode: 'issue' }),
+        });
+        const qrData = await qrRes.json();
+
+        if (!qrRes.ok) {
+            alert('Loan created (ID #' + newLoanID + ') but QR generation failed. Reloading…');
+            location.reload();
+            return;
+        }
+
+        // 3. Show QR inline in the right panel (no separate modal needed)
+        Object.defineProperty(window, 'LOAN_ID', { value: newLoanID, writable: true });
+        showInlineQR(qrData, newLoanID);
+
+    } catch (err) {
+        alert('Network error: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="material-icons">assignment_ind</i>Loan';
+    }
+}
+
+// ── Show QR inline in the issue-modal right panel ────────────────────────────
+function showInlineQR(qrData, loanID) {
+    const idleEl    = document.getElementById('issue-qr-idle');
+    const activeEl  = document.getElementById('issue-qr-active');
+    const imgEl     = document.getElementById('qr-image');
+    const linkEl    = document.getElementById('qr-scanner-link');
+    const openEl    = document.getElementById('qr-open-link');
+    const expireEl  = document.getElementById('qr-expire-text');
+    const pollBadge = document.getElementById('qr-poll-badge');
+    const okBadge   = document.getElementById('qr-success-badge');
+    const errBadge  = document.getElementById('qr-error-badge');
+
+    if (idleEl)   idleEl.style.display   = 'none';
+    if (activeEl) activeEl.style.display = 'block';
+
+    imgEl.src = `data:image/png;base64,${qrData.qr_b64}`;
+    linkEl.href = qrData.scanner_url;
+    linkEl.textContent = qrData.scanner_url;
+    if (openEl) openEl.href = qrData.scanner_url;
+
+    // Reset badges
+    pollBadge.style.display = 'none';
+    okBadge.style.display   = 'none';
+    errBadge.style.display  = 'none';
+    pollBadge.style.display = 'inline-flex';
+
+    // ── Fix: use expires_in from server (default 600 = 10 min) ──────────────
+    const ttl = (typeof qrData.expires_in === 'number' && qrData.expires_in > 0)
+        ? qrData.expires_in : 600;
+    startCountdown(expireEl, ttl);
+
+    // ── Update the file status badge on the detail page to "Pending" ─────────
+    updateStatusBadgePending();
+
+    // ── Poll until scan confirms ──────────────────────────────────────────────
+    stopPolling();
+    window._activeLoanID = loanID;
+    _pollInterval = setInterval(async () => {
+        try {
+            const res  = await fetch(`/loans/${loanID}`, { credentials: 'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.loanStatus === 'Active') {
+                stopPolling();
+                // ── Clear activeLoanID FIRST so the modal close handler
+                //    doesn't try to cancel a loan that just confirmed ──────────
+                window._activeLoanID = null;
+                pollBadge.style.display = 'none';
+                okBadge.style.display   = 'inline-flex';
+                // Hide pending badge, show confirmed
+                const pb = document.getElementById('loan-pending-badge');
+                if (pb) {
+                    pb.style.background = '#e8f5e9';
+                    pb.style.borderColor = '#a5d6a7';
+                    pb.style.color = '#2e7d32';
+                    pb.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:#2e7d32;display:inline-block;"></span> Loan Confirmed';
+                }
+                setTimeout(() => location.reload(), 1800);
+            }
+        } catch (e) { /* ignore */ }
+    }, 2500);
+}
+
+// ── Update the visible status badge on the page to "Pending" ─────────────────
+function updateStatusBadgePending() {
+    // Find all status badges on the page and swap to a "Pending" amber style
+    const badges = document.querySelectorAll('.status-badge');
+    badges.forEach(b => {
+        b.className = 'status-badge';
+        b.style.background = '#fff8e1';
+        b.style.color = '#f57f17';
+        b.innerHTML = '<span class="dot" style="background:#f57f17;width:7px;height:7px;border-radius:50%;flex-shrink:0;"></span>Pending';
+    });
+}
+
+// ── Cancel Pending Loan ───────────────────────────────────────────────────────
+async function cancelPendingLoan() {
+    const loanID = window._activeLoanID;
+    if (!loanID) return;
+
+    const btn = document.getElementById('btn-cancel-loan');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="material-icons" style="font-size:16px;">hourglass_empty</i>Cancelling…'; }
+
+    stopPolling();
+    window._activeLoanID = null;  // clear immediately — prevent onCloseEnd from also firing
+
+    try {
+        const res = await fetch(`/loans/${loanID}/cancel`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (res.ok) {
+            // Reset the right panel back to idle
+            document.getElementById('issue-qr-active').style.display = 'none';
+            document.getElementById('issue-qr-idle').style.display   = 'flex';
+            // Re-enable the Loan button
+            const loanBtn = document.getElementById('btn-loan-submit');
+            if (loanBtn) {
+                loanBtn.disabled = false;
+                loanBtn.innerHTML = '<i class="material-icons">assignment_ind</i>Loan';
+            }
+            // Restore status badge to Available
+            const badges = document.querySelectorAll('.status-badge');
+            badges.forEach(b => {
+                b.className = 'status-badge badge-available';
+                b.style = '';
+                b.innerHTML = '<span class="dot"></span>Available';
+            });
+            window._activeLoanID = null;
+        } else {
+            alert('Could not cancel the loan. Please try manually from the Loans page.');
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="material-icons" style="font-size:16px;">cancel</i>Cancel Loan'; }
+        }
+    } catch (err) {
+        alert('Network error: ' + err.message);
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="material-icons" style="font-size:16px;">cancel</i>Cancel Loan'; }
+    }
+}
+
+
+
+// ── Return flow ───────────────────────────────────────────────────────────────
+async function submitReturnAndShowQR() {
+    if (!LOAN_ID) { alert('No active loan found for this file.'); return; }
+
+    // Warn if no barcode
+    if (!FILE_BARCODE) {
+        const go = confirm(
+            'Warning: This file has no barcode registered.\n\n' +
+            'The scan-to-return flow requires a barcode. ' +
+            'Add one first, or use Manual Check In.\n\nProceed anyway?'
+        );
+        if (!go) return;
+    }
+
+    try {
+        const qrRes  = await fetch('/api/loans/scan-token', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ loanID: LOAN_ID, mode: 'return' }),
+        });
+        const qrData = await qrRes.json();
+
+        if (!qrRes.ok) {
+            alert('Could not generate QR: ' + (qrData.error || 'Unknown error'));
+            return;
+        }
+
+        // Close checkin modal, show return QR modal
+        M.Modal.getInstance(document.getElementById('checkin-modal')).close();
+        setTimeout(() => populateQRModal(qrData, 'return'), 280);
+
+    } catch (err) {
+        alert('Network error: ' + err.message);
+    }
+}
+
+
+// ── View / Re-download barcode modal ─────────────────────────────────────────
+async function openViewBarcodeModal() {
+    M.Modal.getInstance(document.getElementById('view-barcode-modal')).open();
+
+    const loadingEl = document.getElementById('view-barcode-loading');
+    const previewEl = document.getElementById('view-barcode-preview');
+    const imgEl     = document.getElementById('view-barcode-img');
+    const errorEl   = document.getElementById('view-barcode-error');
+
+    // Reset state
+    loadingEl.style.display = 'block';
+    previewEl.style.display = 'none';
+    errorEl.style.display   = 'none';
+
+    try {
+        const res  = await fetch('/api/barcode/generate', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ value: FILE_BARCODE }),
+        });
+        const data = await res.json();
+        loadingEl.style.display = 'none';
+        if (data.barcode_b64) {
+            imgEl.src = `data:image/png;base64,${data.barcode_b64}`;
+            previewEl.style.display = 'block';
+        } else {
+            errorEl.style.display = 'flex';
+        }
+    } catch (err) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display   = 'flex';
+    }
+}
+
+function redownloadBarcode() {
+    if (!FILE_BARCODE) return;
+    window.open(`/api/barcode/download/${encodeURIComponent(FILE_BARCODE)}`, '_blank');
+}
+
+// ── Add-barcode modal ─────────────────────────────────────────────────────────
+function openAddBarcodeModal() {
+    // Pre-fill with a suggested value
+    const suggested = `FILE-${String(FILE_ID).padStart(4, '0')}`;
+    document.getElementById('new-barcode-input').value = suggested;
+    document.getElementById('barcode-preview').style.display      = 'none';
+    document.getElementById('btn-download-barcode').style.display = 'none';
+    document.getElementById('barcode-save-error').style.display   = 'none';
+    M.Modal.getInstance(document.getElementById('add-barcode-modal')).open();
+}
+
+async function generateBarcodePreview() {
+    const value = document.getElementById('new-barcode-input').value.trim();
+    if (!value) { alert('Enter a barcode value first.'); return; }
+
+    try {
+        const res  = await fetch('/api/barcode/generate', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ value }),
+        });
+        const data = await res.json();
+        if (data.barcode_b64) {
+            document.getElementById('barcode-preview-img').src = `data:image/png;base64,${data.barcode_b64}`;
+            document.getElementById('barcode-preview').style.display      = 'block';
+            document.getElementById('btn-download-barcode').style.display = 'inline-flex';
+        } else {
+            alert('Failed to generate barcode: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Network error: ' + err.message);
+    }
+}
+
+function downloadBarcode() {
+    const value = document.getElementById('new-barcode-input').value.trim();
+    if (!value) return;
+    window.open(`/api/barcode/download/${encodeURIComponent(value)}`, '_blank');
+}
+
+async function saveBarcode() {
+    const value = document.getElementById('new-barcode-input').value.trim();
+    const errEl = document.getElementById('barcode-save-error');
+    const errTx = document.getElementById('barcode-save-error-text');
+    errEl.style.display = 'none';
+
+    if (!value) { alert('Enter a barcode value.'); return; }
+
+    try {
+        const res = await fetch(`/files/${FILE_ID}`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ fileID: FILE_ID, barcode: value }),
+        });
+
+        if (res.ok) {
+            location.reload();
+        } else {
+            const data = await res.json();
+            errTx.textContent = data.error || 'Failed to save. The barcode may already be in use.';
+            errEl.style.display = 'flex';
+        }
+    } catch (err) {
+        errTx.textContent = 'Network error: ' + err.message;
+        errEl.style.display = 'flex';
+    }
+}
 </script>
 {% endblock %}
