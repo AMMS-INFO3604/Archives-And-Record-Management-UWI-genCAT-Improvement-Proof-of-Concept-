@@ -347,80 +347,14 @@
     .lm-file-row i { font-size: 16px; color: #111111; flex-shrink: 0; }
     .lm-file-id { font-family: monospace; font-size: 0.78rem; color: #aaa; margin-left: 6px; }
 
-    /* Per-file condition note shown inline inside a file row in the detail modal.
-       Only rendered when f.conditionNotes is set on the file. */
-    .lm-file-condition {
-        display: flex; align-items: flex-start; gap: 4px;
-        font-size: 0.75rem; color: #e65100;
-        background: #fff8e1; border-radius: 4px;
-        padding: 3px 7px; margin-top: 4px;
-        line-height: 1.4;
-    }
-
-    /* "Return Loan" button row at the bottom of the detail modal.
-       Only rendered when the loan hasn't been returned yet (d.returnDate is null). */
+    /* "Go to File" footer row at the bottom of the detail modal */
     .lm-return-row {
         padding: 14px 24px 18px;
         border-top: 1.5px solid #f0f0f0;
         display: flex;
         justify-content: flex-end;
+        gap: 8px;
     }
-
-    /* ── Return confirmation modal (Materialize) ─────────────────────────────
-       Materialize's default z-index is 1003 for the modal and 1002 for the
-       backdrop — both below our loan overlay at 2000. We override them here
-       so the confirm dialog appears ON TOP of the detail overlay. */
-    #returnConfirmModal  { z-index: 3001 !important; }
-    .modal-overlay       { z-index: 3000 !important; }
-
-    #returnConfirmModal .modal-content { padding: 28px 28px 0; }
-    #returnConfirmModal .modal-footer  { padding: 12px 20px 16px; border-top: 1.5px solid #f0f0f0; }
-
-    /* Red circle icon at the top of the confirm modal */
-    .confirm-icon-wrap {
-        width: 56px; height: 56px; border-radius: 50%;
-        background: #fce4ec; display: flex;
-        align-items: center; justify-content: center;
-        margin: 0 auto 16px;
-    }
-    .confirm-icon-wrap i { font-size: 28px; color: #c62828; }
-    .confirm-title { font-size: 1.05rem; font-weight: 800; color: #1a1a1a; margin: 0 0 8px; text-align: center; }
-    .confirm-msg   { font-size: 0.88rem; color: #666; line-height: 1.6; margin: 0 0 18px; text-align: center; }
-
-    /* ── Damage / condition note textareas inside the confirm modal ──────────
-       Used for both the overall loan summary and each per-file note. */
-    .damage-section-title {
-        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.8px;
-        text-transform: uppercase; color: #888;
-        display: flex; align-items: center; gap: 5px;
-        margin-bottom: 6px; margin-top: 4px;
-    }
-    .damage-textarea {
-        width: 100%; min-height: 72px;
-        border: 1.5px solid #cccccc !important;
-        border-radius: 8px; padding: 10px 12px;
-        font-size: 0.875rem; color: #333; resize: vertical;
-        background: #fafafa; font-family: inherit;
-        transition: border-color .15s; box-sizing: border-box;
-        outline: none; margin-bottom: 4px;
-    }
-    .damage-textarea:focus { border-color: #111111 !important; }
-    .damage-hint { font-size: 0.75rem; color: #bbb; margin: 0 0 12px; }
-
-    /* Per-file section inside the confirm modal — injected by openConfirm() */
-    .per-file-divider { border: none; border-top: 1.5px solid #f0f0f0; margin: 14px 0 12px; }
-    .per-file-section-hdr {
-        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.8px;
-        text-transform: uppercase; color: #111111;
-        display: flex; align-items: center; gap: 5px; margin-bottom: 10px;
-    }
-    .per-file-item { margin-bottom: 12px; }
-    .per-file-label {
-        display: flex; align-items: center; gap: 6px;
-        font-size: 0.8rem; font-weight: 600; color: #444; margin-bottom: 5px;
-    }
-    .per-file-label i { font-size: 15px; color: #111111; }
-    .per-file-label .pf-id { font-family: monospace; color: #aaa; font-size: .75rem; }
 
     /* Spinner shown while the detail modal is fetching data from /loans/<id> */
     .lm-loading { text-align: center; padding: 40px 20px; color: #aaa; }
@@ -716,75 +650,6 @@
 
 </div>
 
-{# ══════════════════════════════════════════════════════════════════════════════
-   RETURN CONFIRMATION MODAL (Materialize)
-   This is a standard Materialize modal. It sits at z-index 3001 so it appears
-   above the custom loan detail overlay (z-index 2000).
-   openConfirm(loanID, files) sets the form action and injects per-file textareas
-   before calling M.Modal.open().
-══════════════════════════════════════════════════════════════════════════════ #}
-<div id="returnConfirmModal" class="modal" style="border-radius:14px;max-width:520px;">
-  <div class="modal-content">
-
-    {# Red icon at the top #}
-    <div class="confirm-icon-wrap">
-      <i class="material-icons">assignment_return</i>
-    </div>
-    <h5 class="confirm-title">Return this Loan?</h5>
-
-    {# Confirmation message — populated by openConfirm() with the loan number #}
-    <p class="confirm-msg" id="confirmMsg">
-      This will mark the loan as returned and set all attached files back to
-      <strong>Available</strong>.
-    </p>
-
-    {# The form action is set by openConfirm() to /loans/<id>/return.
-       Both the overall summary and per-file textareas are inside this form
-       so they all submit together in one POST. #}
-    <form id="confirmForm" method="POST" action="">
-
-      {# Overall loan-level summary — one note for the whole return event.
-         Sent as damage_notes in the POST body. #}
-      <div class="damage-section-title">
-        <i class="material-icons" style="font-size:14px;vertical-align:middle;">summarize</i>
-        Overall Return Summary
-      </div>
-      <textarea
-        id="damageNotes"
-        name="damage_notes"
-        class="damage-textarea"
-        placeholder="General condition notes for the whole loan — e.g. all files in good condition, some wear noted…"
-        maxlength="1000"
-      ></textarea>
-      <p class="damage-hint">Optional — leave blank if nothing to note overall.</p>
-
-      {# Per-file condition textareas — this div is empty on page load.
-         openConfirm() builds one textarea per file and injects it here.
-         Each textarea is named file_condition_<fileID> so the view can
-         match them back to individual File records. #}
-      <div id="perFileConditions"></div>
-
-    </form>
-  </div>
-
-  <div class="modal-footer">
-    {# Cancel closes the modal without submitting — Materialize handles this
-       automatically when the element has the modal-close class. #}
-    <a href="#!" class="modal-close btn-flat waves-effect grey-text"
-       style="height:38px;line-height:38px;margin-right:6px;">
-      Cancel
-    </a>
-    {# Submit button calls submitReturnForm() which programmatically submits
-       the #confirmForm — we can't put type="submit" directly here because
-       the button is outside the <form> element. #}
-    <button type="button" onclick="submitReturnForm()"
-            class="btn waves-effect waves-light red darken-2"
-            style="height:38px;line-height:38px;padding:0 20px;font-size:.85rem;">
-      <i class="material-icons left" style="font-size:16px;line-height:38px;">assignment_return</i>
-      Yes, Return
-    </button>
-  </div>
-</div>
 
 {# ══════════════════════════════════════════════════════════════════════════════
    LOAN DETAIL OVERLAY
@@ -900,10 +765,8 @@ function openLoanModal(loanID) {
         }
 
         /* ── Build and inject the full modal body ───────────────────────────
-           Sections: loan metadata grid, optional damage notes box, files list,
-           and the Return Loan button (only for loans not yet returned).
-           JSON.stringify(d.files) passes the files array into openConfirm()
-           so it can build the per-file condition textareas. */
+           Sections: loan metadata grid, files list, and a Go to File button
+           for active loans (redirects to file detail which has the QR check-in) */
         document.getElementById('lm-inner').innerHTML =
             '<div class="lm-body">' +
                 '<div class="lm-section-title"><i class="material-icons">info</i> Loan Details</div>' +
@@ -915,27 +778,23 @@ function openLoanModal(loanID) {
                     '<div class="lm-field"><span class="lm-label">Loan Date</span><span class="lm-value">' + d.loanDate + '</span></div>' +
                     '<div class="lm-field"><span class="lm-label">Return Date</span><span class="lm-value">' + (d.returnDate || '<span class="badge badge-active" style="font-size:.75rem;">Not returned</span>') + '</span></div>' +
                 '</div>' +
-                /* Loan-level damage notes — only shown if damageNotes was recorded */
-                (d.damageNotes ?
-                '<div class="lm-damage-box">' +
-                    '<span class="lm-damage-label"><i class="material-icons" style="font-size:14px;vertical-align:middle;">report_problem</i> Condition on Return</span>' +
-                    '<p class="lm-damage-text">' + d.damageNotes + '</p>' +
-                '</div>'
-                : '') +
                 '<div class="lm-section-title"><i class="material-icons">folder_open</i> Attached Files</div>' +
                 '<div class="lm-files-list">' + filesHtml + '</div>' +
-                /* Return button — hidden once the loan has a returnDate */
-                (!d.returnDate ?
-                '<div class="lm-return-row">' +
-                    '<button type="button" onclick=\'openConfirm(' + d.loanID + ',' + JSON.stringify(d.files) + ')\' ' +
-                            'class="btn waves-effect waves-light red darken-2" ' +
-                            'style="height:38px;line-height:38px;padding:0 18px;font-size:.85rem;">' +
-                        '<i class="material-icons left" style="font-size:16px;line-height:38px;">assignment_return</i>' +
-                        'Return Loan' +
-                    '</button>' +
-                '</div>'
-                : '') +
-            '</div>';
+            '</div>' +
+            /* Footer row — for active loans show a "Go to File" button that
+               links to the file detail page where the QR check-in lives */
+            (!d.returnDate && d.files && d.files.length > 0 ?
+            '<div class="lm-return-row">' +
+                '<a href="/files/' + d.files[0].fileID + '/detail" ' +
+                   'style="display:inline-flex;align-items:center;gap:6px;' +
+                          'padding:8px 18px;background:#111111;color:#fff;' +
+                          'border-radius:8px;font-size:.87rem;font-weight:600;' +
+                          'text-decoration:none;transition:background .15s;">' +
+                    '<i class="material-icons" style="font-size:17px;">assignment_return</i>' +
+                    'Go to File to Check In' +
+                '</a>' +
+            '</div>'
+            : '');
     })
     .catch(function(err) {
         /* Show an error state if the fetch fails */
@@ -948,74 +807,6 @@ function openLoanModal(loanID) {
     });
 }
 
-
-/* ── Return confirm modal ─────────────────────────────────────────────────────
-   Called when the "Return Loan" button is clicked inside the detail modal.
-   loanID  — the loan to return
-   files   — array of file objects from the already-fetched loan JSON
-   Steps:
-     1. Populate the confirmation message with the loan number
-     2. Set the form's action URL to /loans/<id>/return
-     3. Clear any leftover values from a previous open
-     4. Inject one textarea per file for per-file condition notes
-     5. Open the Materialize modal on top of the detail overlay */
-function openConfirm(loanID, files) {
-    var padded = '#' + String(loanID).padStart(3, '0');
-    document.getElementById('confirmMsg').innerHTML =
-        'Loan <strong>' + padded + '</strong> will be marked as returned and all attached files set back to <strong>Available</strong>.';
-    document.getElementById('confirmForm').action = '/loans/' + loanID + '/return';
-
-    /* Clear the overall summary from any previous open */
-    document.getElementById('damageNotes').value = '';
-
-    /* Build and inject per-file condition textareas.
-       Each textarea is named file_condition_<fileID> so the Flask view can
-       iterate request.form and match them to the right File records. */
-    var perFile = document.getElementById('perFileConditions');
-    if (files && files.length > 0) {
-        var html = '<hr class="per-file-divider">' +
-            '<div class="per-file-section-hdr">' +
-                '<i class="material-icons" style="font-size:14px;">folder_open</i>' +
-                'Per-File Condition Notes' +
-            '</div>';
-        files.forEach(function(f) {
-            var label = (f.fileType || 'File') + ' <span class="pf-id">#' + f.fileID + '</span>';
-            if (f.description) label += ' — <span style="color:#888;font-weight:400;">' + f.description + '</span>';
-            html +=
-                '<div class="per-file-item">' +
-                    '<div class="per-file-label">' +
-                        '<i class="material-icons">insert_drive_file</i>' + label +
-                    '</div>' +
-                    '<textarea ' +
-                        'name="file_condition_' + f.fileID + '" ' +
-                        'class="damage-textarea" ' +
-                        'placeholder="Condition of this file on return — leave blank if undamaged…" ' +
-                        'maxlength="500" ' +
-                        'style="min-height:60px;"' +
-                    '></textarea>' +
-                '</div>';
-        });
-        perFile.innerHTML = html;
-    } else {
-        perFile.innerHTML = '';
-    }
-
-    /* Get or initialise the Materialize modal instance and open it.
-       getInstance returns null the first time, so we initialise it then. */
-    var modal = M.Modal.getInstance(document.getElementById('returnConfirmModal'));
-    if (!modal) {
-        modal = M.Modal.init(document.getElementById('returnConfirmModal'), { dismissible: true });
-    }
-    modal.open();
-}
-
-
-/* Submits the return form programmatically.
-   The "Yes, Return" button is outside the <form> tag (it's in modal-footer)
-   so it can't be type="submit" — this function bridges that gap. */
-function submitReturnForm() {
-    document.getElementById('confirmForm').submit();
-}
 
 
 /* ── Loan detail overlay close helpers ───────────────────────────────────────
