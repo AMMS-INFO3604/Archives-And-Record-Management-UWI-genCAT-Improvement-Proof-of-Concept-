@@ -324,25 +324,31 @@
             .sidebar nav ul {
                 list-style: none;
                 margin: 0;
-                padding: 0 8px;
+                padding: 0;
             }
             .sidebar nav ul li {
-                margin: 2px 0;
+                margin: 0;
+            }
+            /* Kill Materialize's .active pink highlight on li */
+            .sidebar nav ul li.active,
+            .sidebar nav ul li.active > a,
+            .sidebar nav ul li > a.active {
+                background: transparent !important;
+                color: inherit !important;
             }
             .sidebar nav ul li a {
                 display: flex;
                 align-items: center;
                 gap: 9px;
-                padding: 9px 10px;
-                border-radius: 8px;
+                padding: 9px 18px;
+                border-radius: 0;
+                border-left: 3px solid transparent;
                 font-size: 0.85rem;
                 font-weight: 500;
                 color: #424242;
                 text-decoration: none;
                 white-space: nowrap;
-                transition:
-                    background 0.15s,
-                    color 0.15s;
+                transition: background 0.15s, color 0.15s;
             }
             .sidebar nav ul li a i {
                 font-size: 18px;
@@ -351,29 +357,29 @@
                 flex-shrink: 0;
             }
             .sidebar nav ul li a:hover {
-                background: #f5f5f5;
+                background: #f0f0f0;
                 color: #212121;
+                border-left-color: #bdbdbd;
             }
             .sidebar nav ul li a:hover i {
                 color: #424242;
             }
 
-            /* Active states — all monochrome */
+            /* Active states — full-width flush highlight */
             .sidebar nav ul li.active-location > a,
             .sidebar nav ul li.active-boxes > a,
             .sidebar nav ul li.active-files > a,
-            .sidebar nav ul li.active-loans > a,
-            .sidebar nav ul li.active-scanner > a {
+            .sidebar nav ul li.active-loans > a {
                 background: #eeeeee;
                 color: #212121;
                 font-weight: 600;
+                border-left-color: #212121;
             }
             .sidebar nav ul li.active-location > a i,
             .sidebar nav ul li.active-boxes > a i,
             .sidebar nav ul li.active-files > a i,
-            .sidebar nav ul li.active-loans > a i,
-            .sidebar nav ul li.active-scanner > a i {
-                color: #424242;
+            .sidebar nav ul li.active-loans > a i {
+                color: #212121;
             }
 
             .sidebar-divider {
@@ -385,8 +391,9 @@
                 color: #9e9e9e;
             }
             .sidebar nav ul li.logout-item > a:hover {
-                background: #f5f5f5;
+                background: #f0f0f0;
                 color: #212121;
+                border-left-color: #bdbdbd;
             }
             .sidebar nav ul li.logout-item > a:hover i {
                 color: #424242;
@@ -611,13 +618,7 @@
                                 Records
                             </a>
                         </li>
-                        <li
-                            class="{{ 'active-scanner' if request.path.startswith('/scanner') else '' }}"
-                        >
-                            <a href="/scanner" target="_blank">
-                                <i class="material-icons">qr_code_scanner</i>Scanner
-                            </a>
-                        </li>
+
                     </ul>
 
                     <div class="sidebar-divider"></div>
