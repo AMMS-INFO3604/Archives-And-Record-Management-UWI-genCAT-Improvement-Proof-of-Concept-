@@ -366,8 +366,8 @@
         overflow-y: auto;
     }
     .issue-panel-right {
-        width: 340px;
-        flex-shrink: 0;
+        flex: 1 1 0;
+        min-width: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -415,8 +415,8 @@
             <div class="header-left">
                 <div class="header-icon"><i class="material-icons">folder_open</i></div>
                 <div class="header-text">
-                    <p class="header-title">File <span>#{{ file.fileID }}</span></p>
-                    <p class="header-sub">{{ file.description or 'No description provided' }}</p>
+                    <p class="header-title">{{ file.description or 'No description provided' }}</p>
+                    <p class="header-sub">File <span>#{{ file.fileID }}</span></p>
                 </div>
             </div>
             <div class="header-actions">
@@ -734,33 +734,83 @@
                 Loan File #{{ file.fileID }}
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Date</label>
-                <input type="text" class="form-input" id="loan-date-display"
-                       readonly style="background:#f5f5f5;color:#555;cursor:default;">
-                <input type="hidden" id="loan-date-value">
+            <!-- compact 2-col grid for the form fields -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;align-items:end;">
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">Date</label>
+                    <input type="text" class="form-input" id="loan-date-display"
+                           readonly style="background:#f5f5f5;color:#555;cursor:default;max-width:180px;">
+                    <input type="hidden" id="loan-date-value">
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="loan-days">Loan Period (days)</label>
+                    <input type="number" id="loan-days" class="form-input"
+                           placeholder="e.g. 14" min="1" max="365" value="14" style="max-width:120px;">
+                </div>
+
             </div>
-            <div class="form-group">
-                <label class="form-label" for="patronID">Loaned To *</label>
-                <select name="patronID" id="patronID" class="form-select">
-                    <option value="">— Select a patron —</option>
-                    {% for patron in patrons %}
-                    <option value="{{ patron.patronID }}">
-                        {% if patron.user %}
-                            {{ patron.user.username }} (Patron #{{ patron.patronID }})
-                        {% else %}
-                            Patron #{{ patron.patronID }}
-                        {% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
+
+            <!-- Patron searchable combobox -->
+            <div class="form-group" style="margin-top:16px;">
+                <label class="form-label" for="patron-search-input">Loaned To *</label>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div id="patron-dropdown-wrap" style="position:relative;flex:1;max-width:280px;">
+                        <input type="hidden" id="patronID" name="patronID" value="">
+                        <!-- Searchable input -->
+                        <div style="position:relative;">
+                            <input type="text" id="patron-search-input"
+                                   autocomplete="off"
+                                   placeholder="Search patron by name…"
+                                   oninput="filterPatrons(this.value)"
+                                   onfocus="openPatronList()"
+                                   style="width:100%;height:42px;padding:0 36px 0 12px;
+                                          border:1.5px solid #cccccc;border-radius:8px;
+                                          font-size:0.87rem;color:#333;background:#fff;
+                                          box-sizing:border-box;outline:none;
+                                          transition:border-color .15s;
+                                          border-bottom:1.5px solid #cccccc !important;
+                                          box-shadow:none !important;margin:0 !important;">
+                            <i class="material-icons"
+                               style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
+                                      font-size:18px;color:#aaa;pointer-events:none;">
+                                search
+                            </i>
+                        </div>
+                        <!-- Dropdown list -->
+                        <ul id="patron-dropdown-list"
+                            style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;
+                                   background:#fff;border:1.5px solid #cccccc;border-radius:8px;
+                                   box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:9999;
+                                   max-height:220px;overflow-y:auto;margin:0;padding:4px 0;list-style:none;">
+                            {% for patron in patrons %}
+                            <li class="patron-opt"
+                                data-value="{{ patron.patronID }}"
+                                data-label="{% if patron.user %}{{ patron.user.username }}{% else %}Patron #{{ patron.patronID }}{% endif %}"
+                                style="padding:9px 14px;font-size:0.87rem;color:#333;cursor:pointer;">
+                                {% if patron.user %}{{ patron.user.username }}{% else %}Patron #{{ patron.patronID }}{% endif %}
+                                <span style="color:#bbb;font-size:.8rem;"> #{{ patron.patronID }}</span>
+                            </li>
+                            {% endfor %}
+                            <li id="patron-no-results"
+                                style="display:none;padding:10px 14px;font-size:0.85rem;color:#aaa;font-style:italic;">
+                                No patrons found
+                            </li>
+                        </ul>
+                    </div>
+                    <button type="button" onclick="openAddPatronDialog()"
+                            style="display:inline-flex;align-items:center;gap:5px;
+                                   padding:8px 14px;background:#fff;color:#111;
+                                   border:1.5px solid #cccccc;border-radius:8px;
+                                   font-size:0.82rem;font-weight:600;cursor:pointer;
+                                   white-space:nowrap;transition:background .15s;flex-shrink:0;">
+                        <i class="material-icons" style="font-size:16px;">person_add</i>Add Patron
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label class="form-label" for="loan-days">Loan Period (days)</label>
-                <input type="number" id="loan-days" class="form-input"
-                       placeholder="e.g. 14" min="1" max="365" value="14">
-            </div>
-            <div class="form-group">
+
+            <div class="form-group" style="margin-bottom:0;">
                 <button type="button" class="btn-modal-cancel"
                         onclick="calcDueDate()"
                         style="border-color:#90caf9;color:#1565c0;">
@@ -770,6 +820,43 @@
                 <div class="due-date-result" id="due-date-result">
                     <i class="material-icons">event_available</i>
                     <span>Due: <strong id="due-date-text"></strong></span>
+                </div>
+            </div>
+
+            <!-- ── Add Patron inline dialog ───────────────────────── -->
+            <div id="add-patron-dialog"
+                 style="display:none;margin-top:18px;background:#f9f9f9;
+                        border:1.5px solid #e0e0e0;border-radius:10px;padding:18px 20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <span style="font-size:0.85rem;font-weight:700;color:#111;display:flex;align-items:center;gap:6px;">
+                        <i class="material-icons" style="font-size:18px;">person_add</i>Add New Patron
+                    </span>
+                    <button type="button" onclick="closeAddPatronDialog()"
+                            style="background:none;border:none;cursor:pointer;color:#aaa;display:flex;align-items:center;">
+                        <i class="material-icons" style="font-size:20px;">close</i>
+                    </button>
+                </div>
+                <div>
+                    <label class="form-label" for="new-patron-username">Username / Patron ID</label>
+                    <input type="text" id="new-patron-username" class="form-input"
+                           placeholder="e.g. jsmith" style="max-width:100%;">
+                </div>
+                <div id="add-patron-error"
+                     style="display:none;margin-top:10px;background:#ffebee;border:1px solid #ef9a9a;
+                            border-radius:6px;padding:8px 12px;font-size:0.82rem;color:#c62828;
+                            align-items:center;gap:6px;">
+                    <i class="material-icons" style="font-size:16px;">error_outline</i>
+                    <span id="add-patron-error-text"></span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:14px;">
+                    <button type="button" onclick="closeAddPatronDialog()"
+                            class="btn-modal-cancel" style="font-size:0.82rem;padding:6px 14px;">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="submitAddPatron()" id="btn-add-patron-submit"
+                            class="btn-modal-submit" style="font-size:0.82rem;padding:6px 14px;">
+                        <i class="material-icons" style="font-size:16px;">person_add</i>Create Patron
+                    </button>
                 </div>
             </div>
 
@@ -815,9 +902,6 @@
                 </a>
                 <p class="qr-expire" id="qr-expire-text" style="text-align:center;margin-bottom:14px;font-size:.78rem;color:#bbb;">Expires in 10:00</p>
                 <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                    <span class="poll-badge poll-waiting" id="qr-poll-badge" style="display:none;">
-                        <span class="dot"></span>Waiting for scan…
-                    </span>
                     <span class="poll-badge poll-success" id="qr-success-badge" style="display:none;">
                         <span class="dot"></span>✓ Loan confirmed — reloading…
                     </span>
@@ -1175,7 +1259,7 @@ function populateQRModal(qrData, mode) {
     const linkEl    = document.getElementById(isIssue ? 'qr-scanner-link'     : 'qr-return-scanner-link');
     const openEl    = document.getElementById(isIssue ? 'qr-open-link'        : 'qr-return-open-link');
     const expireEl  = document.getElementById(isIssue ? 'qr-expire-text'      : 'qr-return-expire-text');
-    const pollBadge = document.getElementById(isIssue ? 'qr-poll-badge'       : 'qr-return-poll-badge');
+    const pollBadge = document.getElementById(isIssue ? 'loan-pending-badge'   : 'qr-return-poll-badge');
     const okBadge   = document.getElementById(isIssue ? 'qr-success-badge'    : 'qr-return-success-badge');
     const errBadge  = document.getElementById(isIssue ? 'qr-error-badge'      : 'qr-return-error-badge');
     const errText   = document.getElementById(isIssue ? 'qr-error-text'       : 'qr-return-error-text');
@@ -1312,7 +1396,7 @@ function showInlineQR(qrData, loanID) {
     const linkEl    = document.getElementById('qr-scanner-link');
     const openEl    = document.getElementById('qr-open-link');
     const expireEl  = document.getElementById('qr-expire-text');
-    const pollBadge = document.getElementById('qr-poll-badge');
+    const pollBadge = document.getElementById('loan-pending-badge');
     const okBadge   = document.getElementById('qr-success-badge');
     const errBadge  = document.getElementById('qr-error-badge');
 
@@ -1426,7 +1510,177 @@ async function cancelPendingLoan() {
 
 
 
-// ── Return flow ───────────────────────────────────────────────────────────────
+// ── Searchable patron combobox ────────────────────────────────────────────────
+(function() {
+    // Wire up list items once DOM is ready
+    function initPatronList() {
+        const items = document.querySelectorAll('.patron-opt');
+        items.forEach(function(li) {
+            li.addEventListener('mouseenter', function() { this.style.background = '#f5f5f5'; });
+            li.addEventListener('mouseleave', function() { this.style.background = ''; });
+            li.addEventListener('mousedown', function(e) {
+                // mousedown fires before blur so we can read the value
+                e.preventDefault();
+                selectPatron(this.dataset.value, this.dataset.label);
+            });
+        });
+    }
+    document.addEventListener('DOMContentLoaded', initPatronList);
+    window._initPatronList = initPatronList; // called again after adding new patron
+})();
+
+function openPatronList() {
+    const list  = document.getElementById('patron-dropdown-list');
+    const input = document.getElementById('patron-search-input');
+    if (!list) return;
+    // Reset filter to show all
+    filterPatrons(input.value);
+    list.style.display = 'block';
+    input.style.borderColor = '#111111';
+}
+
+function filterPatrons(query) {
+    const list  = document.getElementById('patron-dropdown-list');
+    if (!list) return;
+    list.style.display = 'block';
+    const q     = query.trim().toLowerCase();
+    const items = list.querySelectorAll('.patron-opt');
+    let visible = 0;
+    items.forEach(function(li) {
+        const label = (li.dataset.label || '').toLowerCase();
+        const id    = (li.dataset.value || '').toString();
+        const match = !q || label.includes(q) || id.includes(q);
+        li.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    const noRes = document.getElementById('patron-no-results');
+    if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
+}
+
+function selectPatron(value, label) {
+    document.getElementById('patronID').value = value;
+    const input = document.getElementById('patron-search-input');
+    input.value = label;
+    input.style.borderColor = value ? '#111111' : '#cccccc';
+    const list = document.getElementById('patron-dropdown-list');
+    if (list) list.style.display = 'none';
+}
+
+// Close combobox when clicking outside
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('patron-dropdown-wrap');
+    const list = document.getElementById('patron-dropdown-list');
+    if (wrap && list && !wrap.contains(e.target)) {
+        list.style.display = 'none';
+        // If nothing selected, clear the input
+        const hidden = document.getElementById('patronID');
+        if (!hidden || !hidden.value) {
+            const input = document.getElementById('patron-search-input');
+            if (input) { input.value = ''; input.style.borderColor = '#cccccc'; }
+        }
+    }
+});
+
+// ── Add Patron inline dialog ──────────────────────────────────────────────────
+function openAddPatronDialog() {
+    const d = document.getElementById('add-patron-dialog');
+    if (d) {
+        d.style.display = 'block';
+        const inp = document.getElementById('new-patron-username');
+        if (inp) inp.focus();
+        const errEl = document.getElementById('add-patron-error');
+        if (errEl) errEl.style.display = 'none';
+    }
+}
+
+function closeAddPatronDialog() {
+    const d = document.getElementById('add-patron-dialog');
+    if (d) d.style.display = 'none';
+    const inp = document.getElementById('new-patron-username');
+    if (inp) inp.value = '';
+    const errEl = document.getElementById('add-patron-error');
+    if (errEl) errEl.style.display = 'none';
+}
+
+async function submitAddPatron() {
+    const username = (document.getElementById('new-patron-username').value || '').trim();
+    const errEl    = document.getElementById('add-patron-error');
+    const errTx    = document.getElementById('add-patron-error-text');
+    const btn      = document.getElementById('btn-add-patron-submit');
+
+    errEl.style.display = 'none';
+    if (!username) {
+        errTx.textContent = 'Username is required.';
+        errEl.style.display = 'flex';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="material-icons" style="font-size:16px;">hourglass_empty</i>Creating…';
+
+    try {
+        const res = await fetch('/api/patrons', {
+            method:  'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ username }),
+        });
+
+        // Guard against HTML error pages
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+            errTx.textContent = `Server error (HTTP ${res.status}). Check that POST /api/patrons is registered in your Flask app.`;
+            errEl.style.display = 'flex';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="material-icons" style="font-size:16px;">person_add</i>Create Patron';
+            return;
+        }
+
+        const data = await res.json();
+
+        if (res.ok && data.patronID) {
+            const patronID = data.patronID;
+            const label    = `${data.username} (#${patronID})`;
+
+            // Inject into the combobox list
+            const list = document.getElementById('patron-dropdown-list');
+            const li   = document.createElement('li');
+            li.className          = 'patron-opt';
+            li.dataset.value      = patronID;
+            li.dataset.label      = data.username;
+            li.style.cssText      = 'padding:9px 14px;font-size:0.87rem;color:#333;cursor:pointer;';
+            li.innerHTML          = `${data.username} <span style="color:#bbb;font-size:.8rem;"> #${patronID}</span>`;
+            li.addEventListener('mouseenter', function() { this.style.background = '#f5f5f5'; });
+            li.addEventListener('mouseleave', function() { this.style.background = ''; });
+            li.addEventListener('mousedown',  function(e) {
+                e.preventDefault();
+                selectPatron(this.dataset.value, this.dataset.label);
+            });
+            // Insert before the "no results" sentinel
+            const noRes = document.getElementById('patron-no-results');
+            list.insertBefore(li, noRes);
+
+            // Auto-select the new patron
+            selectPatron(String(patronID), data.username);
+            closeAddPatronDialog();
+        } else {
+            errTx.textContent = data.error || data.message || 'Failed to create patron.';
+            errEl.style.display = 'flex';
+        }
+    } catch (err) {
+        errTx.textContent = 'Network error: ' + err.message;
+        errEl.style.display = 'flex';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="material-icons" style="font-size:16px;">person_add</i>Create Patron';
+}
+
+
 async function submitReturnAndShowQR() {
     if (!LOAN_ID) { alert('No active loan found for this file.'); return; }
 
