@@ -1,0 +1,451 @@
+{% extends "layout.html" %}
+{% block title %}Create Batch Parts{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f5f5 !important; }
+
+    .form-wrapper { max-width: 1100px; margin: 32px auto; padding: 0 16px 64px; }
+
+    .breadcrumb-row {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 20px; font-size: .84rem; color: #888;
+    }
+    .breadcrumb-row a { color: #111; text-decoration: none; font-weight: 600; }
+    .breadcrumb-row a:hover { text-decoration: underline; }
+    .breadcrumb-row i { font-size: 16px; color: #bbb; vertical-align: middle; }
+
+    .page-title { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .page-title .title-icon {
+        width: 44px; height: 44px; border-radius: 10px; background: #111;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .page-title .title-icon i { font-size: 22px; color: #fff; }
+    .page-title h4 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #1a1a1a; }
+    .page-title .subtitle { margin: 2px 0 0; font-size: .82rem; color: #888; }
+
+    .form-card {
+        background: #fff; border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 20px;
+    }
+    .form-card-header {
+        padding: 16px 24px; border-bottom: 1.5px solid #f0f0f0; background: #fafafa;
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .form-card-header i { font-size: 18px; color: #111; }
+    .form-card-header span.title {
+        font-size: .78rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #111;
+    }
+    .form-card-header .hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+    .form-label {
+        font-size: .72rem; font-weight: 700; letter-spacing: .5px;
+        text-transform: uppercase; color: #555;
+    }
+    .form-label .required { color: #c62828; margin-left: 2px; }
+    .form-hint { font-size: .73rem; color: #aaa; margin-top: 2px; }
+
+    .form-input, .form-select {
+        height: 40px;
+        border: 1.5px solid #ddd !important; border-bottom: 1.5px solid #ddd !important;
+        border-radius: 8px !important; padding: 0 12px !important;
+        font-size: .88rem; color: #333; background: #fafafa;
+        box-shadow: none !important; margin: 0 !important;
+        box-sizing: border-box; outline: none; width: 100%;
+        transition: border-color .15s; font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus {
+        border-color: #111 !important; box-shadow: 0 0 0 3px rgba(0,0,0,.07) !important; background: #fff;
+    }
+    .form-select {
+        cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 10px center; padding-right: 36px !important;
+    }
+
+    /* ── Global settings bar ── */
+    .global-bar {
+        display: flex; flex-wrap: wrap; gap: 16px 24px;
+        padding: 16px 24px; background: #fafafa;
+        border-bottom: 1.5px solid #f0f0f0; align-items: flex-end;
+    }
+    .global-bar .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
+
+    .global-notice {
+        display: flex; align-items: flex-start; gap: 8px;
+        background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+        padding: 10px 14px; font-size: .82rem; color: #795548;
+    }
+    .global-notice i { font-size: 17px; color: #f57f17; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Batch table ── */
+    .batch-table-wrap { overflow-x: auto; }
+    .batch-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    .batch-table thead tr { background: #f5f5f5; }
+    .batch-table thead th {
+        padding: 10px 10px; font-size: .7rem; font-weight: 800;
+        letter-spacing: .8px; text-transform: uppercase; color: #555;
+        border-bottom: 2px solid #e0e0e0; text-align: left; white-space: nowrap;
+    }
+    .batch-table thead th.col-num { width: 42px; text-align: center; color: #aaa; }
+    .batch-table tbody tr { border-bottom: 1px solid #f0f0f0; transition: background .1s; }
+    .batch-table tbody tr:hover { background: #fafafa; }
+    .batch-table tbody tr.row-filled { background: #f0faf0; }
+    .batch-table tbody td { padding: 6px 8px; vertical-align: middle; }
+    .batch-table tbody td.col-num {
+        text-align: center; font-size: .75rem; color: #aaa; font-weight: 700;
+    }
+
+    .batch-table .form-input,
+    .batch-table .form-select {
+        height: 36px; font-size: .83rem; padding: 0 8px !important; padding-right: 28px !important;
+    }
+    .batch-table .form-select { background-position: right 6px center; padding-right: 26px !important; }
+    .batch-table .form-input[type="month"] { padding: 0 6px !important; }
+
+    /* Barcode scan input */
+    .scan-wrap { position: relative; }
+    .scan-wrap .form-input { padding-right: 30px !important; font-family: monospace; font-size: .8rem; }
+    .scan-wrap .scan-ico {
+        position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+        color: #ccc; font-size: 15px; pointer-events: none;
+    }
+
+    .row-status {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #ddd; display: inline-block; margin: 0 4px;
+    }
+    .row-filled .row-status { background: #4caf50; }
+
+    .btn-row-clear {
+        width: 28px; height: 28px; border-radius: 6px;
+        background: transparent; border: 1.5px solid #e0e0e0;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: #bbb; margin: auto; transition: all .15s;
+    }
+    .btn-row-clear:hover { border-color: #c62828; color: #c62828; background: #ffebee; }
+    .btn-row-clear i { font-size: 14px; }
+
+    /* ── Toolbar ── */
+    .batch-toolbar { display: flex; align-items: center; gap: 10px; }
+    .row-count-chip {
+        display: inline-flex; align-items: center; gap: 5px;
+        background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px;
+        padding: 5px 10px; font-size: .78rem; color: #555; font-weight: 600;
+    }
+    .row-count-chip i { font-size: 14px; }
+    .btn-add-rows {
+        height: 36px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 12px; background: transparent; border: 1.5px dashed #ccc;
+        border-radius: 8px; font-size: .78rem; font-weight: 600; color: #888;
+        cursor: pointer; transition: all .15s;
+    }
+    .btn-add-rows:hover { border-color: #111; color: #111; }
+    .btn-clear-all {
+        height: 36px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 12px; background: transparent; border: 1.5px solid #e0e0e0;
+        border-radius: 8px; font-size: .78rem; font-weight: 600; color: #aaa;
+        cursor: pointer; transition: all .15s;
+    }
+    .btn-clear-all:hover { border-color: #c62828; color: #c62828; background: #ffebee; }
+
+    /* ── Summary ── */
+    .summary-banner {
+        display: flex; gap: 20px; flex-wrap: wrap; padding: 14px 24px;
+        border-top: 1.5px solid #f0f0f0; background: #fafafa;
+    }
+    .summary-stat { display: flex; flex-direction: column; }
+    .summary-stat .sv { font-size: 1.2rem; font-weight: 800; color: #111; line-height: 1; }
+    .summary-stat .sl { font-size: .68rem; text-transform: uppercase; letter-spacing: .8px; color: #aaa; margin-top: 3px; }
+
+    /* ── Flash ── */
+    .flash-msg {
+        padding: 10px 16px; border-radius: 8px; margin-bottom: 16px;
+        font-size: .875rem; display: flex; align-items: center; gap: 8px;
+    }
+    .flash-msg.error   { background: #fce4ec; color: #b71c1c; border: 1px solid #f8bbd0; }
+    .flash-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+
+    /* ── Action bar ── */
+    .action-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding: 16px 24px; border-top: 1.5px solid #f0f0f0;
+        background: #fafafa; flex-wrap: wrap;
+    }
+    .action-bar-left { font-size: .82rem; color: #888; }
+    .action-bar-right { display: flex; gap: 8px; }
+    .btn-cancel {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 18px; background: transparent; color: #555;
+        border: 1.5px solid #ddd; border-radius: 8px;
+        font-size: .87rem; font-weight: 600; text-decoration: none;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-cancel:hover { background: #f0f0f0; color: #111; }
+    .btn-save {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 22px; background: #111; color: #fff; border: none;
+        border-radius: 8px; font-size: .87rem; font-weight: 700;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-save:hover { background: #333; }
+    .btn-save i { font-size: 18px; }
+</style>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash-msg {{ category }}">
+    <i class="material-icons" style="font-size:17px;">{{ 'error' if category=='error' else 'check_circle' }}</i>
+    {{ message }}
+  </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="form-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-row">
+        <a href="/files"><i class="material-icons" style="font-size:14px;vertical-align:middle;">folder_open</i> File Records</a>
+        <i class="material-icons">chevron_right</i>
+        <span style="color:#111;font-weight:600;">Create Batch Parts</span>
+    </div>
+
+    <!-- Page title -->
+    <div class="page-title">
+        <div class="title-icon"><i class="material-icons">playlist_add</i></div>
+        <div>
+            <h4>Create Batch Parts</h4>
+            <p class="subtitle">Add multiple parts to existing file records at once.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/files/create/batch-part/{{ file_type | lower }}" id="batch-part-form">
+
+        <!-- ── Global settings ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">settings</i>
+                <span class="title">Global Settings</span>
+                <span style="font-size:.75rem;color:#aaa;margin-left:8px;">Applied to all rows when saved</span>
+            </div>
+            <div class="global-bar">
+
+                <div class="form-group">
+                    <label class="form-label">KO – Location <span class="required">*</span></label>
+                    <select name="globalLocationID" class="form-select" required>
+                        <option value="" disabled selected>Select location…</option>
+                        {% for loc in locations %}
+                        <option value="{{ loc.locationID }}">{{ loc.geoLocation }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">File Type <span class="required">*</span></label>
+                    <select name="globalFileType" class="form-select" required>
+                        <option value="" disabled selected>Select file type…</option>
+                        <option value="Student" {{ 'selected' if file_type == 'Student' else '' }}>ST – Student Files</option>
+                        <option value="Staff"   {{ 'selected' if file_type == 'Staff'   else '' }}>SF – General Administration Subject Files</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Assign to Box <span class="required">*</span></label>
+                    <select name="globalBoxID" class="form-select" required>
+                        <option value="" disabled selected>Select a box…</option>
+                        {% for box in boxes %}
+                        <option value="{{ box.boxID }}"
+                            {{ 'selected' if request.args.get('boxID') == box.boxID|string else '' }}>
+                            #{{ box.boxID }} – Bay {{ box.bayNo }}, Row {{ box.rowNo }}, Col {{ box.columnNo }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+            </div>
+            <div style="padding:12px 24px;">
+                <div class="global-notice">
+                    <i class="material-icons">info</i>
+                    <span>All records get the above values when saved. Row-level values override these where provided.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Batch parts table ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">table_rows</i>
+                <span class="title">Part Entries</span>
+                <div class="hdr-right">
+                    <div class="batch-toolbar">
+                        <span class="row-count-chip">
+                            <i class="material-icons">grid_on</i>
+                            <span id="row-count">17</span> rows
+                        </span>
+                        <button type="button" class="btn-add-rows" onclick="addRows(5)">
+                            <i class="material-icons">add</i>+5 rows
+                        </button>
+                        <button type="button" class="btn-clear-all" onclick="clearAllRows()">
+                            <i class="material-icons">clear_all</i>Clear all
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="batch-table-wrap">
+                <table class="batch-table" id="batch-table">
+                    <thead>
+                        <tr>
+                            <th class="col-num">#</th>
+                            <th>File <span style="color:#c62828;">*</span></th>
+                            <th>Volume No.</th>
+                            <th>Start (YYYY-MM)</th>
+                            <th>End (YYYY-MM)</th>
+                            <th>Barcode</th>
+                            <th style="width:40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="batch-tbody">
+                        {% for i in range(1, 18) %}
+                        <tr id="row-{{ i }}">
+                            <td class="col-num">
+                                <span class="row-status"></span>{{ i }}
+                            </td>
+                            <!-- Parent file selector -->
+                            <td>
+                                <select name="row_fileID[]" class="form-select row-trigger" data-row="{{ i }}">
+                                    <option value="">Select file…</option>
+                                    {% for file in parent_files %}
+                                    <option value="{{ file.fileID }}">
+                                        #{{ file.fileID }} – {{ (file.description or file.previousDesignation or 'No desc')[:40] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <!-- Volume number -->
+                            <td><input type="text"  name="row_volumeNo[]"  class="form-input" placeholder="1, 2, A…"></td>
+                            <!-- Date range -->
+                            <td><input type="month" name="row_startDate[]" class="form-input" placeholder="YYYY-MM"></td>
+                            <td><input type="month" name="row_endDate[]"   class="form-input" placeholder="YYYY-MM"></td>
+                            <!-- Barcode -->
+                            <td>
+                                <div class="scan-wrap">
+                                    <input type="text" name="row_barcode[]" class="form-input"
+                                           placeholder="Scan…">
+                                    <i class="material-icons scan-ico">qr_code_scanner</i>
+                                </div>
+                            </td>
+                            <!-- Clear -->
+                            <td>
+                                <button type="button" class="btn-row-clear" onclick="clearRow({{ i }})" title="Clear row">
+                                    <i class="material-icons">close</i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-banner">
+                <div class="summary-stat">
+                    <span class="sv" id="summary-filled">0</span>
+                    <span class="sl">Filled Rows</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="sv" id="summary-empty">17</span>
+                    <span class="sl">Empty Rows</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="sv" id="summary-total">17</span>
+                    <span class="sl">Total Rows</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Action bar ── -->
+        <div class="form-card">
+            <div class="action-bar">
+                <div class="action-bar-left">Only rows with a selected File will be saved.</div>
+                <div class="action-bar-right">
+                    <a href="/files" class="btn-cancel">Cancel</a>
+                    <button type="submit" class="btn-save">
+                        <i class="material-icons">save</i>Save All Parts
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var totalRows = 17;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.row-trigger').forEach(function (sel) {
+            sel.addEventListener('change', function () { markRow(this.dataset.row); });
+        });
+    });
+
+    function markRow(rowNum) {
+        var tr = document.getElementById('row-' + rowNum);
+        if (!tr) return;
+        var fileSelect = tr.querySelector('select[name="row_fileID[]"]');
+        var filled = fileSelect && fileSelect.value !== '';
+        tr.classList.toggle('row-filled', filled);
+        updateSummary();
+    }
+
+    function updateSummary() {
+        var rows   = document.querySelectorAll('#batch-tbody tr').length;
+        var filled = document.querySelectorAll('#batch-tbody tr.row-filled').length;
+        document.getElementById('summary-filled').textContent = filled;
+        document.getElementById('summary-empty').textContent  = rows - filled;
+        document.getElementById('summary-total').textContent  = rows;
+        document.getElementById('row-count').textContent      = rows;
+    }
+
+    function clearRow(rowNum) {
+        var tr = document.getElementById('row-' + rowNum);
+        if (!tr) return;
+        tr.querySelectorAll('input').forEach(function (el) { el.value = ''; });
+        tr.querySelectorAll('select').forEach(function (el) { el.selectedIndex = 0; });
+        tr.classList.remove('row-filled');
+        updateSummary();
+    }
+
+    function clearAllRows() {
+        if (!confirm('Clear all row data?')) return;
+        for (var i = 1; i <= totalRows; i++) clearRow(i);
+    }
+
+    function addRows(n) {
+        var tbody = document.getElementById('batch-tbody');
+        var fileOptions = document.querySelector('select[name="row_fileID[]"]').innerHTML;
+
+        for (var k = 0; k < n; k++) {
+            totalRows++;
+            var i = totalRows;
+            var tr = document.createElement('tr');
+            tr.id = 'row-' + i;
+            tr.innerHTML =
+                '<td class="col-num"><span class="row-status"></span>' + i + '</td>' +
+                '<td><select name="row_fileID[]" class="form-select row-trigger" data-row="' + i + '">' + fileOptions + '</select></td>' +
+                '<td><input type="text"  name="row_volumeNo[]"  class="form-input" placeholder="1, 2, A…"></td>' +
+                '<td><input type="month" name="row_startDate[]" class="form-input" placeholder="YYYY-MM"></td>' +
+                '<td><input type="month" name="row_endDate[]"   class="form-input" placeholder="YYYY-MM"></td>' +
+                '<td><div class="scan-wrap"><input type="text" name="row_barcode[]" class="form-input" placeholder="Scan…">' +
+                    '<i class="material-icons scan-ico">qr_code_scanner</i></div></td>' +
+                '<td><button type="button" class="btn-row-clear" onclick="clearRow(' + i + ')" title="Clear row">' +
+                    '<i class="material-icons">close</i></button></td>';
+            tbody.appendChild(tr);
+            tr.querySelector('.row-trigger').addEventListener('change', function () { markRow(this.dataset.row); });
+        }
+        updateSummary();
+    }
+</script>
+{% endblock %}
