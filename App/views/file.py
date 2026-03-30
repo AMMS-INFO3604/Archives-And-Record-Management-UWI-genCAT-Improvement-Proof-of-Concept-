@@ -43,7 +43,7 @@ def create_single_file_page(file_type):
     file_type = file_type.capitalize()
     boxes     = getAllBoxes()
     return render_template(
-        "create_single_file.html",
+        "single_file.html",
         file_type = file_type,
         boxes     = boxes,
         today     = _date.today().isoformat(),
@@ -125,7 +125,7 @@ def create_single_part_page(file_type):
     from App.controllers.file import searchFile
     parent_files = searchFile(fileType=file_type)
     return render_template(
-        "create_single_part.html",
+        "single_part.html",
         file_type    = file_type,
         boxes        = boxes,
         locations    = locations,
@@ -183,7 +183,7 @@ def create_batch_file_page(file_type):
     file_type = file_type.capitalize()
     boxes     = getAllBoxes()
     return render_template(
-        "create_batch_file.html",
+        "batch_file.html",
         file_type = file_type,
         boxes     = boxes,
     )
@@ -285,7 +285,7 @@ def create_batch_part_page(file_type):
     from App.controllers.file import searchFile
     parent_files = searchFile(fileType=file_type)
     return render_template(
-        "create_batch_part.html",
+        "batch_part.html",
         file_type    = file_type,
         boxes        = boxes,
         locations    = locations,
