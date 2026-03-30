@@ -1,0 +1,527 @@
+{% extends "layout.html" %}
+{% block title %}Create Single File Record{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f5f5 !important; }
+
+    .form-wrapper {
+        max-width: 860px;
+        margin: 32px auto;
+        padding: 0 16px 64px;
+    }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb-row {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 20px; font-size: 0.84rem; color: #888;
+    }
+    .breadcrumb-row a { color: #111; text-decoration: none; font-weight: 600; }
+    .breadcrumb-row a:hover { text-decoration: underline; }
+    .breadcrumb-row i { font-size: 16px; color: #bbb; vertical-align: middle; }
+
+    /* ── Page title ── */
+    .page-title {
+        display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .page-title .title-icon {
+        width: 44px; height: 44px; border-radius: 10px;
+        background: #111; display: flex; align-items: center;
+        justify-content: center; flex-shrink: 0;
+    }
+    .page-title .title-icon i { font-size: 22px; color: #fff; }
+    .page-title h4 {
+        margin: 0; font-size: 1.4rem; font-weight: 800; color: #1a1a1a;
+    }
+    .page-title .subtitle {
+        margin: 2px 0 0; font-size: .82rem; color: #888;
+    }
+
+    /* ── Card ── */
+    .form-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.07);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .form-card-header {
+        padding: 16px 24px;
+        border-bottom: 1.5px solid #f0f0f0;
+        background: #fafafa;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .form-card-header i { font-size: 18px; color: #111; }
+    .form-card-header span {
+        font-size: .78rem; font-weight: 800; letter-spacing: 1px;
+        text-transform: uppercase; color: #111;
+    }
+    .form-card-body { padding: 24px; }
+
+    /* ── Form grid ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+    .form-grid.single-col { grid-template-columns: 1fr; }
+    .form-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
+    .full-width { grid-column: 1 / -1; }
+
+    /* ── Form group ── */
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+        font-size: .72rem; font-weight: 700; letter-spacing: .5px;
+        text-transform: uppercase; color: #555;
+    }
+    .form-label .required { color: #c62828; margin-left: 2px; }
+    .form-label .optional {
+        font-size: .68rem; font-weight: 400; color: #aaa;
+        text-transform: none; letter-spacing: 0; margin-left: 4px;
+    }
+
+    /* ── Inputs ── */
+    .form-input, .form-select, .form-textarea {
+        height: 42px;
+        border: 1.5px solid #ddd !important;
+        border-bottom: 1.5px solid #ddd !important;
+        border-radius: 8px !important;
+        padding: 0 12px !important;
+        font-size: .9rem; color: #333; background: #fafafa;
+        box-shadow: none !important; margin: 0 !important;
+        box-sizing: border-box; outline: none; width: 100%;
+        transition: border-color .15s, box-shadow .15s;
+        font-family: inherit;
+    }
+    .form-textarea {
+        height: auto; min-height: 90px;
+        padding: 10px 12px !important; resize: vertical;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: #111 !important;
+        box-shadow: 0 0 0 3px rgba(0,0,0,.07) !important;
+        background: #fff;
+    }
+    .form-select { cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 10px center;
+        padding-right: 36px !important;
+    }
+    .form-hint { font-size: .73rem; color: #aaa; margin-top: 2px; }
+
+    /* ── Keywords row ── */
+    .keyword-list { display: flex; flex-direction: column; gap: 8px; }
+    .keyword-row { display: flex; gap: 8px; align-items: center; }
+    .keyword-row .form-input { flex: 1; }
+    .btn-remove-kw {
+        width: 32px; height: 32px; border-radius: 6px;
+        background: transparent; border: 1.5px solid #ddd;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; color: #aaa; flex-shrink: 0;
+        transition: all .15s;
+    }
+    .btn-remove-kw:hover { border-color: #c62828; color: #c62828; background: #ffebee; }
+    .btn-add-kw {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 12px; background: transparent;
+        border: 1.5px dashed #ccc; border-radius: 8px;
+        font-size: .78rem; font-weight: 600; color: #888;
+        cursor: pointer; transition: all .15s; margin-top: 4px;
+        width: fit-content;
+    }
+    .btn-add-kw:hover { border-color: #111; color: #111; }
+    .btn-add-kw i { font-size: 15px; }
+
+    /* ── Barcode section ── */
+    .bc-section {
+        border: 1.5px solid #e0e0e0; border-radius: 10px;
+        padding: 14px 16px; background: #fafafa; margin-top: 0;
+    }
+    .bc-section-title {
+        font-size: .72rem; font-weight: 800; letter-spacing: .5px;
+        text-transform: uppercase; color: #555;
+        display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
+    }
+    .bc-section-title i { font-size: 15px; }
+    .bc-input-row { display: flex; gap: 8px; }
+    .bc-input-row .form-input { flex: 1; font-family: monospace; }
+    .btn-gen-barcode {
+        height: 42px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 14px; background: #111; color: #fff; border: none;
+        border-radius: 8px; font-size: .83rem; font-weight: 600;
+        cursor: pointer; white-space: nowrap; flex-shrink: 0;
+        transition: background .15s;
+    }
+    .btn-gen-barcode:hover { background: #333; }
+    .bc-preview-box {
+        display: none; margin-top: 10px; background: #fff;
+        border: 1.5px solid #e0e0e0; border-radius: 8px;
+        padding: 10px; text-align: center;
+    }
+    .bc-preview-box img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    .bc-preview-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+    .btn-bc-action {
+        height: 30px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 10px; border-radius: 6px; font-size: .75rem; font-weight: 600;
+        cursor: pointer; text-decoration: none;
+    }
+    .btn-bc-dl { background: #f0f0f0; color: #111; border: 1px solid #ddd; }
+    .btn-bc-clear { background: transparent; color: #c62828; border: 1px solid #ef9a9a; }
+
+    /* ── Record type sub-section ── */
+    .record-section {
+        border: 1.5px solid #e8e8e8; border-radius: 10px;
+        overflow: hidden; margin-top: 0;
+    }
+    .record-section-hdr {
+        padding: 10px 16px; background: #f5f5f5;
+        border-bottom: 1.5px solid #e8e8e8;
+        font-size: .72rem; font-weight: 800; letter-spacing: 1px;
+        text-transform: uppercase; color: #555;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .record-section-hdr i { font-size: 15px; color: #111; }
+    .record-section-body { padding: 16px; }
+
+    /* ── Flash ── */
+    .flash-msg {
+        padding: 10px 16px; border-radius: 8px; margin-bottom: 16px;
+        font-size: .875rem; display: flex; align-items: center; gap: 8px;
+    }
+    .flash-msg.error   { background: #fce4ec; color: #b71c1c; border: 1px solid #f8bbd0; }
+    .flash-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+
+    /* ── Action bar ── */
+    .action-bar {
+        display: flex; align-items: center; justify-content: flex-end;
+        gap: 10px; padding: 16px 24px;
+        border-top: 1.5px solid #f0f0f0; background: #fafafa;
+    }
+    .btn-cancel {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 18px; background: transparent; color: #555;
+        border: 1.5px solid #ddd; border-radius: 8px;
+        font-size: .87rem; font-weight: 600; text-decoration: none;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-cancel:hover { background: #f0f0f0; color: #111; }
+    .btn-save {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 22px; background: #111; color: #fff;
+        border: none; border-radius: 8px;
+        font-size: .87rem; font-weight: 700; cursor: pointer;
+        transition: background .15s;
+    }
+    .btn-save:hover { background: #333; }
+    .btn-save i { font-size: 18px; }
+
+    /* ── File type toggle ── */
+    .file-type-toggle { display: none; }
+    .file-type-toggle.active { display: contents; }
+
+    @media (max-width: 640px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .form-grid.three-col { grid-template-columns: 1fr; }
+    }
+</style>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash-msg {{ category }}">
+    <i class="material-icons" style="font-size:17px;">{{ 'error' if category=='error' else 'check_circle' }}</i>
+    {{ message }}
+  </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="form-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-row">
+        <a href="/files">
+            <i class="material-icons" style="font-size:14px;vertical-align:middle;">folder_open</i>
+            File Records
+        </a>
+        <i class="material-icons">chevron_right</i>
+        <span style="color:#111;font-weight:600;">Create Single File</span>
+    </div>
+
+    <!-- Page title -->
+    <div class="page-title">
+        <div class="title-icon"><i class="material-icons">note_add</i></div>
+        <div>
+            <h4>Create Single File Record</h4>
+            <p class="subtitle">Enter details for one file. Fields marked <span style="color:#c62828;">*</span> are required.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/files/create/single-file/{{ file_type | lower }}" id="single-file-form">
+
+        <!-- ── Core file details ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">info</i>
+                <span>File Details</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+
+                    <!-- File Type -->
+                    <div class="form-group">
+                        <label class="form-label">File Type <span class="required">*</span></label>
+                        <select name="fileType" class="form-select" id="fileTypeSelect" onchange="onFileTypeChange(this.value)" required>
+                            <option value="" disabled {{ 'selected' if not file_type else '' }}>Select file type…</option>
+                            <option value="Student" {{ 'selected' if file_type == 'Student' else '' }}>ST – Student Files</option>
+                            <option value="Staff"   {{ 'selected' if file_type == 'Staff'   else '' }}>SF – General Administration Subject Files</option>
+                        </select>
+                    </div>
+
+                    <!-- Assign to Box -->
+                    <div class="form-group">
+                        <label class="form-label">Assign to Box <span class="required">*</span></label>
+                        <select name="boxID" class="form-select" required>
+                            <option value="" disabled selected>Select a box…</option>
+                            {% for box in boxes %}
+                            <option value="{{ box.boxID }}" {{ 'selected' if request.args.get('boxID') == box.boxID|string else '' }}>
+                                #{{ box.boxID }} – Bay {{ box.bayNo }}, Row {{ box.rowNo }}, Col {{ box.columnNo }}
+                                {% if box.barcode %}({{ box.barcode }}){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Description <span class="optional">(optional)</span></label>
+                        <textarea name="description" class="form-textarea"
+                                  placeholder="Brief description of this file's contents…"></textarea>
+                    </div>
+
+                    <!-- Previous Designation -->
+                    <div class="form-group">
+                        <label class="form-label">Previous Designation <span class="optional">(optional)</span></label>
+                        <input type="text" name="previousDesignation" class="form-input"
+                               placeholder="e.g. T/CS/2018/001">
+                        <span class="form-hint">Former reference number from prior system.</span>
+                    </div>
+
+                    <!-- Date Created -->
+                    <div class="form-group">
+                        <label class="form-label">Date Created <span class="optional">(optional)</span></label>
+                        <input type="date" name="dateCreated" class="form-input"
+                               value="{{ today }}">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Student-specific fields ── -->
+        <div class="form-card" id="student-section" style="display:none;">
+            <div class="form-card-header">
+                <i class="material-icons">school</i>
+                <span>Student Record</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Student ID / Code <span class="required">*</span></label>
+                        <input type="text" name="studentCode" class="form-input"
+                               placeholder="e.g. 810002345">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Certificate / Diploma <span class="required">*</span></label>
+                        <input type="text" name="certificateDiploma" class="form-input"
+                               placeholder="e.g. BSc Computer Science">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Staff-specific fields ── -->
+        <div class="form-card" id="staff-section" style="display:none;">
+            <div class="form-card-header">
+                <i class="material-icons">badge</i>
+                <span>Staff Record</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">File Number <span class="optional">(optional)</span></label>
+                        <input type="text" name="fileNumber" class="form-input"
+                               placeholder="e.g. SL-2024-001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">File Title <span class="optional">(optional)</span></label>
+                        <input type="text" name="fileTitle" class="form-input"
+                               placeholder="e.g. Academic Appointment – Lecturer">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Post / Job Title <span class="optional">(optional)</span></label>
+                        <input type="text" name="post" class="form-input"
+                               placeholder="e.g. Senior Lecturer">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Organisation Unit <span class="optional">(optional)</span></label>
+                        <input type="text" name="organisationUnit" class="form-input"
+                               placeholder="e.g. Faculty of Science & Technology">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Notes <span class="optional">(optional)</span></label>
+                        <textarea name="notes" class="form-textarea"
+                                  placeholder="Any additional notes about this staff record…"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Keywords ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">label</i>
+                <span>Keywords</span>
+            </div>
+            <div class="form-card-body">
+                <p style="font-size:.82rem;color:#888;margin:0 0 12px;">
+                    Add keywords to improve searchability of this record.
+                </p>
+                <div class="keyword-list" id="keyword-list">
+                    <div class="keyword-row">
+                        <input type="text" name="keywords[]" class="form-input"
+                               placeholder="e.g. undergraduate, transcript">
+                        <button type="button" class="btn-remove-kw" onclick="removeKeyword(this)" title="Remove">
+                            <i class="material-icons" style="font-size:16px;">close</i>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="btn-add-kw" onclick="addKeyword()">
+                    <i class="material-icons">add</i>Add Keyword
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Barcode ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">qr_code</i>
+                <span>Barcode</span>
+            </div>
+            <div class="form-card-body">
+                <input type="hidden" name="barcode" id="barcode-value">
+                <div class="bc-section">
+                    <div class="bc-section-title">
+                        <i class="material-icons">qr_code_scanner</i>Generate Barcode
+                    </div>
+                    <div class="bc-input-row">
+                        <input type="text" id="barcode-input" class="form-input"
+                               placeholder="e.g. FILE-STU-001  (leave blank to skip)">
+                        <button type="button" class="btn-gen-barcode" onclick="generateBarcode()">
+                            <i class="material-icons" style="font-size:17px;">qr_code_scanner</i>Generate
+                        </button>
+                    </div>
+                    <div id="bc-loading" style="display:none;font-size:.82rem;color:#555;margin-top:8px;">
+                        <i class="material-icons" style="font-size:14px;vertical-align:middle;">hourglass_top</i>
+                        Generating…
+                    </div>
+                    <div class="bc-preview-box" id="bc-preview">
+                        <img id="bc-img" src="" alt="barcode">
+                        <div style="font-size:.72rem;color:#888;margin-top:6px;" id="bc-label"></div>
+                        <div class="bc-preview-actions">
+                            <a id="bc-download" href="#" class="btn-bc-action btn-bc-dl" download>
+                                <i class="material-icons" style="font-size:13px;">download</i>PNG
+                            </a>
+                            <button type="button" class="btn-bc-action btn-bc-clear" onclick="clearBarcode()">
+                                <i class="material-icons" style="font-size:13px;">close</i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Action bar ── -->
+        <div class="form-card">
+            <div class="action-bar">
+                <a href="/files" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-save">
+                    <i class="material-icons">save</i>Create File Record
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set today's date
+    document.addEventListener('DOMContentLoaded', function () {
+        var di = document.querySelector('input[name="dateCreated"]');
+        if (di && !di.value) {
+            var today = new Date();
+            di.value = today.toISOString().split('T')[0];
+        }
+        // Show section if file_type pre-set
+        var sel = document.getElementById('fileTypeSelect');
+        if (sel && sel.value) onFileTypeChange(sel.value);
+    });
+
+    function onFileTypeChange(val) {
+        document.getElementById('student-section').style.display = val === 'Student' ? 'block' : 'none';
+        document.getElementById('staff-section').style.display   = val === 'Staff'   ? 'block' : 'none';
+    }
+
+    // Keywords
+    function addKeyword() {
+        var list = document.getElementById('keyword-list');
+        var row = document.createElement('div');
+        row.className = 'keyword-row';
+        row.innerHTML = '<input type="text" name="keywords[]" class="form-input" placeholder="Add keyword…">' +
+                        '<button type="button" class="btn-remove-kw" onclick="removeKeyword(this)" title="Remove">' +
+                        '<i class="material-icons" style="font-size:16px;">close</i></button>';
+        list.appendChild(row);
+        row.querySelector('input').focus();
+    }
+
+    function removeKeyword(btn) {
+        var list = document.getElementById('keyword-list');
+        if (list.children.length > 1) btn.closest('.keyword-row').remove();
+        else btn.closest('.keyword-row').querySelector('input').value = '';
+    }
+
+    // Barcode
+    async function generateBarcode() {
+        var val = document.getElementById('barcode-input').value.trim();
+        if (!val) {
+            document.getElementById('barcode-input').focus();
+            document.getElementById('barcode-input').style.borderColor = '#c62828';
+            setTimeout(() => document.getElementById('barcode-input').style.borderColor = '', 1500);
+            return;
+        }
+        document.getElementById('bc-loading').style.display = 'block';
+        document.getElementById('bc-preview').style.display = 'none';
+        try {
+            var res  = await fetch('/api/barcode/generate', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({value: val})
+            });
+            var data = await res.json();
+            if (!res.ok || data.error) throw new Error(data.error || 'Failed');
+            document.getElementById('bc-img').src  = 'data:image/png;base64,' + data.barcode_b64;
+            document.getElementById('bc-label').textContent = val;
+            document.getElementById('barcode-value').value  = val;
+            document.getElementById('bc-download').href     = '/api/barcode/download/' + encodeURIComponent(val);
+            document.getElementById('bc-download').download = 'barcode-' + val + '.png';
+            document.getElementById('bc-preview').style.display = 'block';
+        } catch (err) {
+            alert('Barcode generation failed: ' + err.message);
+        } finally {
+            document.getElementById('bc-loading').style.display = 'none';
+        }
+    }
+
+    function clearBarcode() {
+        document.getElementById('barcode-input').value  = '';
+        document.getElementById('barcode-value').value  = '';
+        document.getElementById('bc-preview').style.display = 'none';
+    }
+</script>
+{% endblock %}

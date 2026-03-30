@@ -30,6 +30,325 @@ from .index import index_views
 
 file_views = Blueprint("file_views", __name__, template_folder="templates")
 
+from datetime import date as _date
+from App.controllers.location import get_all_locations
+ 
+ 
+# ── Single File ───────────────────────────────────────────────────────────────
+ 
+@file_views.route("/files/create/single-file/<file_type>", methods=["GET"])
+@jwt_required()
+def create_single_file_page(file_type):
+    """Render the single-file creation form."""
+    file_type = file_type.capitalize()
+    boxes     = getAllBoxes()
+    return render_template(
+        "create_single_file.html",
+        file_type = file_type,
+        boxes     = boxes,
+        today     = _date.today().isoformat(),
+    )
+ 
+ 
+@file_views.route("/files/create/single-file/<file_type>", methods=["POST"])
+@jwt_required()
+def create_single_file_action(file_type):
+    """Handle single-file form submission."""
+    file_type = file_type.capitalize()
+    form      = request.form
+ 
+    box_id      = form.get("boxID",            "").strip()
+    description = form.get("description",      "").strip() or None
+    prev_desig  = form.get("previousDesignation","").strip() or None
+    date_created= form.get("dateCreated",      "").strip() or None
+    barcode     = form.get("barcode",          "").strip() or None
+ 
+    if not box_id:
+        flash("Box is required.", "error")
+        return redirect(request.url)
+ 
+    try:
+        box_id = int(box_id)
+    except ValueError:
+        flash("Invalid box selection.", "error")
+        return redirect(request.url)
+ 
+    # Create the core file
+    from App.controllers.file import addFile
+    file = addFile(
+        boxID                = box_id,
+        fileType             = file_type,
+        description          = description,
+        previousDesignation  = prev_desig,
+        dateCreated          = date_created,
+        barcode              = barcode,
+        createdByStaffUserID = getattr(jwt_current_user, "staffUserID", None),
+    )
+ 
+    if not file:
+        flash("Failed to create file record.", "error")
+        return redirect(request.url)
+ 
+    # Create sub-record
+    if file_type == "Student":
+        from App.controllers.fileRecord import create_student_record
+        create_student_record(
+            fileID              = file.fileID,
+            code                = form.get("studentCode", "").strip() or None,
+            certificateDiploma  = form.get("certificateDiploma", "").strip() or None,
+        )
+    elif file_type == "Staff":
+        from App.controllers.fileRecord import create_staff_record
+        create_staff_record(
+            fileID           = file.fileID,
+            fileNumber       = form.get("fileNumber",       "").strip() or None,
+            fileTitle        = form.get("fileTitle",        "").strip() or None,
+            post             = form.get("post",             "").strip() or None,
+            organisationUnit = form.get("organisationUnit", "").strip() or None,
+            notes            = form.get("notes",            "").strip() or None,
+        )
+ 
+    flash(f"File #{file.fileID} created successfully.", "success")
+    return redirect(url_for("file_views.file_detail_page", fileID=file.fileID))
+ 
+ 
+# ── Single Part ───────────────────────────────────────────────────────────────
+ 
+@file_views.route("/files/create/single-part/<file_type>", methods=["GET"])
+@jwt_required()
+def create_single_part_page(file_type):
+    """Render the single-part creation form."""
+    file_type    = file_type.capitalize()
+    boxes        = getAllBoxes()
+    locations    = get_all_locations()
+    # Parent files = files of the same type that can receive parts
+    from App.controllers.file import searchFile
+    parent_files = searchFile(fileType=file_type)
+    return render_template(
+        "create_single_part.html",
+        file_type    = file_type,
+        boxes        = boxes,
+        locations    = locations,
+        parent_files = parent_files,
+    )
+ 
+ 
+@file_views.route("/files/create/single-part/<file_type>", methods=["POST"])
+@jwt_required()
+def create_single_part_action(file_type):
+    """Handle single-part form submission."""
+    file_type = file_type.capitalize()
+    form      = request.form
+ 
+    box_id        = form.get("boxID",         "").strip()
+    location_id   = form.get("locationID",    "").strip() or None
+    barcode       = form.get("barcode",       "").strip() or None
+    volume_number = form.get("volumeNumber",  "").strip() or None
+    start_date    = form.get("startDate",     "").strip() or None
+    end_date      = form.get("endDate",       "").strip() or None
+ 
+    if not box_id:
+        flash("Box is required.", "error")
+        return redirect(request.url)
+ 
+    try:
+        box_id = int(box_id)
+    except ValueError:
+        flash("Invalid box selection.", "error")
+        return redirect(request.url)
+ 
+    from App.controllers.file import addFile
+    file = addFile(
+        boxID                = box_id,
+        locationID           = int(location_id) if location_id else None,
+        fileType             = file_type,
+        barcode              = barcode,
+        createdByStaffUserID = getattr(jwt_current_user, "staffUserID", None),
+    )
+ 
+    if not file:
+        flash("Failed to create part record.", "error")
+        return redirect(request.url)
+ 
+    flash(f"Part #{file.fileID} created successfully.", "success")
+    return redirect(url_for("file_views.file_detail_page", fileID=file.fileID))
+ 
+ 
+# ── Batch File ────────────────────────────────────────────────────────────────
+ 
+@file_views.route("/files/create/batch-file/<file_type>", methods=["GET"])
+@jwt_required()
+def create_batch_file_page(file_type):
+    """Render the batch-file creation form."""
+    file_type = file_type.capitalize()
+    boxes     = getAllBoxes()
+    return render_template(
+        "create_batch_file.html",
+        file_type = file_type,
+        boxes     = boxes,
+    )
+ 
+ 
+@file_views.route("/files/create/batch-file/<file_type>", methods=["POST"])
+@jwt_required()
+def create_batch_file_action(file_type):
+    """Handle batch-file form submission — saves every non-empty row."""
+    file_type = file_type.capitalize()
+    form      = request.form
+ 
+    global_box_id     = form.get("globalBoxID",      "").strip()
+    global_date       = form.get("globalDateCreated", "").strip() or None
+ 
+    if not global_box_id:
+        flash("Box selection is required.", "error")
+        return redirect(request.url)
+ 
+    try:
+        global_box_id = int(global_box_id)
+    except ValueError:
+        flash("Invalid box selection.", "error")
+        return redirect(request.url)
+ 
+    # Collect row lists
+    descriptions   = form.getlist("row_description[]")
+    prev_desigs    = form.getlist("row_prevDesig[]")
+    codes          = form.getlist("row_code[]")
+    cert_diplomas  = form.getlist("row_certDiploma[]")
+    student_ids    = form.getlist("row_studentID[]")
+    file_numbers   = form.getlist("row_fileNumber[]")
+    file_titles    = form.getlist("row_fileTitle[]")  # staff title col
+    staff_titles   = form.getlist("row_staffTitle[]") # staff-only title col
+    posts          = form.getlist("row_post[]")
+    org_units      = form.getlist("row_orgUnit[]")
+ 
+    from App.controllers.file import addFile
+    from App.controllers.fileRecord import create_student_record, create_staff_record
+ 
+    created = 0
+    errors  = 0
+ 
+    for idx, desc in enumerate(descriptions):
+        desc = desc.strip()
+        pd   = prev_desigs[idx].strip() if idx < len(prev_desigs) else ""
+        if not desc and not pd:
+            continue  # skip empty rows
+ 
+        file = addFile(
+            boxID               = global_box_id,
+            fileType            = file_type,
+            description         = desc or None,
+            previousDesignation = pd or None,
+            dateCreated         = global_date,
+            createdByStaffUserID= getattr(jwt_current_user, "staffUserID", None),
+        )
+ 
+        if not file:
+            errors += 1
+            continue
+ 
+        if file_type == "Student":
+            create_student_record(
+                fileID             = file.fileID,
+                code               = codes[idx].strip()         if idx < len(codes)         else None,
+                certificateDiploma = cert_diplomas[idx].strip() if idx < len(cert_diplomas) else None,
+            )
+        elif file_type == "Staff":
+            fn = file_numbers[idx].strip() if idx < len(file_numbers) else ""
+            ft = (staff_titles[idx].strip() if idx < len(staff_titles) else "") or \
+                 (file_titles[idx].strip()   if idx < len(file_titles)  else "")
+            create_staff_record(
+                fileID           = file.fileID,
+                fileNumber       = fn or None,
+                fileTitle        = ft or None,
+                post             = posts[idx].strip()     if idx < len(posts)     else None,
+                organisationUnit = org_units[idx].strip() if idx < len(org_units) else None,
+            )
+        created += 1
+ 
+    if errors:
+        flash(f"{created} record(s) created; {errors} failed.", "warning")
+    else:
+        flash(f"{created} record(s) created successfully.", "success")
+ 
+    return redirect(url_for("file_views.get_files_page"))
+ 
+ 
+# ── Batch Part ────────────────────────────────────────────────────────────────
+ 
+@file_views.route("/files/create/batch-part/<file_type>", methods=["GET"])
+@jwt_required()
+def create_batch_part_page(file_type):
+    """Render the batch-part creation form."""
+    file_type    = file_type.capitalize()
+    boxes        = getAllBoxes()
+    locations    = get_all_locations()
+    from App.controllers.file import searchFile
+    parent_files = searchFile(fileType=file_type)
+    return render_template(
+        "create_batch_part.html",
+        file_type    = file_type,
+        boxes        = boxes,
+        locations    = locations,
+        parent_files = parent_files,
+    )
+ 
+ 
+@file_views.route("/files/create/batch-part/<file_type>", methods=["POST"])
+@jwt_required()
+def create_batch_part_action(file_type):
+    """Handle batch-part form submission."""
+    file_type = file_type.capitalize()
+    form      = request.form
+ 
+    global_box_id   = form.get("globalBoxID",      "").strip()
+    global_loc_id   = form.get("globalLocationID", "").strip() or None
+ 
+    if not global_box_id:
+        flash("Box selection is required.", "error")
+        return redirect(request.url)
+ 
+    try:
+        global_box_id = int(global_box_id)
+    except ValueError:
+        flash("Invalid box selection.", "error")
+        return redirect(request.url)
+ 
+    file_ids    = form.getlist("row_fileID[]")
+    volume_nos  = form.getlist("row_volumeNo[]")
+    start_dates = form.getlist("row_startDate[]")
+    end_dates   = form.getlist("row_endDate[]")
+    barcodes    = form.getlist("row_barcode[]")
+ 
+    from App.controllers.file import addFile
+ 
+    created = 0
+    errors  = 0
+ 
+    for idx, fid in enumerate(file_ids):
+        fid = fid.strip()
+        if not fid:
+            continue  # skip unselected rows
+ 
+        file = addFile(
+            boxID                = global_box_id,
+            locationID           = int(global_loc_id) if global_loc_id else None,
+            fileType             = file_type,
+            barcode              = barcodes[idx].strip()    if idx < len(barcodes)    else None,
+            createdByStaffUserID = getattr(jwt_current_user, "staffUserID", None),
+        )
+ 
+        if not file:
+            errors += 1
+            continue
+        created += 1
+ 
+    if errors:
+        flash(f"{created} part(s) created; {errors} failed.", "warning")
+    else:
+        flash(f"{created} part(s) created successfully.", "success")
+ 
+    return redirect(url_for("file_views.get_files_page"))
+
 @file_views.route("/files/create", methods=["POST"])
 @jwt_required()
 def add_file_page():
