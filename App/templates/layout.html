@@ -514,6 +514,21 @@
             <div class="tb-right">
                 {% if is_authenticated %}
 
+                {% if session.get('selected_location') %}
+                <span class="tb-date" aria-live="polite" style="margin-right: 8px; background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; cursor: pointer;" onclick="window.location.href='/location'" title="Change Location">
+                    <i class="material-icons" style="color: #1565c0;">location_on</i>
+                    <span>
+                        {% if session['selected_location'] == 'lloyd-brathwaite-sta' %}
+                            Lloyd Brathwaite
+                        {% elif session['selected_location'] == 'south-campus' %}
+                            South Campus
+                        {% else %}
+                            {{ session['selected_location'] | replace('-', ' ') | title }}
+                        {% endif %}
+                    </span>
+                </span>
+                {% endif %}
+
                 <!-- Date chip -->
                 <span class="tb-date" id="tb-date" aria-live="polite">
                     <i class="material-icons">calendar_today</i>

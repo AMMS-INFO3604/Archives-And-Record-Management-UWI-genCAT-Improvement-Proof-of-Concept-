@@ -25,6 +25,12 @@ location_views = Blueprint("location_views", __name__, template_folder="../templ
 @location_views.route("/location", methods=["GET"])
 @jwt_required()
 def get_locations_page():
+    from flask import session
+    loc = request.args.get("loc")
+    if loc:
+        session["selected_location"] = loc
+        return redirect(url_for("box_views.get_boxes_page"))
+    
     locations = get_all_locations()
     return render_template("location.html", locations=locations)
 
