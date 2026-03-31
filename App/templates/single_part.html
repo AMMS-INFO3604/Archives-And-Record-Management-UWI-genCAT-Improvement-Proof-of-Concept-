@@ -1,0 +1,448 @@
+{% extends "layout.html" %}
+{% block title %}Create Single Part{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f5f5 !important; }
+
+    .form-wrapper { max-width: 860px; margin: 32px auto; padding: 0 16px 64px; }
+
+    .breadcrumb-row {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 20px; font-size: .84rem; color: #888;
+    }
+    .breadcrumb-row a { color: #111; text-decoration: none; font-weight: 600; }
+    .breadcrumb-row a:hover { text-decoration: underline; }
+    .breadcrumb-row i { font-size: 16px; color: #bbb; vertical-align: middle; }
+
+    .page-title { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .page-title .title-icon {
+        width: 44px; height: 44px; border-radius: 10px;
+        background: #111; display: flex; align-items: center; justify-content: center;
+    }
+    .page-title .title-icon i { font-size: 22px; color: #fff; }
+    .page-title h4 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #1a1a1a; }
+    .page-title .subtitle { margin: 2px 0 0; font-size: .82rem; color: #888; }
+
+    .form-card {
+        background: #fff; border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 20px;
+    }
+    .form-card-header {
+        padding: 16px 24px; border-bottom: 1.5px solid #f0f0f0; background: #fafafa;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .form-card-header i { font-size: 18px; color: #111; }
+    .form-card-header span {
+        font-size: .78rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #111;
+    }
+    .form-card-body { padding: 24px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+    .form-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
+    .full-width { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label {
+        font-size: .72rem; font-weight: 700; letter-spacing: .5px;
+        text-transform: uppercase; color: #555;
+    }
+    .form-label .required { color: #c62828; margin-left: 2px; }
+    .form-label .optional { font-size: .68rem; font-weight: 400; color: #aaa; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .form-hint { font-size: .73rem; color: #aaa; margin-top: 2px; }
+
+    .form-input, .form-select, .form-textarea {
+        height: 42px;
+        border: 1.5px solid #ddd !important; border-bottom: 1.5px solid #ddd !important;
+        border-radius: 8px !important; padding: 0 12px !important;
+        font-size: .9rem; color: #333; background: #fafafa;
+        box-shadow: none !important; margin: 0 !important;
+        box-sizing: border-box; outline: none; width: 100%;
+        transition: border-color .15s; font-family: inherit;
+    }
+    .form-textarea { height: auto; min-height: 80px; padding: 10px 12px !important; resize: vertical; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: #111 !important; box-shadow: 0 0 0 3px rgba(0,0,0,.07) !important; background: #fff;
+    }
+    .form-select {
+        cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 10px center; padding-right: 36px !important;
+    }
+
+    /* ── Date range row ── */
+    .date-range-row { display: flex; gap: 12px; align-items: center; }
+    .date-range-row .form-group { flex: 1; }
+    .date-sep { font-size: .8rem; color: #aaa; font-weight: 600; padding-top: 22px; flex-shrink: 0; }
+
+    /* ── Barcode scanner input ── */
+    .scan-input-wrap { position: relative; }
+    .scan-input-wrap .form-input { padding-right: 44px !important; font-family: monospace; }
+    .scan-input-wrap .scan-icon {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        color: #bbb; font-size: 18px; pointer-events: none;
+    }
+
+    /* ── Parent box finder ── */
+    .finder-row { display: flex; gap: 8px; }
+    .finder-row .form-select { flex: 1; }
+    .btn-finder {
+        height: 42px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 12px; background: #f0f0f0; border: 1.5px solid #ddd;
+        border-radius: 8px; font-size: .8rem; font-weight: 600; color: #555;
+        cursor: pointer; flex-shrink: 0; transition: background .15s;
+    }
+    .btn-finder:hover { background: #e0e0e0; color: #111; }
+
+    /* ── Attachments table ── */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table thead tr { background: #f5f5f5; }
+    .attach-table thead th {
+        padding: 9px 12px; font-size: .7rem; font-weight: 800;
+        letter-spacing: .8px; text-transform: uppercase; color: #555;
+        border-bottom: 1.5px solid #e0e0e0; text-align: left; white-space: nowrap;
+    }
+    .attach-table tbody tr { border-bottom: 1px solid #f0f0f0; }
+    .attach-table tbody tr:last-child { border-bottom: none; }
+    .attach-table tbody td { padding: 8px 12px; vertical-align: middle; }
+    .attach-table .form-input { height: 36px; font-size: .85rem; }
+
+    .btn-attach-add {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 7px 12px; background: transparent;
+        border: 1.5px dashed #ccc; border-radius: 8px;
+        font-size: .78rem; font-weight: 600; color: #888;
+        cursor: pointer; transition: all .15s; margin-top: 8px;
+    }
+    .btn-attach-add:hover { border-color: #111; color: #111; }
+
+    .btn-file-select {
+        height: 36px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 10px; background: #f5f5f5; border: 1.5px solid #ddd;
+        border-radius: 6px; font-size: .78rem; font-weight: 600; color: #555;
+        cursor: pointer; white-space: nowrap; transition: background .15s;
+    }
+    .btn-file-select:hover { background: #e8e8e8; color: #111; }
+
+    .btn-do-it {
+        height: 36px; display: inline-flex; align-items: center; gap: 4px;
+        padding: 0 12px; background: #111; color: #fff; border: none;
+        border-radius: 6px; font-size: .78rem; font-weight: 700;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-do-it:hover { background: #333; }
+
+    /* ── Display image row ── */
+    .display-img-row { display: flex; gap: 10px; align-items: center; }
+    .display-img-row .form-input { flex: 1; }
+
+    /* ── Flash ── */
+    .flash-msg {
+        padding: 10px 16px; border-radius: 8px; margin-bottom: 16px;
+        font-size: .875rem; display: flex; align-items: center; gap: 8px;
+    }
+    .flash-msg.error   { background: #fce4ec; color: #b71c1c; border: 1px solid #f8bbd0; }
+    .flash-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+
+    /* ── Action bar ── */
+    .action-bar {
+        display: flex; align-items: center; justify-content: flex-end;
+        gap: 10px; padding: 16px 24px; border-top: 1.5px solid #f0f0f0; background: #fafafa;
+    }
+    .btn-cancel {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 18px; background: transparent; color: #555;
+        border: 1.5px solid #ddd; border-radius: 8px;
+        font-size: .87rem; font-weight: 600; text-decoration: none;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-cancel:hover { background: #f0f0f0; color: #111; }
+    .btn-save {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 22px; background: #111; color: #fff; border: none;
+        border-radius: 8px; font-size: .87rem; font-weight: 700;
+        cursor: pointer; transition: background .15s;
+    }
+    .btn-save:hover { background: #333; }
+    .btn-save i { font-size: 18px; }
+
+    @media (max-width: 640px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .form-grid.three-col { grid-template-columns: 1fr; }
+        .date-range-row { flex-direction: column; }
+        .date-sep { display: none; }
+    }
+</style>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash-msg {{ category }}">
+    <i class="material-icons" style="font-size:17px;">{{ 'error' if category=='error' else 'check_circle' }}</i>
+    {{ message }}
+  </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="form-wrapper">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-row">
+        <a href="/files"><i class="material-icons" style="font-size:14px;vertical-align:middle;">folder_open</i> File Records</a>
+        <i class="material-icons">chevron_right</i>
+        <span style="color:#111;font-weight:600;">Create Single Part</span>
+    </div>
+
+    <!-- Page title -->
+    <div class="page-title">
+        <div class="title-icon"><i class="material-icons">library_add</i></div>
+        <div>
+            <h4>Create Single Part</h4>
+            <p class="subtitle">Enter details for one file part. Fields marked <span style="color:#c62828;">*</span> are required.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/files/create/single-part/{{ file_type | lower }}" id="single-part-form"
+          enctype="multipart/form-data">
+
+        <!-- ── Staff / Location ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">location_on</i>
+                <span>Location &amp; Classification</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+
+                    <!-- KO – Location -->
+                    <div class="form-group">
+                        <label class="form-label">KO – Location <span class="required">*</span></label>
+                        <select name="locationID" class="form-select" required>
+                            <option value="" disabled selected>Select location…</option>
+                            {% for loc in locations %}
+                            <option value="{{ loc.locationID }}">{{ loc.geoLocation }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- File Type -->
+                    <div class="form-group">
+                        <label class="form-label">File Type <span class="required">*</span></label>
+                        <select name="fileType" class="form-select" required>
+                            <option value="" disabled selected>Select file type…</option>
+                            <option value="Student" {{ 'selected' if file_type == 'Student' else '' }}>ST – Student Files</option>
+                            <option value="Staff"   {{ 'selected' if file_type == 'Staff'   else '' }}>SF – General Administration Subject Files</option>
+                        </select>
+                    </div>
+
+                    <!-- Parent File -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Parent File <span class="required">*</span></label>
+                        <div class="finder-row">
+                            <select name="parentFileID" class="form-select" required>
+                                <option value="" disabled selected>Select parent file…</option>
+                                {% for file in parent_files %}
+                                <option value="{{ file.fileID }}"
+                                    {{ 'selected' if request.args.get('fileID') == file.fileID|string else '' }}>
+                                    #{{ file.fileID }} – {{ file.description or file.previousDesignation or 'No description' }}
+                                    ({{ file.fileType }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn-finder">
+                                <i class="material-icons" style="font-size:16px;">search</i>Find
+                            </button>
+                        </div>
+                        <span class="form-hint">The file this part belongs to.</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Part details ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">info</i>
+                <span>Part Details</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+
+                    <!-- Barcode -->
+                    <div class="form-group">
+                        <label class="form-label">Barcode <span class="optional">(optional)</span></label>
+                        <div class="scan-input-wrap">
+                            <input type="text" name="barcode" id="part-barcode" class="form-input"
+                                   placeholder="Scan or type barcode…">
+                            <i class="material-icons scan-icon">qr_code_scanner</i>
+                        </div>
+                    </div>
+
+                    <!-- Volume Number -->
+                    <div class="form-group">
+                        <label class="form-label">Volume Number <span class="optional">(optional)</span></label>
+                        <input type="text" name="volumeNumber" class="form-input"
+                               placeholder="e.g. 1, 2, A, B">
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Date Range <span class="optional">(optional)</span></label>
+                        <div class="date-range-row">
+                            <div class="form-group">
+                                <label class="form-label" style="font-size:.68rem;">Start (YYYY-MM)</label>
+                                <input type="month" name="startDate" class="form-input"
+                                       placeholder="YYYY-MM">
+                            </div>
+                            <span class="date-sep">to</span>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size:.68rem;">End (YYYY-MM)</label>
+                                <input type="month" name="endDate" class="form-input"
+                                       placeholder="YYYY-MM">
+                            </div>
+                        </div>
+                        <span class="form-hint">Inclusive date range covered by this part.</span>
+                    </div>
+
+                    <!-- Assign to Box -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Assign to Box <span class="required">*</span></label>
+                        <div class="finder-row">
+                            <select name="boxID" class="form-select" required>
+                                <option value="" disabled selected>Select a box…</option>
+                                {% for box in boxes %}
+                                <option value="{{ box.boxID }}"
+                                    {{ 'selected' if request.args.get('boxID') == box.boxID|string else '' }}>
+                                    #{{ box.boxID }} – Bay {{ box.bayNo }}, Row {{ box.rowNo }}, Col {{ box.columnNo }}
+                                    {% if box.barcode %}({{ box.barcode }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn-finder">
+                                <i class="material-icons" style="font-size:16px;">search</i>Find
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Digital content ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">cloud_upload</i>
+                <span>Digital Content</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+
+                    <!-- Display image -->
+                    <div class="form-group full-width">
+                        <label class="form-label">Display Image <span class="optional">(optional)</span></label>
+                        <div class="display-img-row">
+                            <input type="text" name="displayImage" class="form-input"
+                                   placeholder="Image filename or URL…">
+                            <label class="btn-file-select" for="display-img-upload">
+                                <i class="material-icons" style="font-size:16px;">attach_file</i>Select file
+                            </label>
+                            <input type="file" id="display-img-upload" name="displayImageFile"
+                                   accept="image/*" style="display:none;" onchange="updateDisplayImgName(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attachments -->
+                <div style="margin-top:16px;">
+                    <label class="form-label" style="display:block;margin-bottom:8px;">Attachments</label>
+                    <div style="overflow-x:auto;">
+                        <table class="attach-table">
+                            <thead>
+                                <tr>
+                                    <th>Caption</th>
+                                    <th>File Reference</th>
+                                    <th>Attached File</th>
+                                    <th>Content</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="attach-tbody">
+                                {% for i in range(3) %}
+                                <tr>
+                                    <td><input type="text" name="attach_caption[]"  class="form-input" placeholder="Caption…"></td>
+                                    <td><input type="text" name="attach_file_ref[]" class="form-input" placeholder="File reference…"></td>
+                                    <td>
+                                        <label class="btn-file-select" for="attach-file-{{ i }}">
+                                            <i class="material-icons" style="font-size:15px;">attach_file</i>Select
+                                        </label>
+                                        <input type="file" id="attach-file-{{ i }}" name="attach_file_{{ i }}"
+                                               style="display:none;" onchange="updateAttachLabel(this, {{ i }})">
+                                        <span id="attach-name-{{ i }}" style="font-size:.75rem;color:#888;margin-left:4px;"></span>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="attach_content[]" class="form-input" placeholder="Content description…">
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn-do-it">Do it</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn-attach-add" onclick="addAttachRow()">
+                        <i class="material-icons">add</i>Add Row
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Action bar ── -->
+        <div class="form-card">
+            <div class="action-bar">
+                <a href="/files" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-save">
+                    <i class="material-icons">save</i>Create Part
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var attachCount = 3;
+
+    function addAttachRow() {
+        var tbody = document.getElementById('attach-tbody');
+        var i = attachCount++;
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><input type="text" name="attach_caption[]"  class="form-input" placeholder="Caption…"></td>' +
+            '<td><input type="text" name="attach_file_ref[]" class="form-input" placeholder="File reference…"></td>' +
+            '<td>' +
+                '<label class="btn-file-select" for="attach-file-' + i + '">' +
+                    '<i class="material-icons" style="font-size:15px;">attach_file</i>Select' +
+                '</label>' +
+                '<input type="file" id="attach-file-' + i + '" name="attach_file_' + i +
+                    '" style="display:none;" onchange="updateAttachLabel(this,' + i + ')">' +
+                '<span id="attach-name-' + i + '" style="font-size:.75rem;color:#888;margin-left:4px;"></span>' +
+            '</td>' +
+            '<td><input type="text" name="attach_content[]" class="form-input" placeholder="Content description…"></td>' +
+            '<td><button type="button" class="btn-do-it">Do it</button></td>';
+        tbody.appendChild(tr);
+    }
+
+    function updateAttachLabel(input, idx) {
+        var nameEl = document.getElementById('attach-name-' + idx);
+        if (nameEl) nameEl.textContent = input.files.length ? input.files[0].name : '';
+    }
+
+    function updateDisplayImgName(input) {
+        var field = document.querySelector('input[name="displayImage"]');
+        if (field && input.files.length) field.value = input.files[0].name;
+    }
+</script>
+{% endblock %}
