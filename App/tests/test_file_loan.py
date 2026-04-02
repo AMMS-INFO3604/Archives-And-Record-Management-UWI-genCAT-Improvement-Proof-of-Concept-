@@ -166,6 +166,12 @@ class FileControllerUnitTests(unittest.TestCase):
         self.assertIsNotNone(file)
         self.assertEqual(file.status, "Available")
 
+    def test_add_file_with_custom_status(self):
+        box = _get_box()
+        file = addFile(boxID=box.boxID, fileType="Student", status="Unprocessed/Pending")
+        self.assertIsNotNone(file)
+        self.assertEqual(file.status, "Unprocessed/Pending")
+
     def test_view_file_found(self):
         box = _get_box()
         created = addFile(boxID=box.boxID, fileType="Student", description="view test")
@@ -222,6 +228,13 @@ class FileControllerUnitTests(unittest.TestCase):
         results = searchFile(fileType="Staff")
         self.assertIsInstance(results, list)
         self.assertTrue(all(f.fileType == "Staff" for f in results))
+
+    def test_box_color_status_derived(self):
+        box = _get_box()
+        addFile(boxID=box.boxID, fileType="Student", status="Unprocessed/Pending")
+        from App.database import db
+        db.session.refresh(box)
+        self.assertEqual(box.color_status, "Unprocessed/Pending")
 
     def test_search_file_by_keyword_description(self):
         box = _get_box()

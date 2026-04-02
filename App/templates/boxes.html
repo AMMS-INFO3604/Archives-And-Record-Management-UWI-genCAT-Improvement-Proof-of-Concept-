@@ -143,7 +143,33 @@
         background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 6px;
         padding: 3px 9px; font-family: monospace; font-size: 0.8rem; color: #333;
     }
-
+    .box-status-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 10px; border-radius: 999px;
+        font-size: 0.73rem; font-weight: 700; color: #fff;
+        text-transform: uppercase;
+    }
+    .box-status-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .box-status-unprocessed { background: #ffebee; color: #b71c1c; }
+    .box-status-unprocessed .dot { background: #f44336; }
+    .box-status-space { background: #e3f2fd; color: #1565c0; }
+    .box-status-space .dot { background: #2196f3; }
+    .box-status-missing { background: #fff3e0; color: #ef6c00; }
+    .box-status-missing .dot { background: #ff9800; }
+    .box-status-damaged { background: #fffde7; color: #f57f17; }
+    .box-status-damaged .dot { background: #ffeb3b; }
+    .box-status-full { background: #e8f5e9; color: #2e7d32; }
+    .box-status-full .dot { background: #4caf50; }
+    .box-status-scanned { background: #f3e5f5; color: #6a1b9a; }
+    .box-status-scanned .dot { background: #9c27b0; }
+    .box-status-pending { background: #e0f2f1; color: #00796b; }
+    .box-status-pending .dot { background: #009688; }
+    .box-status-action { background: #fce4ec; color: #c2185b; }
+    .box-status-action .dot { background: #e91e63; }
+    .box-status-approved { background: #bdbdbd; color: #212121; }
+    .box-status-approved .dot { background: #000000; }
+    .box-status-disaster { background: #efebe9; color: #5d4037; }
+    .box-status-disaster .dot { background: #795548; }
     /* ── Action buttons ─────────────────────────────────────────────────── */
     .btn-action {
         display: inline-flex; align-items: center; gap: 3px;
@@ -404,6 +430,18 @@
             </span>
         </div>
 
+        <div style="padding: 10px 16px; border-bottom: 1px solid #eee; background: #fafafa;">
+            <strong>Box status legend:</strong>
+            <span class="box-status-chip box-status-unprocessed" style="margin-left:8px;"><span class="dot"></span>Unprocessed/Pending</span>
+            <span class="box-status-chip box-status-space"><span class="dot"></span>Space Available</span>
+            <span class="box-status-chip box-status-missing"><span class="dot"></span>Missing File</span>
+            <span class="box-status-chip box-status-damaged"><span class="dot"></span>Damaged Records</span>
+            <span class="box-status-chip box-status-full"><span class="dot"></span>Full/Max Capacity</span>
+            <span class="box-status-chip box-status-scanned"><span class="dot"></span>Scanned</span>
+            <span class="box-status-chip box-status-pending"><span class="dot"></span>Pending Scanning</span>
+            <span class="box-status-chip box-status-action"><span class="dot"></span>Action Required</span>
+        </div>
+
         {% if boxes %}
         <div style="overflow-x: auto;">
             <table class="boxes-table">
@@ -414,6 +452,7 @@
                         <th>Barcode</th>
                         <th>Location</th>
                         <th>Files</th>
+                        <th>Status</th>
                         <th style="text-align:right;">Actions</th>
                     </tr>
                 </thead>
@@ -451,6 +490,32 @@
                             <span class="file-count-chip">
                                 <i class="material-icons">folder_open</i>{{ box.files | length }}
                             </span>
+                        </td>
+                        <td>
+                            {% set bs = box.color_status %}
+                            {% if bs == 'Unprocessed/Pending' %}
+                                <span class="box-status-chip box-status-unprocessed"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Space Available' %}
+                                <span class="box-status-chip box-status-space"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Missing File' %}
+                                <span class="box-status-chip box-status-missing"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Damaged Records' %}
+                                <span class="box-status-chip box-status-damaged"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Full/Max Capacity' %}
+                                <span class="box-status-chip box-status-full"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Scanned' %}
+                                <span class="box-status-chip box-status-scanned"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Pending Scanning' %}
+                                <span class="box-status-chip box-status-pending"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Action Required' %}
+                                <span class="box-status-chip box-status-action"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Approved/Authorised Destruction' %}
+                                <span class="box-status-chip box-status-approved"><span class="dot"></span>{{ bs }}</span>
+                            {% elif bs == 'Unintentional Destruction (Disaster)' %}
+                                <span class="box-status-chip box-status-disaster"><span class="dot"></span>{{ bs }}</span>
+                            {% else %}
+                                <span class="box-status-chip box-status-space"><span class="dot"></span>{{ bs }}</span>
+                            {% endif %}
                         </td>
                         <td class="col-actions" style="text-align:right;">
                             <!-- Move button (opens shared modal with boxID pre-set) -->

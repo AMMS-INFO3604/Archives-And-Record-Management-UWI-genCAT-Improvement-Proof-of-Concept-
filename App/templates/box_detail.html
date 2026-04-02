@@ -177,6 +177,11 @@
         {{ box.location.geoLocation }}
       </div>
       {% endif %}
+      <div class="loc-line">
+        <i class="material-icons">label</i>
+        {% set bs = box.color_status %}
+        <span style="font-weight:600;">{{ bs }}</span>
+      </div>
     </div>
 
     {% if box.barcode %}

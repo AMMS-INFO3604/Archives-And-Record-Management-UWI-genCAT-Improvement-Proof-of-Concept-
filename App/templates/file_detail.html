@@ -475,18 +475,33 @@
                     <div class="field-item">
                         <span class="field-label">Status</span>
                         <span class="field-value">
-                            {% if file.status == 'Available' %}
-                                <span class="status-badge badge-available">
-                                    <span class="dot"></span>Available
-                                </span>
-                            {% elif file.status == 'On Loan' %}
-                                <span class="status-badge badge-on-loan">
-                                    <span class="dot"></span>On Loan
-                                </span>
+                            {% set st = file.status or 'Unknown' %}
+                            {% if st == 'Available' %}
+                                <span class="status-badge badge-space"><span class="dot"></span>Space Available</span>
+                            {% elif st == 'On Loan' %}
+                                <span class="status-badge badge-on-loan"><span class="dot"></span>On Loan</span>
+                            {% elif st == 'Unprocessed/Pending' %}
+                                <span class="status-badge badge-unprocessed"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Space Available' %}
+                                <span class="status-badge badge-space"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Missing File' %}
+                                <span class="status-badge badge-missing"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Damaged Records' %}
+                                <span class="status-badge badge-damaged"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Full/Max Capacity' %}
+                                <span class="status-badge badge-full"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Scanned' %}
+                                <span class="status-badge badge-scanned"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Pending Scanning' %}
+                                <span class="status-badge badge-pending-scan"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Action Required' %}
+                                <span class="status-badge badge-action"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Approved/Authorised Destruction' %}
+                                <span class="status-badge badge-approved"><span class="dot"></span>{{ st }}</span>
+                            {% elif st == 'Unintentional Destruction (Disaster)' %}
+                                <span class="status-badge badge-disaster"><span class="dot"></span>{{ st }}</span>
                             {% else %}
-                                <span class="status-badge badge-other">
-                                    <span class="dot"></span>{{ file.status }}
-                                </span>
+                                <span class="status-badge badge-other"><span class="dot"></span>{{ st }}</span>
                             {% endif %}
                         </span>
                     </div>
