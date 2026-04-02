@@ -200,9 +200,15 @@ def create_batch_file_action(file_type):
     # ── Global settings (fallback values for every row) ──────────────────────
     raw_box_id   = form.get("globalBoxID",       "").strip()
     global_date  = form.get("globalDateCreated", "").strip() or None
+    global_status = form.get("globalStatus", "").strip() or None
+    global_file_type = form.get("globalFileType", "").strip().capitalize() or None
 
     if not raw_box_id:
         flash("A global box must be selected.", "error")
+        return redirect(request.url)
+
+    if not global_file_type or global_file_type not in ["Student", "Staff"]:
+        flash("A valid file type must be selected.", "error")
         return redirect(request.url)
 
     try:
@@ -211,6 +217,7 @@ def create_batch_file_action(file_type):
         flash("Invalid box selection.", "error")
         return redirect(request.url)
 
+    file_type = global_file_type
     # ── Per-row field lists ───────────────────────────────────────────────────
     descriptions  = form.getlist("row_description[]")
     prev_desigs   = form.getlist("row_prevDesig[]")
@@ -256,6 +263,7 @@ def create_batch_file_action(file_type):
             previousDesignation  = pd or None,
             dateCreated          = global_date,
             createdByStaffUserID = staff_id,
+            status               = global_status,
         )
 
         if not file:

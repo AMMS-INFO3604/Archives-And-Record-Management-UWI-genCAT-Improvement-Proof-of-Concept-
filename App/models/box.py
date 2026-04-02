@@ -13,5 +13,41 @@ class Box(db.Model):
 
     files = db.relationship('File', backref='box', lazy=True)
 
+    @property
+    def color_status(self):
+        """Derive a box status marker from file states, for status color coding."""
+        if not self.files:
+            return "Unprocessed/Pending"
+
+        status_set = set(f.status for f in self.files if f.status)
+
+        mapping_check = [
+            ("Unprocessed/Pending", "Unprocessed/Pending"),
+            ("Missing File", "Missing File"),
+            ("Damaged Records", "Damaged Records"),
+            ("Action Required", "Action Required"),
+            ("Unintentional Destruction (Disaster)", "Unintentional Destruction (Disaster)"),
+            ("Approved/Authorised Destruction", "Approved/Authorised Destruction"),
+            ("Pending Scanning", "Pending Scanning"),
+            ("Scanned", "Scanned"),
+        ]
+
+        for key, value in mapping_check:
+            if key in status_set:
+                return value
+
+        if "Available" in status_set and "On Loan" not in status_set:
+            if len(self.files) >= 50:
+                return "Full/Max Capacity"
+            return "Space Available"
+
+        if "On Loan" in status_set:
+            return "Space Available"
+
+        if len(self.files) >= 50:
+            return "Full/Max Capacity"
+
+        return "Space Available"
+
     def __repr__(self):
         return f'<Box {self.boxID}>'

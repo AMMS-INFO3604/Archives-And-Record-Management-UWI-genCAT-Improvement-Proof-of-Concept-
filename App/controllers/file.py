@@ -12,6 +12,7 @@ def addFile(
     previousDesignation=None,
     createdByStaffUserID=None,
     dateCreated=None,
+    status=None,
 ):  # Add the file to the database fileID is auto generated
     newfile = File(
         boxID=boxID,
@@ -22,7 +23,7 @@ def addFile(
         previousDesignation=previousDesignation,
         createdByStaffUserID=createdByStaffUserID,
         dateCreated=dateCreated,
-        status="Available",
+        status=status or "Available",
     )
     try:
         db.session.add(newfile)
