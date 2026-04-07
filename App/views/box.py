@@ -12,6 +12,7 @@ from flask_jwt_extended import jwt_required
  
 from App.controllers.box import (
     addBox,
+    changeBoxStatus,
     deleteBox,
     getAllBoxes,
     getAllBoxesJSON,
@@ -21,6 +22,11 @@ from App.controllers.box import (
     searchBoxesByLocation,
     searchBoxesByLocationJSON,
     updateBox,
+)
+from App.controllers.file import (
+    deleteFile,
+    updateFile,
+    viewFile,
 )
 from App.controllers.location import get_all_locations
  
@@ -38,7 +44,8 @@ def get_box_detail_page(boxID):
     if not box:
         flash("Box not found.", "error")
         return redirect(url_for("box_views.get_boxes_page"))
-    return render_template("box_detail.html", box=box)
+    all_boxes = getAllBoxes()
+    return render_template("box_detail.html", box=box, all_boxes=all_boxes)
  
  
 # ---------------------------------------------------------------------------
@@ -162,6 +169,104 @@ def delete_box_page(boxID):
     return redirect(url_for("box_views.get_boxes_page"))
  
  
+# ---------------------------------------------------------------------------
+# HTML – Change Status (form POST from detail page)
+# ---------------------------------------------------------------------------
+
+@box_views.route("/boxes/<int:boxID>/status", methods=["POST"])
+@jwt_required()
+def change_box_status_page(boxID):
+    """Change a box's colour/status label via an HTML form on the detail page."""
+    color_status = request.form.get("colorStatus", "").strip()
+
+    if not color_status:
+        flash("A status value is required.", "error")
+        return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+    box = changeBoxStatus(boxID, color_status)
+    if box:
+        flash(f"Box #{boxID} status updated to '{color_status}'.", "success")
+    else:
+        flash(f"Failed to update status for Box #{boxID}.", "error")
+
+    return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+
+# ---------------------------------------------------------------------------
+# HTML – Assign existing file to box (form POST from detail page)
+# ---------------------------------------------------------------------------
+
+@box_views.route("/boxes/<int:boxID>/files/add", methods=["POST"])
+@jwt_required()
+def add_file_to_box_page(boxID):
+    """Reassign an existing file into this box from the detail page."""
+    file_id_raw = request.form.get("fileID", "").strip()
+
+    if not file_id_raw:
+        flash("A file must be selected.", "error")
+        return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+    try:
+        file_id = int(file_id_raw)
+    except ValueError:
+        flash("Invalid file ID.", "error")
+        return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+    file = updateFile(fileID=file_id, boxID=boxID)
+    if file:
+        flash(f"File #{file_id} assigned to Box #{boxID}.", "success")
+    else:
+        flash(f"Failed to assign File #{file_id} to this box.", "error")
+
+    return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+
+# ---------------------------------------------------------------------------
+# HTML – Move file to another box (form POST from detail page)
+# ---------------------------------------------------------------------------
+
+@box_views.route("/boxes/<int:boxID>/files/<int:fileID>/move", methods=["POST"])
+@jwt_required()
+def move_file_to_box_page(boxID, fileID):
+    """Move a file to a different box from the detail page."""
+    new_box_raw = request.form.get("newBoxID", "").strip()
+
+    if not new_box_raw:
+        flash("A destination box is required.", "error")
+        return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+    try:
+        new_box_id = int(new_box_raw)
+    except ValueError:
+        flash("Invalid box ID.", "error")
+        return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+    file = updateFile(fileID=fileID, boxID=new_box_id)
+    if file:
+        flash(f"File #{fileID} moved to Box #{new_box_id}.", "success")
+    else:
+        flash(f"Failed to move File #{fileID}.", "error")
+
+    return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+
+# ---------------------------------------------------------------------------
+# HTML – Delete file from box (form POST from detail page)
+# ---------------------------------------------------------------------------
+
+@box_views.route("/boxes/<int:boxID>/files/<int:fileID>/delete", methods=["POST"])
+@jwt_required()
+def delete_file_from_box_page(boxID, fileID):
+    """Delete a file from the box detail page."""
+    success = deleteFile(fileID)
+    if success:
+        flash(f"File #{fileID} deleted successfully.", "success")
+    else:
+        flash(f"File #{fileID} could not be deleted.", "error")
+
+    return redirect(url_for("box_views.get_box_detail_page", boxID=boxID))
+
+
 # ---------------------------------------------------------------------------
 # API – Create
 # ---------------------------------------------------------------------------
@@ -296,4 +401,3 @@ def api_delete_box(boxID):
             {"message": f"Box {boxID} not found or could not be deleted"}
         ), 404
     return jsonify({"message": f"Box {boxID} deleted successfully"}), 200
- 
