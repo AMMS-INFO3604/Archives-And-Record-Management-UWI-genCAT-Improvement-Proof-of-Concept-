@@ -22,7 +22,8 @@ def addBox(bayNo=None, rowNo=None, columnNo=None, barcode=None, locationID=None)
 
 
 def updateBox(
-    boxID, bayNo=None, rowNo=None, columnNo=None, barcode=None, locationID=None
+    boxID, bayNo=None, rowNo=None, columnNo=None, barcode=None, locationID=None,
+    colorStatus=None
 ):
     box = db.session.get(Box, boxID)
 
@@ -40,6 +41,8 @@ def updateBox(
         box.barcode = barcode
     if locationID is not None:
         box.locationID = locationID
+    if colorStatus is not None:
+        box.colorStatus = colorStatus
 
     try:
         db.session.commit()
@@ -48,6 +51,11 @@ def updateBox(
         db.session.rollback()
         print(f"Error occurred while updating box with ID {boxID}: {e}")
         return None
+
+
+def changeBoxStatus(boxID, colorStatus):
+    """Convenience wrapper — update only the colour/status label."""
+    return updateBox(boxID=boxID, colorStatus=colorStatus)
 
 
 def moveBoxLocation(boxID, newLocationID):

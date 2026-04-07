@@ -179,17 +179,53 @@
       {% endif %}
       <div class="loc-line">
         <i class="material-icons">label</i>
-        {% set bs = box.color_status %}
-        <span style="font-weight:600;">{{ bs }}</span>
+        {% set cs = box.colorStatus or box.color_status %}
+        {% if cs %}
+          {% if cs == 'Unprocessed/Pending' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#ffebee;color:#b71c1c;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#f44336;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Space Available' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#e3f2fd;color:#1565c0;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#2196f3;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Missing File' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#fff3e0;color:#ef6c00;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#ff9800;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Damaged Records' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#fffde7;color:#f57f17;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#ffeb3b;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Full/Max Capacity' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#e8f5e9;color:#2e7d32;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#4caf50;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Scanned' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#f3e5f5;color:#6a1b9a;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#9c27b0;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Pending Scanning' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#e0f2f1;color:#00796b;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#009688;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Action Required' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#fce4ec;color:#c2185b;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#e91e63;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Approved/Authorised Destruction' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#bdbdbd;color:#212121;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#000;flex-shrink:0;"></span>{{ cs }}</span>
+          {% elif cs == 'Unintentional Destruction (Disaster)' %}
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:#efebe9;color:#5d4037;font-size:0.8rem;font-weight:700;"><span style="width:9px;height:9px;border-radius:50%;background:#795548;flex-shrink:0;"></span>{{ cs }}</span>
+          {% else %}
+            <span style="font-weight:600;">{{ cs }}</span>
+          {% endif %}
+        {% else %}
+          <span style="color:#bbb;font-style:italic;">No status set</span>
+        {% endif %}
       </div>
     </div>
 
-    {% if box.barcode %}
-    <div class="barcode-panel">
-      <div class="bc-val">{{ box.barcode }}</div>
-      <div class="bc-lbl">Barcode</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex-shrink:0;">
+      {% if box.barcode %}
+      <div class="barcode-panel">
+        <div class="bc-val">{{ box.barcode }}</div>
+        <div class="bc-lbl">Barcode</div>
+      </div>
+      {% endif %}
+      <button type="button"
+              onclick="document.getElementById('change-status-modal').style.display='flex'"
+              style="height:36px;display:inline-flex;align-items:center;gap:5px;
+                     padding:0 16px;background:#fff;color:#000;
+                     border:1.5px solid #e0e0e0;border-radius:8px;
+                     font-size:0.83rem;font-weight:700;cursor:pointer;">
+        <i class="material-icons" style="font-size:17px;">label</i>Change Status
+      </button>
     </div>
-    {% endif %}
   </div>
 
   <!-- Stat strip -->
@@ -223,9 +259,17 @@
 </div><!-- /.info-card -->
 
 <!-- Files section -->
-<div class="section-hdr">
+<div class="section-hdr" style="margin-top:24px;">
   <i class="material-icons">folder_open</i>
   <h5>Files in this Box</h5>
+  <div style="margin-left:auto;">
+    <button type="button" onclick="document.getElementById('add-file-modal').style.display='flex'"
+            style="height:36px;display:inline-flex;align-items:center;gap:5px;
+                   padding:0 16px;background:#000;color:#fff;border:none;
+                   border-radius:8px;font-size:0.83rem;font-weight:700;cursor:pointer;">
+      <i class="material-icons" style="font-size:17px;">add</i>Add File
+    </button>
+  </div>
 </div>
 
 <div class="data-card">
@@ -239,7 +283,7 @@
           <th>Description</th>
           <th>Designation</th>
           <th>Status</th>
-          <th></th>
+          <th style="text-align:right;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -247,7 +291,7 @@
         <tr>
           <td style="color:#aaa; font-size:.77rem;">#{{ file.fileID }}</td>
           <td><span class="type-chip">{{ file.fileType }}</span></td>
-          <td style="max-width:240px;">
+          <td style="max-width:200px;">
             <span style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
                   title="{{ file.description }}">
               {{ file.description or '—' }}
@@ -258,22 +302,43 @@
           </td>
           <td>
             {% if file.status == 'Available' %}
-              <span class="status-badge">
-                <i class="material-icons">check_circle</i>Available
-              </span>
+              <span class="status-badge"><i class="material-icons">check_circle</i>Available</span>
             {% elif file.status == 'On Loan' %}
-              <span class="status-badge">
-                <i class="material-icons">swap_horiz</i>On Loan
-              </span>
+              <span class="status-badge"><i class="material-icons">swap_horiz</i>On Loan</span>
             {% else %}
               <span class="status-badge" style="background:#888;">{{ file.status }}</span>
             {% endif %}
           </td>
-          <td style="text-align:right; padding-right:14px;">
-            <a href="/files/{{ file.fileID }}/detail" class="btn btn-primary"
-               style="height:32px; padding:0 14px; font-size:0.78rem;">
+          <td style="text-align:right; padding-right:14px; white-space:nowrap;">
+            <!-- View -->
+            <a href="/files/{{ file.fileID }}/detail"
+               style="display:inline-flex;align-items:center;gap:3px;padding:4px 10px;
+                      border-radius:6px;font-size:0.78rem;font-weight:600;
+                      border:1.5px solid #e0e0e0;color:#000;text-decoration:none;
+                      background:transparent;cursor:pointer;margin-right:2px;">
               <i class="material-icons" style="font-size:14px;">visibility</i>View
             </a>
+            <!-- Move -->
+            <button type="button"
+                    onclick="openMoveFileModal({{ file.fileID }}, '{{ file.description | default('File #' ~ file.fileID, true) | e }}')"
+                    style="display:inline-flex;align-items:center;gap:3px;padding:4px 10px;
+                           border-radius:6px;font-size:0.78rem;font-weight:600;
+                           border:1.5px solid #e0e0e0;color:#000;background:transparent;
+                           cursor:pointer;margin-right:2px;">
+              <i class="material-icons" style="font-size:14px;">drive_file_move</i>Move
+            </button>
+            <!-- Delete -->
+            <form method="POST"
+                  action="/boxes/{{ box.boxID }}/files/{{ file.fileID }}/delete"
+                  style="display:inline;"
+                  onsubmit="return confirm('Delete File #{{ file.fileID }}? This cannot be undone.');">
+              <button type="submit"
+                      style="display:inline-flex;align-items:center;gap:3px;padding:4px 10px;
+                             border-radius:6px;font-size:0.78rem;font-weight:600;
+                             border:1.5px solid #ef9a9a;color:#c62828;background:transparent;cursor:pointer;">
+                <i class="material-icons" style="font-size:14px;">delete_outline</i>Delete
+              </button>
+            </form>
           </td>
         </tr>
         {% endfor %}
@@ -295,5 +360,370 @@
     <i class="material-icons" style="font-size:18px;">arrow_back</i>Back to Boxes
   </a>
 </div>
+
+
+<!-- ══ Add File Modal (search existing files) ══════════════════════════════ -->
+<div id="add-file-modal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+            z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:14px;max-width:560px;width:100%;
+              box-shadow:0 8px 40px rgba(0,0,0,.18);overflow:hidden;display:flex;flex-direction:column;max-height:90vh;">
+
+    <!-- Header -->
+    <div style="padding:24px 28px 16px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:1.05rem;
+                  font-weight:700;color:#000;margin-bottom:16px;">
+        <i class="material-icons">playlist_add</i>Assign File to Box #{{ box.boxID }}
+      </div>
+
+      <!-- Search bar -->
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="af-search-input"
+               placeholder="Search by ID, description, type…"
+               oninput="searchFiles()"
+               style="flex:1;height:42px;border:1.5px solid #e0e0e0;border-radius:8px;
+                      padding:0 14px;font-size:0.9rem;color:#333;background:#f8f8f8;
+                      outline:none;box-sizing:border-box;" />
+        <button type="button" onclick="searchFiles()"
+                style="height:42px;padding:0 16px;background:#000;color:#fff;border:none;
+                       border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;
+                       display:inline-flex;align-items:center;gap:4px;flex-shrink:0;">
+          <i class="material-icons" style="font-size:18px;">search</i>Search
+        </button>
+      </div>
+      <div id="af-search-status"
+           style="font-size:0.78rem;color:#999;margin-top:6px;min-height:16px;"></div>
+    </div>
+
+    <!-- Results list -->
+    <div id="af-results"
+         style="flex:1;overflow-y:auto;border-top:1px solid #f0f0f0;min-height:120px;max-height:340px;">
+      <div style="text-align:center;padding:40px 20px;color:#bbb;">
+        <i class="material-icons" style="font-size:40px;display:block;margin-bottom:8px;">search</i>
+        Type to search for files
+      </div>
+    </div>
+
+    <!-- Hidden form for submission -->
+    <form id="add-file-form" method="POST" action="/boxes/{{ box.boxID }}/files/add">
+      <input type="hidden" name="fileID" id="af-selected-file-id" value="" />
+    </form>
+
+    <!-- Footer -->
+    <div style="padding:14px 28px 20px;display:flex;justify-content:space-between;
+                align-items:center;border-top:1.5px solid #f5f5f5;flex-shrink:0;">
+      <span id="af-selected-label" style="font-size:0.82rem;color:#888;">No file selected</span>
+      <div style="display:flex;gap:10px;">
+        <button type="button" onclick="closeAddFileModal()"
+                style="height:38px;display:inline-flex;align-items:center;padding:0 16px;
+                       background:transparent;color:#888;border:1.5px solid #ddd;
+                       border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;">
+          Cancel
+        </button>
+        <button type="submit" form="add-file-form" id="af-assign-btn" disabled
+                style="height:38px;display:inline-flex;align-items:center;gap:4px;padding:0 20px;
+                       background:#ccc;color:#fff;border:none;border-radius:8px;
+                       font-size:0.85rem;font-weight:700;cursor:not-allowed;transition:background .15s;">
+          <i class="material-icons" style="font-size:17px;">check</i>Assign to Box
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ Move File Modal ════════════════════════════════════════════════════════ -->
+<div id="move-file-modal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+            z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:14px;max-width:460px;width:100%;
+              box-shadow:0 8px 40px rgba(0,0,0,.18);overflow:hidden;">
+    <div style="padding:24px 28px 0;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:1.05rem;
+                  font-weight:700;color:#000;margin-bottom:16px;">
+        <i class="material-icons">drive_file_move</i>Move File to Another Box
+      </div>
+      <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;
+                  padding:10px 14px;font-size:0.84rem;color:#5d4037;margin-bottom:16px;
+                  display:flex;align-items:flex-start;gap:8px;">
+        <i class="material-icons" style="font-size:17px;color:#f57c00;flex-shrink:0;">warning_amber</i>
+        <span>Moving <strong id="mf-file-label">—</strong> will reassign it to the selected box.</span>
+      </div>
+      <form id="move-file-form" method="POST" action="">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:0.78rem;font-weight:700;color:#555;
+                        text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">
+            Destination Box <span style="color:#c62828;">*</span>
+          </label>
+          <select name="newBoxID" id="mf-box-select" required
+                  style="width:100%;height:42px;border:1.5px solid #e0e0e0;border-radius:8px;
+                         padding:0 12px;font-size:0.9rem;color:#333;background:#f8f8f8;
+                         outline:none;box-sizing:border-box;cursor:pointer;">
+            <option value="" disabled selected>Select a destination box…</option>
+            {% if all_boxes %}
+              {% for b in all_boxes %}
+              {% if b.boxID != box.boxID %}
+              <option value="{{ b.boxID }}">
+                Box #{{ b.boxID }} — Bay {{ b.bayNo }}, Row {{ b.rowNo }}, Col {{ b.columnNo }}{% if b.location %} · {{ b.location.geoLocation }}{% endif %}
+              </option>
+              {% endif %}
+              {% endfor %}
+            {% else %}
+              <option value="" disabled>No other boxes available</option>
+            {% endif %}
+          </select>
+          <div style="font-size:0.75rem;color:#999;margin-top:5px;">
+            {{ (all_boxes | length - 1) if all_boxes else 0 }} other box{{ 'es' if (all_boxes | length - 1) != 1 else '' }} available
+          </div>
+        </div>
+      </form>
+    </div>
+    <div style="padding:16px 28px 20px;display:flex;justify-content:flex-end;gap:10px;
+                border-top:1.5px solid #f5f5f5;">
+      <button type="button" onclick="document.getElementById('move-file-modal').style.display='none'"
+              style="height:38px;display:inline-flex;align-items:center;padding:0 16px;
+                     background:transparent;color:#888;border:1.5px solid #ddd;
+                     border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;">
+        Cancel
+      </button>
+      <button type="submit" form="move-file-form"
+              style="height:38px;display:inline-flex;align-items:center;gap:4px;padding:0 20px;
+                     background:#000;color:#fff;border:none;border-radius:8px;
+                     font-size:0.85rem;font-weight:700;cursor:pointer;">
+        <i class="material-icons" style="font-size:17px;">drive_file_move</i>Move File
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ Change Box Status Modal ════════════════════════════════════════════ -->
+<div id="change-status-modal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+            z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:14px;max-width:560px;width:100%;
+              box-shadow:0 8px 40px rgba(0,0,0,.18);">
+    <form method="POST" action="/boxes/{{ box.boxID }}/status"
+          onsubmit="return validateStatusForm()">
+      <!-- hidden input — JS sets this on chip click, guaranteed to submit -->
+      <input type="hidden" name="colorStatus" id="cs-hidden-value"
+             value="{{ box.colorStatus or box.color_status or '' }}">
+
+      <!-- Header -->
+      <div style="padding:24px 28px 16px;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:1.05rem;
+                    font-weight:700;color:#000;margin-bottom:6px;">
+          <i class="material-icons">label</i>Change Box Status
+        </div>
+        <div style="font-size:0.8rem;color:#999;margin-bottom:16px;">
+          Click a status below to select it, then press Update Status.
+        </div>
+
+        {% set current_status = box.colorStatus or box.color_status or '' %}
+
+        <!-- Visual chip grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="cs-grid">
+        {% for opt, dot_color, bg_color, text_color in [
+            ('Unprocessed/Pending',                  '#f44336', '#ffebee', '#b71c1c'),
+            ('Space Available',                      '#2196f3', '#e3f2fd', '#1565c0'),
+            ('Missing File',                         '#ff9800', '#fff3e0', '#ef6c00'),
+            ('Damaged Records',                      '#ffeb3b', '#fffde7', '#f57f17'),
+            ('Full/Max Capacity',                    '#4caf50', '#e8f5e9', '#2e7d32'),
+            ('Scanned',                              '#9c27b0', '#f3e5f5', '#6a1b9a'),
+            ('Pending Scanning',                     '#009688', '#e0f2f1', '#00796b'),
+            ('Action Required',                      '#e91e63', '#fce4ec', '#c2185b'),
+            ('Approved/Authorised Destruction',      '#000000', '#e0e0e0', '#212121'),
+            ('Unintentional Destruction (Disaster)', '#795548', '#efebe9', '#5d4037')
+        ] %}
+        <div onclick="pickStatus('{{ opt }}', '{{ dot_color }}', '{{ bg_color }}', '{{ text_color }}')"
+             id="cs-chip-{{ loop.index }}"
+             data-val="{{ opt }}" data-dot="{{ dot_color }}" data-bg="{{ bg_color }}" data-txt="{{ text_color }}"
+             style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                    border-radius:10px;cursor:pointer;user-select:none;
+                    border:2px solid {% if current_status == opt %}{{ dot_color }}{% else %}#e8e8e8{% endif %};
+                    background:{% if current_status == opt %}{{ bg_color }}{% else %}#fafafa{% endif %};
+                    transition:border-color .12s,background .12s;">
+          <span style="width:13px;height:13px;border-radius:50%;background:{{ dot_color }};
+                       flex-shrink:0;border:1px solid rgba(0,0,0,.14);
+                       box-shadow:0 1px 3px rgba(0,0,0,.2);"></span>
+          <span style="font-size:0.82rem;font-weight:700;line-height:1.3;
+                       color:{% if current_status == opt %}{{ text_color }}{% else %}#555{% endif %};"
+                id="cs-text-{{ loop.index }}">{{ opt }}</span>
+          <span id="cs-check-{{ loop.index }}"
+                style="margin-left:auto;font-weight:900;font-size:15px;color:{{ dot_color }};
+                       {% if current_status != opt %}visibility:hidden;{% endif %}">✓</span>
+        </div>
+        {% endfor %}
+        </div>
+
+        <div id="cs-error" style="display:none;margin-top:10px;color:#c62828;
+             font-size:0.82rem;font-weight:600;">Please select a status before saving.</div>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:14px 28px 20px;display:flex;justify-content:flex-end;gap:10px;
+                  border-top:1.5px solid #f0f0f0;">
+        <button type="button"
+                onclick="document.getElementById('change-status-modal').style.display='none'"
+                style="height:38px;display:inline-flex;align-items:center;padding:0 16px;
+                       background:transparent;color:#888;border:1.5px solid #ddd;
+                       border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;">
+          Cancel
+        </button>
+        <button type="submit"
+                style="height:38px;display:inline-flex;align-items:center;gap:4px;padding:0 20px;
+                       background:#000;color:#fff;border:none;border-radius:8px;
+                       font-size:0.85rem;font-weight:700;cursor:pointer;">
+          <i class="material-icons" style="font-size:17px;">check</i>Update Status
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<script>
+  // ── Change Status chip picker ────────────────────────────────────────────
+  function pickStatus(val, dot, bg, txt) {
+    // Set the hidden input that actually gets submitted
+    document.getElementById('cs-hidden-value').value = val;
+    document.getElementById('cs-error').style.display = 'none';
+
+    // Update all chips
+    document.querySelectorAll('#cs-grid > div[data-val]').forEach(function(chip, i) {
+      var idx   = i + 1;
+      var isMe  = chip.dataset.val === val;
+      chip.style.border     = '2px solid ' + (isMe ? chip.dataset.dot : '#e8e8e8');
+      chip.style.background = isMe ? chip.dataset.bg : '#fafafa';
+      var textEl  = document.getElementById('cs-text-' + idx);
+      var checkEl = document.getElementById('cs-check-' + idx);
+      if (textEl)  textEl.style.color             = isMe ? chip.dataset.txt : '#555';
+      if (checkEl) checkEl.style.visibility       = isMe ? 'visible' : 'hidden';
+    });
+  }
+
+  function validateStatusForm() {
+    var val = document.getElementById('cs-hidden-value').value;
+    if (!val) {
+      document.getElementById('cs-error').style.display = 'block';
+      return false;
+    }
+    return true;
+  }
+
+  // ── Modal backdrop close ──────────────────────────────────────────────────
+  ['add-file-modal','move-file-modal','change-status-modal'].forEach(function(id) {
+    document.getElementById(id).addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+  });
+
+  // ── Add File modal ────────────────────────────────────────────────────────
+  function closeAddFileModal() {
+    document.getElementById('add-file-modal').style.display = 'none';
+    document.getElementById('af-search-input').value = '';
+    document.getElementById('af-results').innerHTML =
+      '<div style="text-align:center;padding:40px 20px;color:#bbb;">' +
+      '<i class="material-icons" style="font-size:40px;display:block;margin-bottom:8px;">search</i>' +
+      'Type to search for files</div>';
+    document.getElementById('af-selected-file-id').value = '';
+    document.getElementById('af-selected-label').textContent = 'No file selected';
+    var btn = document.getElementById('af-assign-btn');
+    btn.disabled = true;
+    btn.style.background = '#ccc';
+    btn.style.cursor = 'not-allowed';
+  }
+
+  var _searchTimeout = null;
+  function searchFiles() {
+    clearTimeout(_searchTimeout);
+    _searchTimeout = setTimeout(_doSearch, 300);
+  }
+
+  function _doSearch() {
+    var q = document.getElementById('af-search-input').value.trim();
+    var status = document.getElementById('af-search-status');
+    var results = document.getElementById('af-results');
+
+    if (!q) {
+      results.innerHTML =
+        '<div style="text-align:center;padding:40px 20px;color:#bbb;">' +
+        '<i class="material-icons" style="font-size:40px;display:block;margin-bottom:8px;">search</i>' +
+        'Type to search for files</div>';
+      status.textContent = '';
+      return;
+    }
+
+    status.textContent = 'Searching…';
+    results.innerHTML = '<div style="text-align:center;padding:30px;color:#bbb;">Loading…</div>';
+
+    fetch('/api/files/search?keyword=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!Array.isArray(data) || data.length === 0) {
+          results.innerHTML =
+            '<div style="text-align:center;padding:40px 20px;color:#bbb;">' +
+            '<i class="material-icons" style="font-size:36px;display:block;margin-bottom:8px;">folder_off</i>' +
+            'No files found</div>';
+          status.textContent = '0 results';
+          return;
+        }
+        status.textContent = data.length + ' result' + (data.length !== 1 ? 's' : '');
+        results.innerHTML = data.map(function(f) {
+          var isInBox = (f.boxID === {{ box.boxID }});
+          return '<div onclick="selectFile(' + f.fileID + ', \'' +
+            (f.description || 'File #' + f.fileID).replace(/'/g, "\\'").replace(/"/g, '&quot;') +
+            '\')" id="af-row-' + f.fileID + '"' +
+            ' style="display:flex;align-items:center;gap:12px;padding:12px 20px;' +
+            'cursor:pointer;border-bottom:1px solid #f5f5f5;transition:background .1s;"' +
+            ' onmouseover="this.style.background=\'#f8f8f8\'" onmouseout="if(document.getElementById(\'af-selected-file-id\').value!=\'' + f.fileID + '\')this.style.background=\'\'">' +
+            '<div style="font-weight:700;color:#000;font-size:0.82rem;white-space:nowrap;">#' + f.fileID + '</div>' +
+            '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:0.875rem;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+            (f.description || '<span style="color:#bbb;">No description</span>') + '</div>' +
+            '<div style="font-size:0.72rem;color:#999;margin-top:2px;">' + (f.fileType || '') +
+            (f.status ? ' &middot; ' + f.status : '') +
+            (isInBox ? ' &middot; <span style="color:#f57c00;font-weight:700;">Already in this box</span>' : '') +
+            '</div></div>' +
+            '<div style="width:10px;height:10px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;" id="af-dot-' + f.fileID + '"></div>' +
+            '</div>';
+        }).join('');
+      })
+      .catch(function() {
+        results.innerHTML = '<div style="text-align:center;padding:30px;color:#c62828;">Search failed. Please try again.</div>';
+        status.textContent = '';
+      });
+  }
+
+  function selectFile(fileID, label) {
+    // Deselect previous
+    var prev = document.getElementById('af-selected-file-id').value;
+    if (prev) {
+      var prevRow = document.getElementById('af-row-' + prev);
+      var prevDot = document.getElementById('af-dot-' + prev);
+      if (prevRow) prevRow.style.background = '';
+      if (prevDot) { prevDot.style.background = ''; prevDot.style.borderColor = '#ccc'; }
+    }
+    // Select new
+    document.getElementById('af-selected-file-id').value = fileID;
+    document.getElementById('af-selected-label').textContent = 'Selected: File #' + fileID + ' — ' + label;
+    var row = document.getElementById('af-row-' + fileID);
+    var dot = document.getElementById('af-dot-' + fileID);
+    if (row) row.style.background = '#f0f7ff';
+    if (dot) { dot.style.background = '#000'; dot.style.borderColor = '#000'; }
+    var btn = document.getElementById('af-assign-btn');
+    btn.disabled = false;
+    btn.style.background = '#000';
+    btn.style.cursor = 'pointer';
+  }
+
+  function openMoveFileModal(fileID, fileLabel) {
+    var form = document.getElementById('move-file-form');
+    form.action = '/boxes/{{ box.boxID }}/files/' + fileID + '/move';
+    document.getElementById('mf-file-label').textContent = 'File #' + fileID + (fileLabel ? ' – ' + fileLabel : '');
+    document.getElementById('mf-box-select').selectedIndex = 0;
+    document.getElementById('move-file-modal').style.display = 'flex';
+  }
+</script>
 
 {% endblock %}
