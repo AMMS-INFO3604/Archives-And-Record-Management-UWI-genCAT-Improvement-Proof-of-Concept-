@@ -21,7 +21,7 @@ def global_search():
                 "type": "File",
                 "label": f.description or f"File {f.fileID}",
                 "sublabel": f"ID: {f.fileID} | {f.fileType}",
-                "url": f"/files/{f.fileID}"
+                "url": f"/files/{f.fileID}/detail"
             })
 
     # Search Boxes
@@ -33,7 +33,7 @@ def global_search():
                 "type": "Box",
                 "label": b.barcode or f"Box {b.boxID}",
                 "sublabel": f"ID: {b.boxID} | Bay: {b.bayNo}, Row: {b.rowNo}, Col: {b.columnNo}",
-                "url": f"/boxes/{b.boxID}"
+                "url": f"/boxes/{b.boxID}/detail"
             })
 
     # Search Locations
