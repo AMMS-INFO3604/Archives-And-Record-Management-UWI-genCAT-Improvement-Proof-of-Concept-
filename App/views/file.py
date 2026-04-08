@@ -67,6 +67,47 @@ def add_file_page():
         flash("Failed to create file. Please check your inputs.", "error")
  
     return redirect(url_for("file_views.get_files_page"))
+
+@file_views.route("/api/files/batch", methods=["POST"])
+@jwt_required()
+def add_files_batch():
+    """Handle batch file addition via API."""
+    data = request.json
+    if not data or "files" not in data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    files_to_add = data["files"]
+    added_files = []
+    
+    try:
+        for f_data in files_to_add:
+            box_id = f_data.get("boxID")
+            file_type = f_data.get("fileType")
+            
+            if not box_id or not file_type:
+                continue
+                
+            file = addFile(
+                boxID=int(box_id),
+                fileType=file_type,
+                description=f_data.get("description"),
+                previousDesignation=f_data.get("previousDesignation"),
+                barcode=f_data.get("barcode"),
+                createdByStaffUserID=getattr(jwt_current_user, "id", None),
+                commit=False
+            )
+            if file:
+                added_files.append(file.fileID)
+        
+        db.session.commit()
+        return jsonify({
+            "message": f"Successfully added {len(added_files)} files.",
+            "fileIDs": added_files
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
  
 
 @file_views.route("/files", methods=["POST"])

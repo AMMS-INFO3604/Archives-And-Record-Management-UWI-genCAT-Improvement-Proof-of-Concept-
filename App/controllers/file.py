@@ -12,6 +12,7 @@ def addFile(
     previousDesignation=None,
     createdByStaffUserID=None,
     dateCreated=None,
+    commit=True,
 ):  # Add the file to the database fileID is auto generated
     newfile = File(
         boxID=boxID,
@@ -26,7 +27,9 @@ def addFile(
     )
     try:
         db.session.add(newfile)
-        db.session.commit()
+        db.session.flush() # Ensure fileID is generated
+        if commit:
+            db.session.commit()
         return newfile  # Return the newly created file object
     except Exception as e:
         db.session.rollback()
