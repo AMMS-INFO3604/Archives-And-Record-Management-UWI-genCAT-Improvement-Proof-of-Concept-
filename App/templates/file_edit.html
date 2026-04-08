@@ -1,0 +1,275 @@
+{% extends "layout.html" %}
+{% block title %}Edit File #{{ file.fileID }}{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f5f5f5 !important; }
+
+    .form-wrapper { max-width: 860px; margin: 32px auto; padding: 0 16px 64px; }
+
+    .breadcrumb-row {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 20px; font-size: .84rem; color: #888;
+    }
+    .breadcrumb-row a { color: #111; text-decoration: none; font-weight: 600; }
+    .breadcrumb-row a:hover { text-decoration: underline; }
+    .breadcrumb-row i { font-size: 16px; color: #bbb; vertical-align: middle; }
+
+    .page-title { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .page-title .title-icon {
+        width: 44px; height: 44px; border-radius: 10px;
+        background: #111; display: flex; align-items: center; justify-content: center;
+    }
+    .page-title .title-icon i { font-size: 22px; color: #fff; }
+    .page-title h4 { margin: 0; font-size: 1.4rem; font-weight: 800; color: #1a1a1a; }
+    .page-title .subtitle { margin: 2px 0 0; font-size: .82rem; color: #888; }
+
+    .form-card {
+        background: #fff; border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 20px;
+    }
+    .form-card-header {
+        padding: 16px 24px; border-bottom: 1.5px solid #f0f0f0; background: #fafafa;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .form-card-header i { font-size: 18px; color: #111; }
+    .form-card-header span { font-size: .78rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #111; }
+    .form-card-body { padding: 24px; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
+    .full-width { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: .72rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #555; }
+    .form-label .optional { font-size: .68rem; font-weight: 400; color: #aaa; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+
+    .form-input, .form-select, .form-textarea {
+        height: 42px;
+        border: 1.5px solid #ddd !important; border-bottom: 1.5px solid #ddd !important;
+        border-radius: 8px !important; padding: 0 12px !important;
+        font-size: .9rem; color: #333; background: #fafafa;
+        box-shadow: none !important; margin: 0 !important;
+        box-sizing: border-box; outline: none; width: 100%;
+        transition: border-color .15s; font-family: inherit;
+    }
+    .form-textarea { height: auto; min-height: 90px; padding: 10px 12px !important; resize: vertical; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: #111 !important; box-shadow: 0 0 0 3px rgba(0,0,0,.07) !important; background: #fff;
+    }
+    .form-select {
+        cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 10px center; padding-right: 36px !important;
+    }
+
+    .flash-msg {
+        padding: 10px 16px; border-radius: 8px; margin-bottom: 16px;
+        font-size: .875rem; display: flex; align-items: center; gap: 8px;
+    }
+    .flash-msg.error   { background: #fce4ec; color: #b71c1c; border: 1px solid #f8bbd0; }
+    .flash-msg.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+
+    .action-bar {
+        display: flex; align-items: center; justify-content: flex-end;
+        gap: 10px; padding: 16px 24px; border-top: 1.5px solid #f0f0f0; background: #fafafa;
+    }
+    .btn-cancel {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 18px; background: transparent; color: #555;
+        border: 1.5px solid #ddd; border-radius: 8px;
+        font-size: .87rem; font-weight: 600; text-decoration: none; cursor: pointer;
+    }
+    .btn-cancel:hover { background: #f0f0f0; color: #111; }
+    .btn-save {
+        height: 40px; display: inline-flex; align-items: center; gap: 5px;
+        padding: 0 22px; background: #111; color: #fff; border: none;
+        border-radius: 8px; font-size: .87rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-save:hover { background: #333; }
+
+    @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+</style>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash-msg {{ category }}">
+    <i class="material-icons" style="font-size:17px;">{{ 'error' if category=='error' else 'check_circle' }}</i>
+    {{ message }}
+  </div>
+  {% endfor %}
+{% endwith %}
+
+<div class="form-wrapper">
+
+    <div class="breadcrumb-row">
+        <a href="/files"><i class="material-icons" style="font-size:14px;vertical-align:middle;">folder_open</i> File Records</a>
+        <i class="material-icons">chevron_right</i>
+        <a href="/files/{{ file.fileID }}/detail">File #{{ file.fileID }}</a>
+        <i class="material-icons">chevron_right</i>
+        <span style="color:#111;font-weight:600;">Edit</span>
+    </div>
+
+    <div class="page-title">
+        <div class="title-icon"><i class="material-icons">edit</i></div>
+        <div>
+            <h4>Edit File #{{ file.fileID }}</h4>
+            <p class="subtitle">Update the details for this file record.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/files/{{ file.fileID }}/edit" id="edit-file-form">
+
+        <!-- Core details -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="material-icons">info</i>
+                <span>File Details</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label class="form-label">File Type</label>
+                        <select name="fileType" class="form-select" id="fileTypeSelect" onchange="onFileTypeChange(this.value)">
+                            <option value="Student" {{ 'selected' if file.fileType == 'Student' else '' }}>ST – Student Files</option>
+                            <option value="Staff"   {{ 'selected' if file.fileType == 'Staff'   else '' }}>SF – Staff Files</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Assign to Box</label>
+                        <select name="boxID" class="form-select">
+                            {% for box in boxes %}
+                            <option value="{{ box.boxID }}" {{ 'selected' if box.boxID == file.boxID else '' }}>
+                                #{{ box.boxID }} – Bay {{ box.bayNo }}, Row {{ box.rowNo }}, Col {{ box.columnNo }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            {% for s in ['Available', 'On Loan', 'Unprocessed/Pending', 'Missing File', 'Damaged Records', 'Scanned', 'Pending Scanning', 'Action Required', 'Approved/Authorised Destruction', 'Unintentional Destruction (Disaster)'] %}
+                            <option value="{{ s }}" {{ 'selected' if file.status == s else '' }}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Date Created</label>
+                        <input type="date" name="dateCreated" class="form-input"
+                               value="{{ file.dateCreated.strftime('%Y-%m-%d') if file.dateCreated else '' }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Previous Designation <span class="optional">(optional)</span></label>
+                        <input type="text" name="previousDesignation" class="form-input"
+                               value="{{ file.previousDesignation or '' }}"
+                               placeholder="e.g. T/CS/2018/001">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Barcode <span class="optional">(optional)</span></label>
+                        <input type="text" name="barcode" class="form-input"
+                               value="{{ file.barcode or '' }}"
+                               placeholder="e.g. FILE-0001">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="form-label">Description <span class="optional">(optional)</span></label>
+                        <textarea name="description" class="form-textarea"
+                                  placeholder="Brief description…">{{ file.description or '' }}</textarea>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Student record -->
+        <div class="form-card" id="student-section" style="{{ '' if file.fileType == 'Student' else 'display:none;' }}">
+            <div class="form-card-header">
+                <i class="material-icons">school</i>
+                <span>Student Record</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Student ID / Code</label>
+                        <input type="text" name="studentCode" class="form-input"
+                               value="{{ file.student_record.code if file.student_record else '' }}"
+                               placeholder="e.g. 810002345">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Certificate / Diploma</label>
+                        <input type="text" name="certificateDiploma" class="form-input"
+                               value="{{ file.student_record.certificateDiploma if file.student_record else '' }}"
+                               placeholder="e.g. BSc Computer Science">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff record -->
+        <div class="form-card" id="staff-section" style="{{ '' if file.fileType == 'Staff' else 'display:none;' }}">
+            <div class="form-card-header">
+                <i class="material-icons">badge</i>
+                <span>Staff Record</span>
+            </div>
+            <div class="form-card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">File Number <span class="optional">(optional)</span></label>
+                        <input type="text" name="fileNumber" class="form-input"
+                               value="{{ file.staff_record.fileNumber if file.staff_record else '' }}"
+                               placeholder="e.g. SL-2024-001">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">File Title <span class="optional">(optional)</span></label>
+                        <input type="text" name="fileTitle" class="form-input"
+                               value="{{ file.staff_record.fileTitle if file.staff_record else '' }}"
+                               placeholder="e.g. Academic Appointment">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Post <span class="optional">(optional)</span></label>
+                        <input type="text" name="post" class="form-input"
+                               value="{{ file.staff_record.post if file.staff_record else '' }}"
+                               placeholder="e.g. Senior Lecturer">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Organisation Unit <span class="optional">(optional)</span></label>
+                        <input type="text" name="organisationUnit" class="form-input"
+                               value="{{ file.staff_record.organisationUnit if file.staff_record else '' }}"
+                               placeholder="e.g. Faculty of Science">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">Notes <span class="optional">(optional)</span></label>
+                        <textarea name="notes" class="form-textarea"
+                                  placeholder="Any additional notes…">{{ file.staff_record.notes if file.staff_record else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="form-card">
+            <div class="action-bar">
+                <a href="/files/{{ file.fileID }}/detail" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-save">
+                    <i class="material-icons">save</i>Save Changes
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function onFileTypeChange(val) {
+        document.getElementById('student-section').style.display = val === 'Student' ? 'block' : 'none';
+        document.getElementById('staff-section').style.display   = val === 'Staff'   ? 'block' : 'none';
+    }
+</script>
+{% endblock %}

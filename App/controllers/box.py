@@ -54,8 +54,19 @@ def updateBox(
 
 
 def changeBoxStatus(boxID, colorStatus):
-    """Convenience wrapper — update only the colour/status label."""
-    return updateBox(boxID=boxID, colorStatus=colorStatus)
+    """Update the colour/status label stored directly on the box."""
+    box = db.session.get(Box, boxID)
+    if not box:
+        print(f"Box with ID {boxID} was not found.")
+        return None
+    box.colorStatus = colorStatus
+    try:
+        db.session.commit()
+        return box
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error occurred while changing status for box {boxID}: {e}")
+        return None
 
 
 def moveBoxLocation(boxID, newLocationID):
@@ -126,6 +137,8 @@ def getBoxJSON(box):
         "columnNo": box.columnNo,
         "barcode": box.barcode,
         "locationID": box.locationID,
+        "colorStatus": box.colorStatus,
+        "color_status": box.color_status,
         "fileCount": len(box.files),
     }
 
