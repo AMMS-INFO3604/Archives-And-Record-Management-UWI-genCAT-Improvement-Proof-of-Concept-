@@ -545,11 +545,11 @@
       <thead>
         <tr>
           <th>Loan ID</th>
-          <th>Patron ID</th>
+          <th>Patron</th>
           <th>Processed By</th>
           <th>Files</th>
           <th>Loan Date</th>
-          <th>Return Date</th>
+          <th>Due / Returned</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -562,7 +562,7 @@
           {# Zero-padded loan ID e.g. #003 #}
           <td class="td-id">#{{ '%03d' % loan.loanID }}</td>
 
-          <td><strong>{{ loan.patronID }}</strong></td>
+          <td><strong>{{ loan.patron.user.username if loan.patron and loan.patron.user else loan.patronID }}</strong></td>
 
           {# Walk the relationship chain: Loan → StaffUser → User → username.
              Shows '—' if the loan wasn't processed by a staff member. #}
@@ -580,9 +580,15 @@
 
           <td class="td-date">{{ loan.loanDate.strftime('%d %b %Y') }}</td>
 
-          {# Return date — red if the loan is overdue, '—' if not yet returned #}
+          {# Due date for active loans; actual returned date for returned loans #}
           <td class="td-date {{ 'overdue' if is_overdue else '' }}">
-            {{ loan.returnDate.strftime('%d %b %Y') if loan.returnDate else '—' }}
+            {% if loan.returnDate %}
+              {{ loan.returnDate.strftime('%d %b %Y') }}
+            {% elif loan.dueDate %}
+              {{ loan.dueDate.strftime('%d %b %Y') if loan.dueDate.__class__.__name__ != 'str' else loan.dueDate }}
+            {% else %}
+              —
+            {% endif %}
           </td>
 
           {# Status badge: green Returned, red Overdue, or blue Active #}
@@ -772,11 +778,14 @@ function openLoanModal(loanID) {
                 '<div class="lm-section-title"><i class="material-icons">info</i> Loan Details</div>' +
                 '<div class="lm-grid">' +
                     '<div class="lm-field"><span class="lm-label">Loan ID</span><span class="lm-value mono">#' + String(d.loanID).padStart(3,'0') + '</span></div>' +
-                    '<div class="lm-field"><span class="lm-label">Patron ID</span><span class="lm-value">' + d.patronID + '</span></div>' +
+                    '<div class="lm-field"><span class="lm-label">Patron</span><span class="lm-value">' + (d.patronUsername || d.patronID) + '</span></div>' +
                     '<div class="lm-field"><span class="lm-label">Processed By</span><span class="lm-value">' + (d.processedByUsername || '—') + '</span></div>' +
                     '<div class="lm-field"><span class="lm-label">File Count</span><span class="lm-value">' + d.fileCount + '</span></div>' +
                     '<div class="lm-field"><span class="lm-label">Loan Date</span><span class="lm-value">' + d.loanDate + '</span></div>' +
-                    '<div class="lm-field"><span class="lm-label">Return Date</span><span class="lm-value">' + (d.returnDate || '<span class="badge badge-active" style="font-size:.75rem;">Not returned</span>') + '</span></div>' +
+                    (d.returnDate
+                        ? '<div class="lm-field"><span class="lm-label">Returned Date</span><span class="lm-value">' + d.returnDate + '</span></div>'
+                        : '<div class="lm-field"><span class="lm-label">Due Date</span><span class="lm-value">' + (d.dueDate || '<span class="badge badge-active" style="font-size:.75rem;">Not set</span>') + '</span></div>'
+                    ) +
                 '</div>' +
                 '<div class="lm-section-title"><i class="material-icons">folder_open</i> Attached Files</div>' +
                 '<div class="lm-files-list">' + filesHtml + '</div>' +

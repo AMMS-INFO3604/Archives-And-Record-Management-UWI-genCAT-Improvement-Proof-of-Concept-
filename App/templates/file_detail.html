@@ -645,6 +645,7 @@
                 <div class="section-title"><i class="material-icons">history</i>Loan History</div>
 
                 {% if file.loan %}
+                {# Active loan banner #}
                 <div class="warn-box" style="margin-bottom:16px;">
                     <i class="material-icons">swap_horiz</i>
                     <div>
@@ -657,18 +658,36 @@
                         {% endif %}.
                     </div>
                 </div>
+                {% elif not loan_history %}
+                {# Only show "not on loan" when there is truly no history at all #}
+                <div class="info-box" style="margin-bottom:16px;">
+                    <i class="material-icons">check_circle</i>
+                    This file has never been loaned out.
+                </div>
+                {% endif %}
 
-                {% if file.loan.damageNotes %}
+                {# ── Damage notes banner ───────────────────────────────────────
+                   Intentionally outside {% if file.loan %} so it survives
+                   check-in. Shows the most recent returned loan that has notes. #}
+                {% if last_damaged_loan %}
                 <div class="damage-box" style="margin-bottom:16px;">
                     <i class="material-icons">report_problem</i>
                     <div class="damage-box-content">
-                        <div class="damage-box-label">Condition Notes on Return</div>
-                        <p class="damage-box-text">{{ file.loan.damageNotes }}</p>
+                        <div class="damage-box-label">
+                            Condition Notes — Loan #{{ last_damaged_loan.loanID }}
+                            {% if last_damaged_loan.returnDate %}
+                                returned {{ last_damaged_loan.returnDate.strftime('%d %b %Y') }}
+                            {% endif %}
+                        </div>
+                        <p class="damage-box-text">{{ last_damaged_loan.damageNotes }}</p>
                     </div>
                 </div>
                 {% endif %}
 
-                <div style="overflow-x:auto;">
+                {# ── Loan history table ────────────────────────────────────────
+                   Shown whenever loan_history is non-empty (active or returned). #}
+                {% if loan_history %}
+                <div style="overflow-x:auto;margin-top:8px;">
                     <table class="loan-table">
                         <thead>
                             <tr>
@@ -681,44 +700,48 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for loan in loan_history %}
                             <tr>
-                                <td class="col-id">#{{ file.loan.loanID }}</td>
+                                <td class="col-id">#{{ loan.loanID }}</td>
                                 <td>
-                                    {% if file.loan.returnDate is none %}
+                                    {% if loan.returnDate is none %}
                                         <span class="loan-status-badge lbadge-active">Active</span>
                                     {% else %}
                                         <span class="loan-status-badge lbadge-returned">Returned</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if file.loan.patron and file.loan.patron.user %}
-                                        {{ file.loan.patron.user.username }}
-                                        <span style="color:#bbb;font-size:.8rem;">(#{{ file.loan.patronID }})</span>
+                                    {% if loan.patron and loan.patron.user %}
+                                        {{ loan.patron.user.username }}
+                                        <span style="color:#bbb;font-size:.8rem;">(#{{ loan.patronID }})</span>
                                     {% else %}
-                                        #{{ file.loan.patronID }}
+                                        #{{ loan.patronID }}
                                     {% endif %}
                                 </td>
                                 <td class="col-date">
-                                    {% if file.loan.loanDate %}{{ file.loan.loanDate.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
+                                    {% if loan.loanDate %}{{ loan.loanDate.strftime('%d %b %Y') }}{% else %}&mdash;{% endif %}
                                 </td>
                                 <td class="col-date">
-                                    {% if file.loan.returnDate %}{{ file.loan.returnDate.strftime('%d %b %Y') }}
+                                    {% if loan.returnDate %}{{ loan.returnDate.strftime('%d %b %Y') }}
                                     {% else %}<span style="color:#c62828;font-weight:600;">Pending</span>{% endif %}
+                                    {% if loan.damageNotes %}
+                                    <span style="display:inline-flex;align-items:center;gap:3px;
+                                                 background:#fff8e1;border:1px solid #ffe082;border-radius:4px;
+                                                 padding:1px 6px;font-size:.72rem;font-weight:600;color:#f57f17;
+                                                 margin-left:4px;">
+                                        <i class="material-icons" style="font-size:11px;">report_problem</i>Notes
+                                    </span>
+                                    {% endif %}
                                 </td>
                                 <td>
-                                    <a href="/loans/{{ file.loan.loanID }}/detail" class="btn-view-loan">
+                                    <a href="/loans/{{ loan.loanID }}/detail" class="btn-view-loan">
                                         <i class="material-icons">open_in_new</i>View
                                     </a>
                                 </td>
                             </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
-                </div>
-
-                {% else %}
-                <div class="info-box">
-                    <i class="material-icons">check_circle</i>
-                    This file is not currently on loan.
                 </div>
                 {% endif %}
 
@@ -1034,11 +1057,10 @@
         <a href="#!" class="btn-modal-cancel modal-close">Cancel</a>
 
         <!-- Manual check-in (traditional form POST) -->
-        <form method="POST" action="/loans/{{ file.loanID }}/checkin" style="display:inline;margin:0;">
+        <form id="checkin-form" method="POST" action="/loans/{{ file.loanID }}/checkin" style="display:inline;margin:0;">
             <input type="hidden" name="damage_notes" id="damage_notes_hidden">
             <button type="submit" class="btn-modal-submit"
-                    style="background:#2e7d32;margin-right:6px;"
-                    onclick="syncDamageNotes()">
+                    style="background:#2e7d32;margin-right:6px;">
                 <i class="material-icons">assignment_return</i>Manual Check In
             </button>
         </form>
@@ -1227,12 +1249,20 @@ function calcDueDate() {
     document.getElementById('due-date-result').classList.add('show');
 }
 
-// Copy damage_notes textarea value into the hidden form field before submit
-function syncDamageNotes() {
-    var src = document.getElementById('damage_notes');
-    var dst = document.getElementById('damage_notes_hidden');
-    if (src && dst) dst.value = src.value;
-}
+// Copy damage_notes textarea value into the hidden form field before submit.
+// Uses a 'submit' event on the form so the hidden field is populated BEFORE
+// the browser serialises the form data (onclick fires too late).
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('checkin-form');
+        if (!form) return;
+        form.addEventListener('submit', function() {
+            var src = document.getElementById('damage_notes');
+            var dst = document.getElementById('damage_notes_hidden');
+            if (src && dst) dst.value = src.value;
+        });
+    });
+})();
 
 // ── Helper: close issue modal, open add-barcode modal ────────────────────────
 function closeIssueOpenBarcode() {
