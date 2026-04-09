@@ -1,5 +1,6 @@
 from App.database import db
 
+
 class Box(db.Model):
     __tablename__ = 'box'
 
@@ -9,13 +10,16 @@ class Box(db.Model):
     columnNo = db.Column(db.Integer, nullable=False)
     barcode = db.Column(db.String(100), unique=True, nullable=True)
     locationID = db.Column(db.Integer, db.ForeignKey('location.locationID'), nullable=False)
-    colorStatus = db.Column(db.String(100), nullable=True)  # manually set status label
+    # Manually-set status label (overrides the computed color_status when present)
+    colorStatus = db.Column(db.String(100), nullable=True)
 
     files = db.relationship('File', backref='box', lazy=True)
 
     @property
     def color_status(self):
-        """Return the manually set colorStatus if present, otherwise derive from file states."""
+        """Return the manually-set colorStatus if one has been saved, otherwise
+        derive a status marker automatically from the file states."""
+        # If staff have explicitly set a label, honour it
         if self.colorStatus:
             return self.colorStatus
 
