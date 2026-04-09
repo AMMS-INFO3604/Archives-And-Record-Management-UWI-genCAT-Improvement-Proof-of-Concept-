@@ -268,6 +268,45 @@ def delete_file_from_box_page(boxID, fileID):
 
 
 # ---------------------------------------------------------------------------
+# API – Generate barcode suggestion for a box
+# ---------------------------------------------------------------------------
+
+@box_views.route("/api/boxes/barcode-suggestion", methods=["GET"])
+@jwt_required()
+def api_box_barcode_suggestion():
+    """
+    GET /api/boxes/barcode-suggestion?bayNo=1&rowNo=2&columnNo=3&locationID=1
+    Returns a suggested barcode string based on box coordinates.
+    """
+    from App.controllers.location import get_location
+
+    bay = request.args.get("bayNo", "")
+    row = request.args.get("rowNo", "")
+    col = request.args.get("columnNo", "")
+    loc_id = request.args.get("locationID", "")
+
+    # Build location prefix
+    loc_prefix = "BOX"
+    if loc_id:
+        try:
+            loc = get_location(int(loc_id))
+            if loc:
+                # Take first letters of each word
+                words = loc.geoLocation.split()
+                loc_prefix = "".join(w[0].upper() for w in words if w)[:4]
+        except Exception:
+            pass
+
+    # Pad numbers
+    bay_str = bay.zfill(2) if bay else "00"
+    row_str = row.zfill(2) if row else "00"
+    col_str = col.zfill(2) if col else "00"
+
+    suggestion = f"{loc_prefix}-B{bay_str}R{row_str}C{col_str}"
+    return jsonify({"suggestion": suggestion})
+
+
+# ---------------------------------------------------------------------------
 # API – Create
 # ---------------------------------------------------------------------------
  
@@ -357,6 +396,7 @@ def api_update_box(boxID):
         columnNo=data.get("columnNo"),
         barcode=data.get("barcode"),
         locationID=data.get("locationID"),
+        colorStatus=data.get("colorStatus"),
     )
  
     if not box:

@@ -40,12 +40,10 @@ def initialize():
 
 def _seed():
     # ------------------------------------------------------------------
-    # 1. Locations
+    # 1. Locations  (only 2, matching the web app location selection)
     # ------------------------------------------------------------------
-    loc1 = _add(Location(geoLocation="UWI Main Library – Bay A"))
-    loc2 = _add(Location(geoLocation="UWI Main Library – Bay B"))
-    loc3 = _add(Location(geoLocation="Faculty of Social Sciences – Archive Room"))
-    loc4 = _add(Location(geoLocation="Registry – Secure Vault"))
+    loc1 = _add(Location(geoLocation="Lloyd Brathwaite Building"))
+    loc2 = _add(Location(geoLocation="South Campus"))
 
     # ------------------------------------------------------------------
     # 2. Boxes
@@ -55,7 +53,7 @@ def _seed():
             bayNo=1,
             rowNo=1,
             columnNo=1,
-            barcode="BOX-A-001",
+            barcode="BOX-LB-001",
             locationID=loc1.locationID,
         )
     )
@@ -64,7 +62,7 @@ def _seed():
             bayNo=1,
             rowNo=1,
             columnNo=2,
-            barcode="BOX-A-002",
+            barcode="BOX-LB-002",
             locationID=loc1.locationID,
         )
     )
@@ -73,7 +71,7 @@ def _seed():
             bayNo=1,
             rowNo=2,
             columnNo=1,
-            barcode="BOX-A-003",
+            barcode="BOX-LB-003",
             locationID=loc1.locationID,
         )
     )
@@ -82,7 +80,7 @@ def _seed():
             bayNo=2,
             rowNo=1,
             columnNo=1,
-            barcode="BOX-B-001",
+            barcode="BOX-SC-001",
             locationID=loc2.locationID,
         )
     )
@@ -91,7 +89,7 @@ def _seed():
             bayNo=2,
             rowNo=1,
             columnNo=2,
-            barcode="BOX-B-002",
+            barcode="BOX-SC-002",
             locationID=loc2.locationID,
         )
     )
@@ -100,8 +98,8 @@ def _seed():
             bayNo=1,
             rowNo=3,
             columnNo=1,
-            barcode="BOX-SS-001",
-            locationID=loc3.locationID,
+            barcode="BOX-SC-003",
+            locationID=loc2.locationID,
         )
     )
     box7 = _add(
@@ -109,20 +107,18 @@ def _seed():
             bayNo=1,
             rowNo=1,
             columnNo=1,
-            barcode="BOX-REG-001",
-            locationID=loc4.locationID,
+            barcode="BOX-LB-REG-001",
+            locationID=loc1.locationID,
         )
     )
 
     # ------------------------------------------------------------------
     # 3. Users  (staff first, then patrons)
     # ------------------------------------------------------------------
-    # Staff accounts
     u_admin = _add(User(username="admin", password="adminpass"))
     u_alice = _add(User(username="alice", password="alicepass"))
     u_bob = _add(User(username="bob", password="bobpass"))
 
-    # Patron accounts
     u_carol = _add(User(username="carol", password="carolpass"))
     u_dave = _add(User(username="dave", password="davepass"))
     u_eve = _add(User(username="eve", password="evepass"))
@@ -252,7 +248,6 @@ def _seed():
         )
     )
 
-    # Additional files that will be placed on active loans
     loan_file1 = _add(
         File(
             boxID=box4.boxID,
@@ -277,148 +272,80 @@ def _seed():
     )
 
     # ------------------------------------------------------------------
-    # 7. Student records  (one per student file)
+    # 7. Student records
     # ------------------------------------------------------------------
-    _add(
-        Student(
-            fileID=sf1.fileID,
-            certificateDiploma="BSc Computer Science",
-            code="810002345",
-        )
-    )
-    _add(
-        Student(
-            fileID=sf2.fileID,
-            certificateDiploma="BSc Information Technology",
-            code="810003456",
-        )
-    )
-    _add(
-        Student(
-            fileID=sf3.fileID, certificateDiploma="MSc Data Science", code="816001234"
-        )
-    )
-    _add(
-        Student(fileID=sf4.fileID, certificateDiploma="BA Economics", code="810009876")
-    )
-    _add(
-        Student(
-            fileID=sf5.fileID,
-            certificateDiploma="Diploma in Management Studies",
-            code="DMS2021-007",
-        )
-    )
-    _add(
-        Student(
-            fileID=sf6.fileID,
-            certificateDiploma="Certificate in Public Administration",
-            code="CPA2022-003",
-        )
-    )
-    _add(
-        Student(
-            fileID=loan_file1.fileID,
-            certificateDiploma="BSc Mathematics",
-            code="810007654",
-        )
-    )
-    _add(
-        Student(
-            fileID=loan_file2.fileID, certificateDiploma="MA History", code="816004321"
-        )
-    )
+    _add(Student(fileID=sf1.fileID, certificateDiploma="BSc Computer Science", code="810002345"))
+    _add(Student(fileID=sf2.fileID, certificateDiploma="BSc Information Technology", code="810003456"))
+    _add(Student(fileID=sf3.fileID, certificateDiploma="MSc Data Science", code="816001234"))
+    _add(Student(fileID=sf4.fileID, certificateDiploma="BA Economics", code="810009876"))
+    _add(Student(fileID=sf5.fileID, certificateDiploma="Diploma in Management Studies", code="DMS2021-007"))
+    _add(Student(fileID=sf6.fileID, certificateDiploma="Certificate in Public Administration", code="CPA2022-003"))
+    _add(Student(fileID=loan_file1.fileID, certificateDiploma="BSc Mathematics", code="810007654"))
+    _add(Student(fileID=loan_file2.fileID, certificateDiploma="MA History", code="816004321"))
 
     # ------------------------------------------------------------------
-    # 8. Staff records  (one per personnel file)
+    # 8. Staff records
     # ------------------------------------------------------------------
-    _add(
-        StaffRecord(
-            fileID=pf1.fileID,
-            fileNumber="SL-2015-001",
-            fileTitle="Academic Appointment – Senior Lecturer",
-            post="Senior Lecturer",
-            organisationUnit="Faculty of Science & Technology",
-            notes="Tenure track appointment, started January 2015.",
-        )
-    )
-    _add(
-        StaffRecord(
-            fileID=pf2.fileID,
-            fileNumber="AO-2017-002",
-            fileTitle="Administrative Appointment – Registry",
-            post="Administrative Officer II",
-            organisationUnit="Registry",
-            notes="Transferred from Faculty of Humanities in 2019.",
-        )
-    )
-    _add(
-        StaffRecord(
-            fileID=pf3.fileID,
-            fileNumber="RF-2019-003",
-            fileTitle="Research Appointment – Institute for Critical Thinking",
-            post="Research Fellow",
-            organisationUnit="Institute for Critical Thinking & Writing",
-            notes="Fixed-term contract renewed twice.",
-        )
-    )
+    _add(StaffRecord(
+        fileID=pf1.fileID, fileNumber="SL-2015-001",
+        fileTitle="Academic Appointment – Senior Lecturer",
+        post="Senior Lecturer", organisationUnit="Faculty of Science & Technology",
+        notes="Tenure track appointment, started January 2015.",
+    ))
+    _add(StaffRecord(
+        fileID=pf2.fileID, fileNumber="AO-2017-002",
+        fileTitle="Administrative Appointment – Registry",
+        post="Administrative Officer II", organisationUnit="Registry",
+        notes="Transferred from Faculty of Humanities in 2019.",
+    ))
+    _add(StaffRecord(
+        fileID=pf3.fileID, fileNumber="RF-2019-003",
+        fileTitle="Research Appointment – Institute for Critical Thinking",
+        post="Research Fellow", organisationUnit="Institute for Critical Thinking & Writing",
+        notes="Fixed-term contract renewed twice.",
+    ))
 
     # ------------------------------------------------------------------
-    # 9. Loans  (some returned, some still active)
+    # 9. Loans
     # ------------------------------------------------------------------
+    now = datetime.utcnow()
 
-    # -- Returned loan 1 : carol borrowed sf1 & sf2, processed by alice
-    rl1 = _add(
-        Loan(
-            patronID=p_carol.patronID,
-            processedByStaffUserID=su_alice.staffUserID,
-            loanDate=now - timedelta(days=60),
-            returnDate=now - timedelta(days=45),
-        )
-    )
-    # Files were returned so they remain Available; we only record the loanID
-    # for historical reference here rather than setting status.
+    rl1 = _add(Loan(
+        patronID=p_carol.patronID,
+        processedByStaffUserID=su_alice.staffUserID,
+        loanDate=now - timedelta(days=60),
+        returnDate=now - timedelta(days=45),
+    ))
 
-    # -- Returned loan 2 : dave borrowed sf3, processed by bob
-    rl2 = _add(
-        Loan(
-            patronID=p_dave.patronID,
-            processedByStaffUserID=su_bob.staffUserID,
-            loanDate=now - timedelta(days=90),
-            returnDate=now - timedelta(days=80),
-        )
-    )
+    rl2 = _add(Loan(
+        patronID=p_dave.patronID,
+        processedByStaffUserID=su_bob.staffUserID,
+        loanDate=now - timedelta(days=90),
+        returnDate=now - timedelta(days=80),
+    ))
 
-    # -- Returned loan 3 : eve borrowed pf1, processed by admin
-    rl3 = _add(
-        Loan(
-            patronID=p_eve.patronID,
-            processedByStaffUserID=su_admin.staffUserID,
-            loanDate=now - timedelta(days=120),
-            returnDate=now - timedelta(days=100),
-        )
-    )
+    rl3 = _add(Loan(
+        patronID=p_eve.patronID,
+        processedByStaffUserID=su_admin.staffUserID,
+        loanDate=now - timedelta(days=120),
+        returnDate=now - timedelta(days=100),
+    ))
 
-    # -- Active loan 1 : frank borrowed loan_file1, processed by alice
-    al1 = _add(
-        Loan(
-            patronID=p_frank.patronID,
-            processedByStaffUserID=su_alice.staffUserID,
-            loanDate=now - timedelta(days=10),
-            returnDate=None,
-        )
-    )
+    al1 = _add(Loan(
+        patronID=p_frank.patronID,
+        processedByStaffUserID=su_alice.staffUserID,
+        loanDate=now - timedelta(days=10),
+        returnDate=None,
+    ))
     loan_file1.loanID = al1.loanID
     loan_file1.status = "On Loan"
 
-    # -- Active loan 2 : grace borrowed loan_file2, processed by bob
-    al2 = _add(
-        Loan(
-            patronID=p_grace.patronID,
-            processedByStaffUserID=su_bob.staffUserID,
-            loanDate=now - timedelta(days=5),
-            returnDate=None,
-        )
-    )
+    al2 = _add(Loan(
+        patronID=p_grace.patronID,
+        processedByStaffUserID=su_bob.staffUserID,
+        loanDate=now - timedelta(days=5),
+        returnDate=None,
+    ))
     loan_file2.loanID = al2.loanID
     loan_file2.status = "On Loan"
 

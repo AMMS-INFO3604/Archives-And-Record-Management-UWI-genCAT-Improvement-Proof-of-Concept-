@@ -10,12 +10,19 @@ class Box(db.Model):
     columnNo = db.Column(db.Integer, nullable=False)
     barcode = db.Column(db.String(100), unique=True, nullable=True)
     locationID = db.Column(db.Integer, db.ForeignKey('location.locationID'), nullable=False)
+    # Manually-set status label (overrides the computed color_status when present)
+    colorStatus = db.Column(db.String(100), nullable=True)
 
     files = db.relationship('File', backref='box', lazy=True)
 
     @property
     def color_status(self):
-        """Derive a box status marker from file states, for status color coding."""
+        """Return the manually-set colorStatus if one has been saved, otherwise
+        derive a status marker automatically from the file states."""
+        # If staff have explicitly set a label, honour it
+        if self.colorStatus:
+            return self.colorStatus
+
         if not self.files:
             return "Unprocessed/Pending"
 

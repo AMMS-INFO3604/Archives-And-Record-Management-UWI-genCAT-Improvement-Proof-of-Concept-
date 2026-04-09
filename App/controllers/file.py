@@ -1,4 +1,3 @@
-
 from App.database import db
 from App.models import Box, File, Location, User
 from datetime import datetime, date as _date
@@ -70,6 +69,7 @@ def updateFile(
 ):
     file = db.session.get(File, fileID)
     if not file:
+        print(f"File with ID {fileID} not found")
         return None
 
     if boxID is not None:
@@ -143,11 +143,20 @@ def searchFile(
 
 
 def deleteFile(fileID):
+    """Delete a file by ID. Detaches from loan first to avoid FK issues."""
     file = db.session.get(File, fileID)
     if not file:
         print(f"File with ID {fileID} not found")
         return False
     try:
+        # Detach from loan before deletion to avoid FK constraint issues
+        file.loanID = None
+        # Also delete linked student/staff records
+        if file.student_record:
+            db.session.delete(file.student_record)
+        if file.staff_record:
+            db.session.delete(file.staff_record)
+        db.session.flush()
         db.session.delete(file)
         db.session.commit()
         print(f"File with ID {fileID} deleted successfully")

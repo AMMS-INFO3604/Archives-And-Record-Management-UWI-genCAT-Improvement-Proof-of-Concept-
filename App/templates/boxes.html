@@ -815,8 +815,60 @@
         return confirm('Delete Box #' + boxID + '? This action cannot be undone.');
     }
 
+    // PATCH: Replace the existing generateBoxBarcode and related functions in boxes.html
+    // These replacements fix:
+    // 1. Auto-suggest barcode from coordinates when inputs change
+    // 2. Use location abbreviation in barcode prefix
+
+    // ── Auto-suggest barcode from coordinates ─────────────────────────────
+    function getLocationPrefix() {
+        var sel = document.getElementById('ab-location');
+        if (!sel || !sel.value) return 'BOX';
+        var text = sel.options[sel.selectedIndex].text.trim();
+        // Take first letter of each significant word
+        var words = text.split(/\s+/).filter(function(w) { return w.length > 0; });
+        var prefix = words.map(function(w) { return w[0].toUpperCase(); }).join('').slice(0, 4);
+        return prefix || 'BOX';
+    }
+
+    function autoSuggestBarcode() {
+        var bay = document.getElementById('ab-bay').value.trim();
+        var row = document.getElementById('ab-row').value.trim();
+        var col = document.getElementById('ab-col').value.trim();
+        var locPrefix = getLocationPrefix();
+
+        if (!bay || !row || !col) return;
+
+        var bayStr = bay.padStart(2, '0');
+        var rowStr = row.padStart(2, '0');
+        var colStr = col.padStart(2, '0');
+        var suggestion = locPrefix + '-B' + bayStr + 'R' + rowStr + 'C' + colStr;
+
+        var inputEl = document.getElementById('ab-barcode-input');
+        if (inputEl && !inputEl.value) {
+            inputEl.value = suggestion;
+        }
+    }
+
+    // Wire up coordinate inputs to auto-suggest barcode
+    document.addEventListener('DOMContentLoaded', function () {
+        ['ab-bay', 'ab-row', 'ab-col', 'ab-location'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', autoSuggestBarcode);
+                el.addEventListener('input', autoSuggestBarcode);
+            }
+        });
+    });
+
     async function generateBoxBarcode() {
         const inputEl  = document.getElementById('ab-barcode-input');
+
+        // If input is empty, auto-suggest from coordinates first
+        if (!inputEl.value.trim()) {
+            autoSuggestBarcode();
+        }
+
         const value    = inputEl.value.trim();
         if (!value) {
             inputEl.focus();
@@ -855,6 +907,13 @@
         } finally {
             loading.style.display = 'none';
         }
+    }
+
+    function clearBoxBarcode() {
+        document.getElementById('ab-barcode-input').value  = '';
+        document.getElementById('ab-barcode-value').value  = '';
+        document.getElementById('ab-bc-preview').style.display = 'none';
+        document.getElementById('ab-bc-loading').style.display = 'none';
     }
 
     function clearBoxBarcode() {
