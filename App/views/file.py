@@ -602,7 +602,51 @@ def file_detail_page(fileID):
         flash(f"File {fileID} not found.", "error")
         return redirect(url_for("file_views.get_files_page"))
     patrons = get_all_patrons()
-    return render_template("file_detail.html", file=file, patrons=patrons)
+
+    from App.models.loan import Loan
+
+    # ── Build loan history ────────────────────────────────────────────────────
+    # We CANNOT use Loan.files.any() here because File.loanID (the FK) is set
+    # to NULL when a file is returned — making the reverse relationship empty
+    # for every past loan. Instead we build history from two reliable sources:
+    #
+    #   1. file.loan  — the currently active loan (if the file is still on loan)
+    #   2. last_loan_id — passed as a query-param by checkin_loan_route so we
+    #                     can fetch the loan that was just completed
+    #
+    # This gives correct history immediately after check-in without any schema
+    # changes or extra association tables.
+
+    loan_history = []
+
+    if file.loan:
+        loan_history.append(file.loan)
+
+    last_loan_id = request.args.get('last_loan_id', type=int)
+    if last_loan_id:
+        last_loan = Loan.query.get(last_loan_id)
+        if last_loan and last_loan not in loan_history:
+            loan_history.append(last_loan)
+
+    # Most-recent first
+    loan_history.sort(
+        key=lambda l: l.loanDate if l.loanDate else __import__('datetime').date.min,
+        reverse=True,
+    )
+
+    # Damage-notes banner: most recent returned loan that has notes
+    last_damaged_loan = next(
+        (l for l in loan_history if l.returnDate and l.damageNotes),
+        None,
+    )
+
+    return render_template(
+        "file_detail.html",
+        file=file,
+        patrons=patrons,
+        loan_history=loan_history,
+        last_damaged_loan=last_damaged_loan,
+    )
 
 
 @file_views.route("/files", methods=["GET"])

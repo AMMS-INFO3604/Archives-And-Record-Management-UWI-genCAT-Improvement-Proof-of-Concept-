@@ -280,6 +280,23 @@ def loan_detail_json(loanID):
         loan['loanStatus']  = raw_status or 'Active'
         loan['returnDate']  = None
 
+    # Patron username (walks Loan → Patron → User → username)
+    loan['patronUsername'] = (
+        loan_obj.patron.user.username
+        if loan_obj and loan_obj.patron and loan_obj.patron.user
+        else None
+    )
+
+    # Due date — stored as dueDate on the loan if present, else fall back to loanDate + 30 days
+    from datetime import timedelta
+    due_raw = getattr(loan_obj, 'dueDate', None)
+    if due_raw:
+        loan['dueDate'] = str(due_raw)
+    elif loan_obj and loan_obj.loanDate:
+        loan['dueDate'] = str((loan_obj.loanDate + timedelta(days=30)).date())
+    else:
+        loan['dueDate'] = None
+
     response = jsonify(loan)
     response.headers['Content-Type'] = 'application/json'
     return response
@@ -343,12 +360,16 @@ def checkin_loan_route(loanID):
 
     damage_notes = request.form.get('damage_notes', '').strip()
 
+    # Capture file IDs BEFORE return_loan() sets file.loanID = NULL.
+    # After check-in, loan.files is empty so we cannot read them afterwards.
+    file_ids = [f.fileID for f in loan.files]
+
     result = return_loan(
         loanID,
         damage_notes=damage_notes if damage_notes else None,
     )
 
-    file_id = loan.files[0].fileID if loan.files else None
+    file_id = file_ids[0] if file_ids else None
 
     if result:
         if damage_notes:
@@ -359,7 +380,11 @@ def checkin_loan_route(loanID):
         flash(f'Failed to check in Loan #{loanID}. Please try again.', 'error')
 
     if file_id:
-        return redirect(url_for('file_views.file_detail_page', fileID=file_id))
+        # Pass loanID as last_loan_id so file_detail_page can show the
+        # returned loan in history and display its damage notes, even though
+        # file.loanID has just been cleared to NULL by return_loan().
+        return redirect(url_for('file_views.file_detail_page',
+                                fileID=file_id, last_loan_id=loanID))
     return redirect(url_for('loan_views.loans_page'))
 
 
