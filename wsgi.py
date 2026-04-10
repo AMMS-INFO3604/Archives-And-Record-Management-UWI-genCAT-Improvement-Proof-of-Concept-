@@ -31,6 +31,17 @@ from flask.cli import AppGroup, with_appcontext
 app = create_app()
 migrate = get_migrate(app)
 
+@app.route('/setup-db')
+def setup_db():
+    try:
+        db.drop_all()
+        db.create_all()
+        initialize()
+        return "DB initialized successfully!", 200
+    except Exception as e:
+        db.session.rollback()
+        return f"Error: {str(e)}", 500
+
 
 # -----------------------------------------------------------------------------
 # Database initialisation
